@@ -1,0 +1,307 @@
+@page "/"
+@rendermode InteractiveServer
+
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+
+@inject MockDataService mockDataService
+@inject AuthService authService
+
+<PageTitle>Tổng quan hệ thống</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>Tổng quan quản lý phương tiện</h1>
+        <p class="text-muted mb-0">Hệ thống thông tin điều hành & sử dụng phương tiện công tác</p>
+    </div>
+    @if (authService.CurrentUser != null)
+    {
+        <div class="text-end">
+            <span class="badge bg-primary fs-6 p-2">
+                @authService.CurrentUser.FullName (@authService.GetRoleName(authService.CurrentUser.Role))
+            </span>
+        </div>
+    }
+</div>
+
+@* THẺ CHỈ SỐ NHANH *@
+<div class="row g-3 mb-4">
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card h-100 shadow-sm border-0 border-top border-3 border-primary">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Tổng phương tiện</p>
+                <h3 class="fw-bold mb-0 text-primary">@tongSoXe</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card h-100 shadow-sm border-0 border-top border-3 border-success">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Sẵn sàng</p>
+                <h3 class="fw-bold mb-0 text-success">@soXeSanSang</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card h-100 shadow-sm border-0 border-top border-3 border-info">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Đang điều động</p>
+                <h3 class="fw-bold mb-0 text-info">@soXeDangDieuDong</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card h-100 shadow-sm border-0 border-top border-3 border-warning">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Đang bảo dưỡng</p>
+                <h3 class="fw-bold mb-0 text-warning">@soXeBaoDuong</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card h-100 shadow-sm border-0 border-top border-3 border-danger">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Chờ phê duyệt</p>
+                <h3 class="fw-bold mb-0 text-danger">@soDonChoDuyet</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="card h-100 shadow-sm border-0 border-top border-3 border-secondary">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Đang di chuyển</p>
+                <h3 class="fw-bold mb-0 text-dark">@soChuyenDangChay</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    @* SỐ LƯỢNG THEO LOẠI XE *@
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light fw-bold">
+                Cơ cấu đội xe theo loại phương tiện
+            </div>
+            <div class="card-body">
+                <div class="row text-center g-3">
+                    <div class="col-6 col-sm-3">
+                        <div class="p-3 border rounded bg-light">
+                            <RadzenIcon Icon="directions_car" Style="font-size: 2rem;" class="text-primary mb-1" />
+                            <div class="small text-muted">Ô tô</div>
+                            <h4 class="fw-bold mb-0 mt-1">@soOTo</h4>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="p-3 border rounded bg-light">
+                            <RadzenIcon Icon="two_wheeler" Style="font-size: 2rem;" class="text-success mb-1" />
+                            <div class="small text-muted">Xe máy</div>
+                            <h4 class="fw-bold mb-0 mt-1">@soXeMay</h4>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="p-3 border rounded bg-light">
+                            <RadzenIcon Icon="local_shipping" Style="font-size: 2rem;" class="text-warning mb-1" />
+                            <div class="small text-muted">Xe tải</div>
+                            <h4 class="fw-bold mb-0 mt-1">@soXeTai</h4>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="p-3 border rounded bg-light">
+                            <RadzenIcon Icon="airport_shuttle" Style="font-size: 2rem;" class="text-danger mb-1" />
+                            <div class="small text-muted">Chuyên dụng</div>
+                            <h4 class="fw-bold mb-0 mt-1">@soXeChuyenDung</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ĐỘI NGŨ LÁI XE *@
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light fw-bold">
+                Tình hình lực lượng lái xe
+            </div>
+            <div class="card-body">
+                <div class="row text-center g-3">
+                    <div class="col-4">
+                        <div class="p-3 border rounded bg-light">
+                            <div class="small text-muted">Tổng lái xe</div>
+                            <h4 class="fw-bold mb-0 text-primary">@mockDataService.Drivers.Count</h4>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 border rounded bg-light">
+                            <div class="small text-muted">Đang làm việc</div>
+                            <h4 class="fw-bold mb-0 text-success">@mockDataService.Drivers.Count(d => d.Status == DriverStatus.Active)</h4>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 border rounded bg-light">
+                            <div class="small text-muted">Nghỉ phép</div>
+                            <h4 class="fw-bold mb-0 text-warning">@mockDataService.Drivers.Count(d => d.Status == DriverStatus.OnLeave)</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 text-muted small text-center">
+                    Cán bộ lái xe sẵn sàng phục vụ các kế hoạch công tác đột xuất và thường xuyên của đơn vị.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    @* YÊU CẦU MỚI NHẤT *@
+    <div class="col-md-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <strong class="text-primary">Yêu cầu đăng ký phương tiện mới nhất</strong>
+                <a href="/bookings" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã</th>
+                                <th>Người đăng ký</th>
+                                <th>Điểm đến</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (Booking b in danhSachYeuCauMoi)
+                            {
+                                User? ng = mockDataService.Users.FirstOrDefault(u => u.Id == b.RequesterId);
+                                <tr>
+                                    <td><strong>@b.BookingCode</strong></td>
+                                    <td>@(ng?.FullName ?? "Cán bộ")</td>
+                                    <td>@b.Destination</td>
+                                    <td><small>@b.DepartureTime.ToString("dd/MM HH:mm")</small></td>
+                                    <td>
+                                        <span class="badge @LayMauTrangThaiDon(b.Status)">
+                                            @EnumHelper.TenBookingStatus(b.Status)
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* CÁC CHUYẾN ĐI ĐANG THỰC HIỆN *@
+    <div class="col-md-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <strong class="text-success">Chuyến công tác đang thực hiện</strong>
+                <a href="/trips" class="btn btn-sm btn-outline-success">Theo dõi</a>
+            </div>
+            <div class="card-body p-0">
+                @if (danhSachChuyenDangChay.Count == 0)
+                {
+                    <div class="text-center text-muted p-4">
+                        Hiện không có chuyến công tác nào đang di chuyển ngoài địa bàn.
+                    </div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (Trip t in danhSachChuyenDangChay)
+                        {
+                            Vehicle? xe = mockDataService.Vehicles.FirstOrDefault(v => v.Id == t.VehicleId);
+                            Driver? lx = mockDataService.Drivers.FirstOrDefault(d => d.Id == t.DriverId);
+                            Booking? don = mockDataService.Bookings.FirstOrDefault(b => b.Id == t.BookingId);
+
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>@t.DispatchCode</strong>
+                                    <span class="badge @LayMauTrangThaiChuyen(t.Status)">
+                                        @EnumHelper.TenTripStatus(t.Status)
+                                    </span>
+                                </div>
+                                <div class="small mt-1">
+                                    Xe: <strong>@xe?.LicensePlate</strong> (@xe?.Brand) — Lái xe: @lx?.FullName
+                                </div>
+                                <div class="small text-muted">
+                                    Điểm đến: <strong>@don?.Destination</strong> (Đi: @t.ActualDeparture?.ToString("dd/MM HH:mm"))
+                                </div>
+                                @if (t.Status == TripStatus.NeedSupport)
+                                {
+                                    <div class="small text-danger fw-bold mt-1">
+                                        @t.Note
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    int tongSoXe = 0;
+    int soXeSanSang = 0;
+    int soXeDangDieuDong = 0;
+    int soXeBaoDuong = 0;
+    int soDonChoDuyet = 0;
+    int soChuyenDangChay = 0;
+
+    int soOTo = 0;
+    int soXeMay = 0;
+    int soXeTai = 0;
+    int soXeChuyenDung = 0;
+
+    List<Booking> danhSachYeuCauMoi = new List<Booking>();
+    List<Trip> danhSachChuyenDangChay = new List<Trip>();
+
+    protected override void OnInitialized()
+    {
+        NapDuLieu();
+    }
+
+    private void NapDuLieu()
+    {
+        tongSoXe = mockDataService.Vehicles.Count;
+        soXeSanSang = mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.SanSang);
+        soXeDangDieuDong = mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.DangDuocDieuDong);
+        soXeBaoDuong = mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.DangBaoDuong);
+
+        soOTo = mockDataService.Vehicles.Count(x => x.VehicleType == VehicleType.OTo);
+        soXeMay = mockDataService.Vehicles.Count(x => x.VehicleType == VehicleType.XeMay);
+        soXeTai = mockDataService.Vehicles.Count(x => x.VehicleType == VehicleType.XeTai);
+        soXeChuyenDung = mockDataService.Vehicles.Count(x => x.VehicleType == VehicleType.XeChuyenDung);
+
+        soDonChoDuyet = mockDataService.Bookings.Count(b => b.Status == BookingStatus.PendingApproval);
+        soChuyenDangChay = mockDataService.Trips.Count(t => t.Status == TripStatus.InTransit || t.Status == TripStatus.NeedSupport);
+
+        danhSachYeuCauMoi = mockDataService.Bookings.OrderByDescending(b => b.Id).Take(5).ToList();
+        danhSachChuyenDangChay = mockDataService.Trips.Where(t => t.Status == TripStatus.InTransit || t.Status == TripStatus.NeedSupport).ToList();
+    }
+
+    private string LayMauTrangThaiDon(BookingStatus status)
+    {
+        if (status == BookingStatus.PendingApproval) return "bg-warning text-dark";
+        if (status == BookingStatus.PendingDispatch) return "bg-info text-dark";
+        if (status == BookingStatus.InProgress) return "bg-primary";
+        if (status == BookingStatus.Completed) return "bg-success";
+        if (status == BookingStatus.Rejected) return "bg-danger";
+        return "bg-secondary";
+    }
+
+    private string LayMauTrangThaiChuyen(TripStatus status)
+    {
+        if (status == TripStatus.InTransit) return "bg-primary";
+        if (status == TripStatus.NeedSupport) return "bg-danger";
+        if (status == TripStatus.Returned) return "bg-success";
+        return "bg-secondary";
+    }
+}

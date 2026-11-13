@@ -1,0 +1,92 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+
+@inject AuthService authService
+@inject NavigationManager nav
+
+<RadzenDialog />
+
+@if (!authService.DaDangNhap)
+{
+    @* Chưa đăng nhập: hiện trang login, không hiện layout *@
+    <RedirectToLogin />
+}
+else
+{
+    <RadzenLayout class="main-layout">
+        <RadzenHeader class="main-header">
+            <div class="header-content">
+                <div class="header-brand">
+                    <RadzenSidebarToggle Click="ToggleSidebar" />
+                    <img src="/logo-hvannd.png" alt="Logo Học viện An ninh Nhân dân" class="header-logo" />
+                    <div>
+                        <strong class="brand-title">HỌC VIỆN AN NINH NHÂN DÂN</strong>
+                        <small class="brand-subtitle">HỆ THỐNG QUẢN LÝ PHƯƠNG TIỆN CÔNG VỤ</small>
+                    </div>
+                </div>
+
+                <div class="header-account">
+                    @if (authService.CurrentUser != null)
+                    {
+                        <div class="current-user">
+                            <strong>@authService.CurrentUser.FullName</strong>
+                            <span>@authService.GetRoleName(authService.CurrentUser.Role)</span>
+                        </div>
+                    }
+
+                    <RadzenButton Text="Đăng xuất"
+                                  Icon="logout"
+                                  Click="DangXuat"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Size="ButtonSize.Small" />
+                </div>
+            </div>
+        </RadzenHeader>
+
+        <RadzenSidebar @bind-Expanded="sidebarExpanded" class="main-sidebar">
+            <NavMenu />
+        </RadzenSidebar>
+
+        <RadzenBody>
+            <main class="page-content">
+                @Body
+            </main>
+        </RadzenBody>
+    </RadzenLayout>
+
+    <div id="blazor-error-ui">
+        Đã xảy ra lỗi trong ứng dụng.
+        <a href="" class="reload">Tải lại</a>
+        <a class="dismiss">Đóng</a>
+    </div>
+}
+
+@code {
+    private bool sidebarExpanded = true;
+
+    protected override void OnInitialized()
+    {
+        authService.UserChanged += CapNhatLayout;
+    }
+
+    private void ToggleSidebar()
+    {
+        sidebarExpanded = !sidebarExpanded;
+    }
+
+    private void DangXuat()
+    {
+        authService.DangXuat();
+        nav.NavigateTo("/login");
+    }
+
+    private void CapNhatLayout()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        authService.UserChanged -= CapNhatLayout;
+    }
+}

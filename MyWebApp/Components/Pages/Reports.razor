@@ -1,0 +1,207 @@
+@page "/reports"
+@rendermode InteractiveServer
+
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+
+@inject MockDataService mockDataService
+@inject AuthService authService
+
+<PageTitle>Báo cáo & Thống kê</PageTitle>
+
+@if (!authService.DaDangNhap)
+{
+    <div class="alert alert-warning">
+        Vui lòng đăng nhập để xem báo cáo thống kê.
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1>Báo cáo & Thống kê phương tiện</h1>
+            <p class="text-muted mb-0">Thống kê tần suất hoạt động, quãng đường và nhiên liệu tiêu thụ của đội xe</p>
+        </div>
+    </div>
+
+    @* BỘ LỌC THỐNG KÊ *@
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Lọc theo phương tiện</label>
+                    <select class="form-select" @bind="xeLocId">
+                        <option value="0">-- Tất cả phương tiện --</option>
+                        @foreach (Vehicle xe in mockDataService.Vehicles)
+                        {
+                            <option value="@xe.Id">@xe.LicensePlate - @xe.Brand @xe.Model</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Loại xe</label>
+                    <select class="form-select" @bind="loaiXeLoc">
+                        <option value="-1">-- Tất cả loại xe --</option>
+                        <option value="@((int)VehicleType.OTo)">Ô tô</option>
+                        <option value="@((int)VehicleType.XeMay)">Xe máy</option>
+                        <option value="@((int)VehicleType.XeTai)">Xe tải</option>
+                        <option value="@((int)VehicleType.XeChuyenDung)">Xe chuyên dụng</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <RadzenButton Text="Đặt lại bộ lọc" Icon="refresh" ButtonStyle="ButtonStyle.Light" Click="DatLaiLoc" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* TỔNG KẾT CHỈ SỐ BÁO CÁO *@
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card p-3 shadow-sm border-start border-4 border-primary">
+                <div class="text-muted small">Tổng số chuyến công tác</div>
+                <h3 class="fw-bold mb-0 text-primary">@danhSachChuyenDaLoc.Count</h3>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card p-3 shadow-sm border-start border-4 border-success">
+                <div class="text-muted small">Tổng quãng đường đã chạy</div>
+                <h3 class="fw-bold mb-0 text-success">@tongQuangDuong.ToString("N0") <small class="fs-6">km</small></h3>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card p-3 shadow-sm border-start border-4 border-warning">
+                <div class="text-muted small">Tổng nhiên liệu tiêu thụ</div>
+                <h3 class="fw-bold mb-0 text-warning">@tongNhienLieu.ToString("N1") <small class="fs-6">lít</small></h3>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card p-3 shadow-sm border-start border-4 border-info">
+                <div class="text-muted small">Chuyến hoàn thành quyết toán</div>
+                <h3 class="fw-bold mb-0 text-info">@danhSachChuyenDaLoc.Count(t => t.IsSettled)</h3>
+            </div>
+        </div>
+    </div>
+
+    @* BẢNG CHI TIẾT HIỆU SUẤT TỪNG PHƯƠNG TIỆN *@
+    <div class="card mb-4">
+        <div class="card-header bg-light fw-bold">
+            Thống kê tần suất và chỉ số theo từng phương tiện
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã xe</th>
+                            <th>Biển số</th>
+                            <th>Loại xe</th>
+                            <th>Số chỗ</th>
+                            <th>Km hiện tại</th>
+                            <th>Số chuyến đã phục vụ</th>
+                            <th>Tình trạng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (Vehicle xe in danhSachXeDaLoc)
+                        {
+                            int soChuyen = mockDataService.Trips.Count(t => t.VehicleId == xe.Id);
+                            <tr>
+                                <td>@xe.VehicleCode</td>
+                                <td><strong>@xe.LicensePlate</strong></td>
+                                <td>@EnumHelper.TenVehicleType(xe.VehicleType)</td>
+                                <td>@xe.Seats</td>
+                                <td>@xe.CurrentKm.ToString("N0") km</td>
+                                <td><span class="badge bg-primary fs-6">@soChuyen chuyến</span></td>
+                                <td>
+                                    <span class="badge @LayMauTinhTrangXe(xe.Status)">
+                                        @EnumHelper.TenVehicleStatus(xe.Status)
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    int xeLocId = 0;
+    int loaiXeLoc = -1;
+
+    private List<Vehicle> danhSachXeDaLoc
+    {
+        get
+        {
+            var res = mockDataService.Vehicles.AsEnumerable();
+
+            if (xeLocId > 0)
+            {
+                res = res.Where(x => x.Id == xeLocId);
+            }
+
+            if (loaiXeLoc != -1)
+            {
+                VehicleType vt = (VehicleType)loaiXeLoc;
+                res = res.Where(x => x.VehicleType == vt);
+            }
+
+            return res.ToList();
+        }
+    }
+
+    private List<Trip> danhSachChuyenDaLoc
+    {
+        get
+        {
+            var res = mockDataService.Trips.AsEnumerable();
+
+            if (xeLocId > 0)
+            {
+                res = res.Where(t => t.VehicleId == xeLocId);
+            }
+
+            if (loaiXeLoc != -1)
+            {
+                VehicleType vt = (VehicleType)loaiXeLoc;
+                var listVehicleIds = mockDataService.Vehicles.Where(v => v.VehicleType == vt).Select(v => v.Id).ToList();
+                res = res.Where(t => listVehicleIds.Contains(t.VehicleId));
+            }
+
+            return res.ToList();
+        }
+    }
+
+    private double tongQuangDuong
+    {
+        get
+        {
+            return danhSachChuyenDaLoc.Where(t => t.IsSettled).Sum(t => Math.Max(0, t.EndKm - t.StartKm));
+        }
+    }
+
+    private double tongNhienLieu
+    {
+        get
+        {
+            return danhSachChuyenDaLoc.Where(t => t.IsSettled).Sum(t => t.FuelUsed);
+        }
+    }
+
+    private void DatLaiLoc()
+    {
+        xeLocId = 0;
+        loaiXeLoc = -1;
+    }
+
+    private string LayMauTinhTrangXe(VehicleStatus status)
+    {
+        if (status == VehicleStatus.SanSang) return "bg-success";
+        if (status == VehicleStatus.DangDuocDieuDong) return "bg-primary";
+        if (status == VehicleStatus.DangBaoDuong) return "bg-warning text-dark";
+        if (status == VehicleStatus.NgungHoatDong) return "bg-danger";
+        return "bg-secondary";
+    }
+}

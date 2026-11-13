@@ -1,0 +1,379 @@
+@page "/approvals"
+@rendermode InteractiveServer
+@implements IDisposable
+
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+
+@inject BookingService bookingService
+@inject DialogService dialog
+@inject AuthService authService
+
+<PageTitle>Phê duyệt yêu cầu</PageTitle>
+
+@if (!authService.CanApproveBookings)
+{
+    <div class="alert alert-warning">
+        Trang này dành riêng cho Lãnh đạo đơn vị và Quản trị viên để phê duyệt yêu cầu sử dụng phương tiện.
+    </div>
+}
+else
+{
+    <h1>Phê duyệt yêu cầu phương tiện</h1>
+    <p class="text-muted">Xem xét, phê duyệt hoặc từ chối các yêu cầu đăng ký sử dụng phương tiện</p>
+
+    @if (thongBao != "")
+    {
+        <div class="alert @(coLoi ? "alert-danger" : "alert-success")">
+            @thongBao
+        </div>
+    }
+
+    @if (yeuCauTuChoi != null)
+    {
+        <div class="card mb-3 border-danger">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <strong>Từ chối yêu cầu: @yeuCauTuChoi.BookingCode</strong>
+                <button class="btn btn-sm btn-outline-light" @onclick="HuyTuChoi">Đóng</button>
+            </div>
+            <div class="card-body">
+                <p>Cán bộ đăng ký: <strong>@bookingService.GetRequesterName(yeuCauTuChoi.RequesterId)</strong> — Điểm đến: <strong>@yeuCauTuChoi.Destination</strong></p>
+                <div class="mb-3">
+                    <label class="form-label text-danger"><strong>Lý do từ chối (bắt buộc nhập) <span class="text-danger">*</span>:</strong></label>
+                    <textarea class="form-control" rows="3" @bind="lyDoTuChoi" placeholder="Nhập rõ lý do từ chối để cán bộ nắm thông tin..."></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <RadzenButton Text="Xác nhận từ chối" Icon="block" ButtonStyle="ButtonStyle.Danger" Click="XacNhanTuChoi" />
+                    <RadzenButton Text="Bỏ qua" Icon="close" ButtonStyle="ButtonStyle.Light" Click="HuyTuChoi" />
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (yeuCauDangXem != null)
+    {
+        <div class="card mb-3 border-info">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <strong>Chi tiết yêu cầu: @yeuCauDangXem.BookingCode</strong>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="DongChiTiet">Đóng</button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2"><strong>Mã yêu cầu:</strong> @yeuCauDangXem.BookingCode</div>
+                    <div class="col-md-3 mb-2"><strong>Người đăng ký:</strong> @bookingService.GetRequesterName(yeuCauDangXem.RequesterId)</div>
+                    <div class="col-md-3 mb-2"><strong>Loại công việc:</strong> @yeuCauDangXem.WorkType</div>
+                    <div class="col-md-3 mb-2">
+                        <strong>Trạng thái:</strong> 
+                        <span class="badge @LayMauTrangThai(yeuCauDangXem.Status)">
+                            @EnumHelper.TenBookingStatus(yeuCauDangXem.Status)
+                        </span>
+                    </div>
+
+                    <div class="col-md-6 mb-2"><strong>Địa điểm xuất phát:</strong> @yeuCauDangXem.Departure</div>
+                    <div class="col-md-6 mb-2"><strong>Địa điểm đến:</strong> @yeuCauDangXem.Destination</div>
+
+                    <div class="col-md-6 mb-2"><strong>Thời gian khởi hành:</strong> @yeuCauDangXem.DepartureTime.ToString("dd/MM/yyyy HH:mm")</div>
+                    <div class="col-md-6 mb-2"><strong>Thời gian dự kiến về:</strong> @yeuCauDangXem.ReturnTime.ToString("dd/MM/yyyy HH:mm")</div>
+
+                    <div class="col-md-3 mb-2"><strong>Số lượng người:</strong> @yeuCauDangXem.PassengerCount người</div>
+                    <div class="col-md-3 mb-2"><strong>Loại xe yêu cầu:</strong> @yeuCauDangXem.RequestedVehicleType</div>
+                    <div class="col-md-6 mb-2"><strong>Mục đích:</strong> @yeuCauDangXem.Purpose</div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(yeuCauDangXem.RejectionReason))
+                {
+                    <div class="alert alert-danger mt-2 mb-0">
+                        <strong>Lý do từ chối:</strong> @yeuCauDangXem.RejectionReason
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex gap-2 mb-3">
+                <RadzenButton Text="@($"Chờ phê duyệt ({danhSachChoDuyet.Count})")" 
+                              ButtonStyle="@(hienThiLichSu ? ButtonStyle.Light : ButtonStyle.Primary)" 
+                              Click="@(() => hienThiLichSu = false)" />
+
+                <RadzenButton Text="@($"Lịch sử xử lý ({danhSachLichSu.Count})")" 
+                              ButtonStyle="@(hienThiLichSu ? ButtonStyle.Primary : ButtonStyle.Light)" 
+                              Click="@(() => hienThiLichSu = true)" />
+            </div>
+
+            @if (!hienThiLichSu)
+            {
+                <h2 class="h5 mb-3">Danh sách yêu cầu chờ lãnh đạo phê duyệt</h2>
+
+                <RadzenDataGrid Data="@danhSachChoDuyet" TItem="Booking" AllowPaging="true" PageSize="10" AllowSorting="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Booking" Property="BookingCode" Title="Mã yêu cầu" Width="130px" />
+                        <RadzenDataGridColumn TItem="Booking" Title="Cán bộ đăng ký" Width="160px">
+                            <Template Context="item">
+                                @bookingService.GetRequesterName(item.RequesterId)
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Booking" Property="WorkType" Title="Loại việc" Width="140px" />
+                        <RadzenDataGridColumn TItem="Booking" Property="Destination" Title="Điểm đến" />
+                        <RadzenDataGridColumn TItem="Booking" Title="Thời gian công tác">
+                            <Template Context="item">
+                                <div>@item.DepartureTime.ToString("dd/MM/yyyy HH:mm")</div>
+                                <small class="text-muted">đến @item.ReturnTime.ToString("dd/MM/yyyy HH:mm")</small>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Booking" Title="Loại xe & Số người" Width="160px">
+                            <Template Context="item">
+                                @item.RequestedVehicleType (@item.PassengerCount người)
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Booking" Title="Thao tác" Sortable="false" Filterable="false" Width="200px">
+                            <Template Context="item">
+                                <RadzenButton Icon="visibility" 
+                                              ButtonStyle="ButtonStyle.Light" 
+                                              Size="ButtonSize.Small" 
+                                              Title="Xem chi tiết" 
+                                              Click="@(() => XemChiTiet(item))" />
+
+                                <RadzenButton Text="Duyệt" 
+                                              Icon="check" 
+                                              ButtonStyle="ButtonStyle.Success" 
+                                              Size="ButtonSize.Small" 
+                                              Click="@(() => PheDuyet(item))" />
+
+                                <RadzenButton Text="Từ chối" 
+                                              Icon="close" 
+                                              ButtonStyle="ButtonStyle.Danger" 
+                                              Size="ButtonSize.Small" 
+                                              Click="@(() => MoHopThoaiTuChoi(item))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            }
+            else
+            {
+                <h2 class="h5 mb-3">Lịch sử các yêu cầu đã phê duyệt hoặc từ chối</h2>
+
+                <RadzenDataGrid Data="@danhSachLichSu" TItem="Booking" AllowPaging="true" PageSize="10" AllowSorting="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Booking" Property="BookingCode" Title="Mã yêu cầu" Width="130px" />
+                        <RadzenDataGridColumn TItem="Booking" Title="Cán bộ đăng ký" Width="160px">
+                            <Template Context="item">
+                                @bookingService.GetRequesterName(item.RequesterId)
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Booking" Property="Destination" Title="Điểm đến" />
+                        <RadzenDataGridColumn TItem="Booking" Title="Thời gian công tác">
+                            <Template Context="item">
+                                <div>@item.DepartureTime.ToString("dd/MM/yyyy HH:mm")</div>
+                                <small class="text-muted">đến @item.ReturnTime.ToString("dd/MM/yyyy HH:mm")</small>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Booking" Title="Trạng thái" Width="150px">
+                            <Template Context="item">
+                                <span class="badge @LayMauTrangThai(item.Status)">
+                                    @EnumHelper.TenBookingStatus(item.Status)
+                                </span>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Booking" Title="Ghi chú / Lý do từ chối">
+                            <Template Context="item">
+                                @if (!string.IsNullOrEmpty(item.RejectionReason))
+                                {
+                                    <span class="text-danger">@item.RejectionReason</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Đã duyệt</span>
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Booking" Title="Thao tác" Sortable="false" Filterable="false" Width="80px">
+                            <Template Context="item">
+                                <RadzenButton Icon="visibility" 
+                                              ButtonStyle="ButtonStyle.Light" 
+                                              Size="ButtonSize.Small" 
+                                              Title="Xem chi tiết" 
+                                              Click="@(() => XemChiTiet(item))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    List<Booking> danhSachChoDuyet = new List<Booking>();
+    List<Booking> danhSachLichSu = new List<Booking>();
+
+    Booking? yeuCauDangXem = null;
+    Booking? yeuCauTuChoi = null;
+    string lyDoTuChoi = "";
+
+    bool hienThiLichSu = false;
+    string thongBao = "";
+    bool coLoi = false;
+
+    protected override void OnInitialized()
+    {
+        authService.UserChanged += CapNhatTrang;
+        NapDuLieu();
+    }
+
+    private void CapNhatTrang()
+    {
+        NapDuLieu();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void NapDuLieu()
+    {
+        danhSachChoDuyet = bookingService.GetPendingApprovals();
+        danhSachLichSu = bookingService.GetApprovalHistory();
+    }
+
+    private void XemChiTiet(Booking item)
+    {
+        yeuCauDangXem = item;
+    }
+
+    private void DongChiTiet()
+    {
+        yeuCauDangXem = null;
+    }
+
+    private async Task PheDuyet(Booking item)
+    {
+        var xacNhan = await dialog.Confirm(
+            $"Bạn có đồng ý phê duyệt yêu cầu {item.BookingCode} của cán bộ {bookingService.GetRequesterName(item.RequesterId)}?",
+            "Xác nhận phê duyệt");
+
+        if (xacNhan != true)
+        {
+            return;
+        }
+
+        string loi;
+        bool thanhCong = bookingService.Approve(item.Id, out loi);
+
+        if (!thanhCong)
+        {
+            thongBao = loi;
+            coLoi = true;
+            return;
+        }
+
+        NapDuLieu();
+        thongBao = $"Đã phê duyệt yêu cầu {item.BookingCode}. Yêu cầu được chuyển sang Đội xe để điều động.";
+        coLoi = false;
+
+        if (yeuCauDangXem?.Id == item.Id)
+        {
+            DongChiTiet();
+        }
+    }
+
+    private void MoHopThoaiTuChoi(Booking item)
+    {
+        yeuCauTuChoi = item;
+        lyDoTuChoi = "";
+        thongBao = "";
+    }
+
+    private void HuyTuChoi()
+    {
+        yeuCauTuChoi = null;
+        lyDoTuChoi = "";
+    }
+
+    private void XacNhanTuChoi()
+    {
+        if (yeuCauTuChoi == null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(lyDoTuChoi))
+        {
+            thongBao = "Bắt buộc phải nhập lý do từ chối.";
+            coLoi = true;
+            return;
+        }
+
+        string loi;
+        bool thanhCong = bookingService.Reject(yeuCauTuChoi.Id, lyDoTuChoi, out loi);
+
+        if (!thanhCong)
+        {
+            thongBao = loi;
+            coLoi = true;
+            return;
+        }
+
+        string maDon = yeuCauTuChoi.BookingCode;
+        yeuCauTuChoi = null;
+        lyDoTuChoi = "";
+
+        NapDuLieu();
+        thongBao = $"Đã từ chối yêu cầu {maDon} và gửi phản hồi đến cán bộ.";
+        coLoi = false;
+
+        if (yeuCauDangXem?.Id == yeuCauTuChoi?.Id)
+        {
+            DongChiTiet();
+        }
+    }
+
+    private string LayMauTrangThai(BookingStatus status)
+    {
+        if (status == BookingStatus.Draft)
+        {
+            return "bg-secondary";
+        }
+
+        if (status == BookingStatus.PendingApproval)
+        {
+            return "bg-warning text-dark";
+        }
+
+        if (status == BookingStatus.Approved || status == BookingStatus.PendingDispatch)
+        {
+            return "bg-info text-dark";
+        }
+
+        if (status == BookingStatus.Dispatched || status == BookingStatus.InProgress)
+        {
+            return "bg-primary";
+        }
+
+        if (status == BookingStatus.PendingSettlement)
+        {
+            return "bg-warning text-dark";
+        }
+
+        if (status == BookingStatus.Completed)
+        {
+            return "bg-success";
+        }
+
+        if (status == BookingStatus.Rejected)
+        {
+            return "bg-danger";
+        }
+
+        if (status == BookingStatus.Cancelled)
+        {
+            return "bg-dark";
+        }
+
+        return "bg-secondary";
+    }
+
+    public void Dispose()
+    {
+        authService.UserChanged -= CapNhatTrang;
+    }
+}

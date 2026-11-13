@@ -1,0 +1,245 @@
+﻿@page "/dshocvien"
+@using MyWebApp.Services.Models.CanBo
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+
+@inject IJSRuntime JS
+
+@inject NavigationManager navigator
+
+@inject DialogService dialog
+
+<PageTitle>Quản lý phương tiện của cán bộ</PageTitle>
+
+@* <RadzenButton Shade="Shade.Light"
+              Click=@(args => OpenPage())
+              Text="Mở trang mới"
+              ButtonStyle="ButtonStyle.Success" />
+
+
+ *@
+ <div class="rows">
+    <div class="col-6">
+        <RadzenLabel Text="NHẬP ĐIỀU KIỆN TÌM KIẾM" Style="width:100%" />
+        <RadzenFormField Text="Họ và tên" Style="with:100%">
+            <RadzenTextBox @bind-Value="@ht" Style="width:100%" />
+        </RadzenFormField>
+    </div>
+ </div>
+
+ <p></p>
+
+<NewPage hocVien="@hocVien">
+
+ </NewPage>
+
+
+<p></p>
+<RadzenButton Shade="Shade.Light"
+              Disabled="addNew"
+              Click=@(args => Add())
+              Text="Thêm mới"
+              Icon="add"
+              ButtonStyle="ButtonStyle.Success" />
+
+<RadzenButton Shade="Shade.Light"
+              Click=@(args => Save())
+              Text="Lưu"
+              Icon="save"
+              ButtonStyle="ButtonStyle.Secondary" />
+<RadzenButton Shade="Shade.Light"
+              Click=@(args => Find())
+              Text="Tìm kiếm"
+              Icon="search"
+              ButtonStyle="ButtonStyle.Primary" />
+<RadzenButton Shade="Shade.Light"
+              Click=@(args => Reset())
+              Text="Đặt lại"
+              Icon="refresh"
+              ButtonStyle="ButtonStyle.Warning" />
+
+@if (hocViens == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Họ và tên</th>
+                <th>Ngày sinh</th>
+                <th>Lớp</th>
+                <th>Địa chỉ hiện nay</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var hv in hocViens)
+            {
+                <tr>
+                    <td>@hv.HoTen</td>
+                    <td>@hv?.NgaySinh.Value.ToShortDateString()</td>
+                    <td>@hv.Lop</td>
+                    <td>@hv.DiaChiHienTai</td>
+                    <td>
+                        <RadzenButton Shade="Shade.Light"
+                                      Icon="edit"
+                                      Click=@(args => Edit(hv))
+                                      ButtonStyle="ButtonStyle.Info" />
+                        <RadzenButton Shade="Shade.Light"
+                                      Icon="delete"
+                                      Click=@(args => Delete(hv))
+                                      ButtonStyle="ButtonStyle.Danger" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    // Khai báo danh sách học viên
+    List<tbHocVien> hocViens = new List<tbHocVien>();
+
+    // Khai báo một đối tượng Học viên
+    tbHocVien hocVien = new tbHocVien();
+
+    // Đánh dấu học viên sửa
+    tbHocVien oldHocVien = new tbHocVien();
+
+    // Biến chưa điều kiện tìm kiếm
+    string ht = "";
+
+    bool addNew = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LoadData();
+    }
+
+    private void LoadData()
+    {
+        hocViens = HocVienDataGenerator.DanhSach;
+    }
+
+    private void Add()
+    {
+        tbHocVien hv = new tbHocVien
+            {
+                HoTen = hocVien.HoTen,
+                NgaySinh = hocVien.NgaySinh,
+                Lop = hocVien.Lop,
+                DiaChiHienTai = hocVien.DiaChiHienTai
+            };
+
+        hocViens.Add(hv);
+    }
+
+    async Task OpenPage()
+    {
+        // Mở một trang mới ở tab hiện tại
+        // navigator.NavigateTo("/new-page");
+
+
+        //=============================
+        // Mở một trang mới ở tab mới
+        //==============================
+        // var url = $"/new-page";
+        // await JS.InvokeVoidAsync("open", url, "_blank");
+
+        //==============================
+        // Mở một trang mới theo Dialog
+        //==============================
+        var result=  await dialog.OpenAsync<NewPage>(
+          "Tiêu đề của hộp thoại",
+          new Dictionary<string, object?>
+          {
+
+          },
+          new DialogOptions
+        {
+            Width="800px",
+            Height="600px",
+            Resizable=true,
+            Draggable=true
+        });
+
+        //=======================
+        // Cập nhật dữ liệu mới
+        tbHocVien hocVien = result;
+
+    }
+
+    //===============================
+    // Tìm kiếm một học viên theo tên
+    // Lấy học viên đầu tiên có tên chứa
+    // một tên do người dùng nhập vào
+    //===============================
+
+    private void Find()
+    {
+        if(!String.IsNullOrEmpty(ht))
+        {
+            var lstHocVien = hocViens.Where(p => p.HoTen.Contains(ht)).ToList();
+            hocViens = lstHocVien;
+
+            if (hocViens.Count>0)
+                hocVien = hocViens[0];
+        }
+    }
+
+    //===============================
+    // Đặt lại trạng thái ban đầu:
+    // - Xóa điều kiện tìm kiếm
+    // - Nạp lại toàn bộ danh sách học viên
+    // - Làm trống đối tượng học viên đang hiển thị
+    //===============================
+
+    private void Reset()
+    {
+        // Xóa điều kiện tìm kiếm trên ô nhập
+        ht = "";
+
+        // Nạp lại toàn bộ danh sách
+        LoadData();
+
+        // Làm trống học viên đang hiển thị trong NewPage
+        hocVien = new tbHocVien();
+    }
+
+
+    private void Delete(tbHocVien hv)
+    {
+        hocViens.Remove(hv);
+    }
+    async Task Edit(tbHocVien hv)
+    {
+        //==============================
+        // Mở một trang mới theo Dialog
+        //==============================
+        var result = await dialog.OpenAsync<NewPage>(
+        "Tiêu đề của hộp thoại",
+        new Dictionary<string, object?>
+        {
+            { "hocVien", hv }
+        },
+        new DialogOptions
+            {
+                Width = "1000px",
+                Height = "600px",
+                Resizable = true,
+                Draggable = true
+            });
+
+        //=======================
+        // Cập nhật dữ liệu mới
+        tbHocVien hocVien = result;
+    }
+
+    private void Save()
+    {
+        addNew = false;
+    }
+}

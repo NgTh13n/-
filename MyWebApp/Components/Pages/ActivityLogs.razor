@@ -1,0 +1,116 @@
+@page "/logs"
+@rendermode InteractiveServer
+
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+
+@inject MockDataService mockDataService
+@inject DialogService dialog
+@inject AuthService authService
+
+<PageTitle>Nhật ký hệ thống & Quản trị</PageTitle>
+
+@if (!authService.DaDangNhap)
+{
+    <div class="alert alert-warning">
+        Vui lòng đăng nhập để xem nhật ký hệ thống.
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1>Nhật ký hoạt động & Quản trị hệ thống</h1>
+            <p class="text-muted mb-0">Theo dõi toàn bộ lịch sử thao tác của cán bộ và chức năng khôi phục dữ liệu mẫu demo</p>
+        </div>
+
+        @if (authService.CurrentUser?.Role == UserRole.Administrator)
+        {
+            <RadzenButton Text="Khôi phục dữ liệu mẫu gốc" 
+                          Icon="restart_alt" 
+                          ButtonStyle="ButtonStyle.Danger" 
+                          Click="KhoiPhucDuLieuDemo" />
+        }
+    </div>
+
+    @if (thongBao != "")
+    {
+        <div class="alert alert-success">
+            @thongBao
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <strong>Danh sách nhật ký thao tác gần đây (@mockDataService.ActivityLogs.Count sự kiện)</strong>
+            <span class="small text-muted">Tự động ghi nhận theo thời gian thực</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 170px;">Thời gian</th>
+                            <th style="width: 180px;">Cán bộ thao tác</th>
+                            <th style="width: 180px;">Hành động</th>
+                            <th>Nội dung chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (ActivityLog log in mockDataService.ActivityLogs.OrderByDescending(l => l.CreatedAt))
+                        {
+                            User? user = mockDataService.Users.FirstOrDefault(u => u.Id == log.UserId);
+                            <tr>
+                                <td>
+                                    <small class="text-muted">@log.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</small>
+                                </td>
+                                <td>
+                                    <strong>@(user?.FullName ?? "Hệ thống")</strong>
+                                    <br />
+                                    <small class="text-muted">@(user != null ? authService.GetRoleName(user.Role) : "")</small>
+                                </td>
+                                <td>
+                                    <span class="badge @LayMauHanhDong(log.Action)">
+                                        @log.Action
+                                    </span>
+                                </td>
+                                <td>
+                                    @log.Description
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    string thongBao = "";
+
+    private async Task KhoiPhucDuLieuDemo()
+    {
+        var xacNhan = await dialog.Confirm(
+            "CẢNH BÁO: Thao tác này sẽ đặt lại toàn bộ dữ liệu xe, lái xe, yêu cầu và chuyến đi về trạng thái ban đầu của dữ liệu demo. Bạn có chắc chắn muốn khôi phục không?",
+            "Xác nhận khôi phục dữ liệu gốc");
+
+        if (xacNhan != true)
+        {
+            return;
+        }
+
+        mockDataService.KhoiPhucDuLieuGoc();
+        thongBao = "Đã khôi phục toàn bộ dữ liệu mẫu demo ban đầu thành công!";
+    }
+
+    private string LayMauHanhDong(string action)
+    {
+        if (action.Contains("Tạo") || action.Contains("Gửi")) return "bg-primary";
+        if (action.Contains("Phê duyệt") || action.Contains("Quyết toán")) return "bg-success";
+        if (action.Contains("Từ chối") || action.Contains("Hủy")) return "bg-danger";
+        if (action.Contains("Điều động")) return "bg-info text-dark";
+        if (action.Contains("Sự cố")) return "bg-warning text-dark";
+        return "bg-secondary";
+    }
+}

@@ -1,0 +1,107 @@
+@page "/login"
+@rendermode InteractiveServer
+@layout MyWebApp.Components.Layout.EmptyLayout
+
+@inject AuthService authService
+@inject NavigationManager nav
+
+<PageTitle>Đăng nhập</PageTitle>
+
+<div class="login-wrapper">
+    <div class="login-box">
+        <div class="login-header">
+            <img src="/logo-hvannd.png" alt="Logo Học viện An ninh Nhân dân" class="login-logo" />
+            <h1>HỌC VIỆN AN NINH NHÂN DÂN</h1>
+            <p>Hệ thống quản lý sử dụng phương tiện</p>
+        </div>
+
+        @if (thongBaoLoi != "")
+        {
+            <div class="alert alert-danger">
+                @thongBaoLoi
+            </div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Tên đăng nhập</label>
+            <input type="text" class="form-control" @bind="tenDangNhap" @bind:event="oninput" placeholder="Nhập tên đăng nhập..." />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Mật khẩu</label>
+            <input type="password" class="form-control" @bind="matKhau" @bind:event="oninput" @onkeydown="NhanEnter" placeholder="Nhập mật khẩu..." />
+        </div>
+
+        <RadzenButton Text="Đăng nhập"
+                      Icon="login"
+                      Click="DangNhap"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Style="width: 100%"
+                      Disabled="dangXuLy" />
+
+        <div class="login-hint">
+            <p><strong>Tài khoản demo:</strong></p>
+            <p>canbo / 123 — Cán bộ / Chiến sĩ</p>
+            <p>lanhdao / 123 — Lãnh đạo</p>
+            <p>doixe / 123 — Quản lý đội xe</p>
+            <p>admin / 123 — Quản trị viên</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    string tenDangNhap = "";
+    string matKhau = "";
+    string thongBaoLoi = "";
+    bool dangXuLy = false;
+
+    protected override void OnInitialized()
+    {
+        // Nếu đã đăng nhập rồi thì chuyển thẳng vào trang chủ.
+        if (authService.DaDangNhap)
+        {
+            nav.NavigateTo("/");
+        }
+    }
+
+    private async Task NhanEnter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await DangNhap();
+        }
+    }
+
+    private async Task DangNhap()
+    {
+        thongBaoLoi = "";
+
+        if (tenDangNhap == "")
+        {
+            thongBaoLoi = "Vui lòng nhập tên đăng nhập.";
+            return;
+        }
+
+        if (matKhau == "")
+        {
+            thongBaoLoi = "Vui lòng nhập mật khẩu.";
+            return;
+        }
+
+        dangXuLy = true;
+
+        // Tạm dừng ngắn để tránh cảm giác bấm không có phản hồi.
+        await Task.Delay(300);
+
+        string loi = authService.DangNhap(tenDangNhap, matKhau);
+
+        if (loi != "")
+        {
+            thongBaoLoi = loi;
+            dangXuLy = false;
+            return;
+        }
+
+        nav.NavigateTo("/");
+    }
+}

@@ -1,0 +1,344 @@
+@page "/settlement"
+@rendermode InteractiveServer
+@implements IDisposable
+
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+
+@inject TripService tripService
+@inject DialogService dialog
+@inject AuthService authService
+
+<PageTitle>Quyết toán chuyến công tác</PageTitle>
+
+@if (!authService.CanManageVehicles && authService.CurrentUser?.Role != UserRole.Officer)
+{
+    <div class="alert alert-warning">
+        Vui lòng đăng nhập để thực hiện quyết toán chuyến công tác.
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1>Quyết toán chuyến công tác</h1>
+            <p class="text-muted mb-0">Nghiệm thu hành trình, ghi nhận chỉ số Km, lượng nhiên liệu và hoàn tất hồ sơ</p>
+        </div>
+    </div>
+
+    @if (thongBao != "")
+    {
+        <div class="alert @(coLoi ? "alert-danger" : "alert-success")">
+            @thongBao
+        </div>
+    }
+
+    @* FORM LẬP PHIẾU QUYẾT TOÁN *@
+    @if (chuyenDangQuyetToan != null)
+    {
+        Booking? don = tripService.GetBooking(chuyenDangQuyetToan.BookingId);
+        Vehicle? xe = tripService.GetVehicle(chuyenDangQuyetToan.VehicleId);
+        Driver? lx = tripService.GetDriver(chuyenDangQuyetToan.DriverId);
+
+        <div class="card mb-4 border-success shadow-sm">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <strong>PHIẾU QUYẾT TOÁN CHUYẾN CÔNG TÁC: @chuyenDangQuyetToan.DispatchCode</strong>
+                <button class="btn btn-sm btn-outline-light" @onclick="DongFormQuyetToan">Đóng</button>
+            </div>
+            <div class="card-body">
+                <div class="p-3 bg-light rounded mb-3">
+                    <div class="row">
+                        <div class="col-md-4"><strong>Lệnh điều động:</strong> @chuyenDangQuyetToan.DispatchCode</div>
+                        <div class="col-md-4"><strong>Yêu cầu:</strong> @don?.BookingCode (@don?.Purpose)</div>
+                        <div class="col-md-4"><strong>Cán bộ đăng ký:</strong> @tripService.GetUser(don?.RequesterId ?? 0)?.FullName</div>
+
+                        <div class="col-md-4 mt-2"><strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model)</div>
+                        <div class="col-md-4 mt-2"><strong>Lái xe:</strong> @lx?.FullName (SĐT: @lx?.Phone)</div>
+                        <div class="col-md-4 mt-2"><strong>Lộ trình:</strong> @don?.Departure $\rightarrow$ @don?.Destination</div>
+
+                        <div class="col-md-6 mt-2">
+                            <strong>Khởi hành:</strong> @chuyenDangQuyetToan.ActualDeparture?.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                        <div class="col-md-6 mt-2">
+                            <strong>Trở về:</strong> @chuyenDangQuyetToan.ActualReturn?.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label"><strong>Số Km ban đầu:</strong></label>
+                        <input type="text" class="form-control" value="@chuyenDangQuyetToan.StartKm.ToString("N0") km" disabled />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label"><strong>Số Km kết thúc (đồng hồ xe) <span class="text-danger">*</span>:</strong></label>
+                        <input type="number" class="form-control" @bind="soKmKetThuc" min="@chuyenDangQuyetToan.StartKm" step="1" />
+                        <small class="text-muted">Phải $\ge$ @chuyenDangQuyetToan.StartKm.ToString("N0") km</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label"><strong>Tổng quãng đường di chuyển:</strong></label>
+                        <div class="form-control bg-light text-primary fw-bold">
+                            @((soKmKetThuc >= chuyenDangQuyetToan.StartKm ? (soKmKetThuc - chuyenDangQuyetToan.StartKm) : 0).ToString("N0")) km
+                        </div>
+                        <small class="text-success">Tự động tính: Km cuối - Km đầu</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label"><strong>Nhiên liệu tiêu thụ (Lít) <span class="text-danger">*</span>:</strong></label>
+                        <input type="number" class="form-control" @bind="nhienLieuTieuThu" min="0" step="0.5" />
+                        <small class="text-muted">Nhập số lít xăng/dầu tiêu thụ</small>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label"><strong>Ghi chú phát sinh / Nội dung nghiệm thu:</strong></label>
+                        <textarea class="form-control" rows="2" @bind="ghiChuQuyetToan" placeholder="Ghi chú chi phí cầu đường, tình trạng xe sau khi về, bảo quản phương tiện..."></textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <RadzenButton Text="Xác nhận quyết toán & Hoàn tất chuyến đi" 
+                                  Icon="check_circle" 
+                                  ButtonStyle="ButtonStyle.Success" 
+                                  Click="XacNhanQuyetToan" />
+
+                    <RadzenButton Text="Hủy bỏ" 
+                                  Icon="close" 
+                                  ButtonStyle="ButtonStyle.Light" 
+                                  Click="DongFormQuyetToan" />
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex gap-2 mb-3">
+                <RadzenButton Text="@($"Chờ quyết toán ({danhSachChoQuyetToan.Count})")" 
+                              ButtonStyle="@(tabHienTai == 0 ? ButtonStyle.Primary : ButtonStyle.Light)" 
+                              Click="@(() => tabHienTai = 0)" />
+
+                <RadzenButton Text="@($"Đã hoàn tất quyết toán ({danhSachDaQuyetToan.Count})")" 
+                              ButtonStyle="@(tabHienTai == 1 ? ButtonStyle.Primary : ButtonStyle.Light)" 
+                              Click="@(() => tabHienTai = 1)" />
+            </div>
+
+            @if (tabHienTai == 0)
+            {
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">Danh sách chuyến công tác đã về đơn vị — Chờ quyết toán</h2>
+                    <span class="badge bg-warning text-dark px-3 py-2">
+                        ℹ️ Xe đã về bãi nhưng sẽ chưa chuyển về trạng thái [Sẵn sàng] nếu chưa hoàn tất quyết toán
+                    </span>
+                </div>
+
+                @if (danhSachChoQuyetToan.Count == 0)
+                {
+                    <div class="text-center text-muted py-4">
+                        <RadzenIcon Icon="done_all" Style="font-size: 2.5rem;" class="text-success mb-2" />
+                        <p class="mb-0">Tất cả các chuyến đi đã trở về đều đã được quyết toán đầy đủ.</p>
+                    </div>
+                }
+                else
+                {
+                    <RadzenDataGrid Data="@danhSachChoQuyetToan" TItem="Trip" AllowPaging="true" PageSize="10" AllowSorting="true">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="Trip" Property="DispatchCode" Title="Mã lệnh" Width="130px" />
+                            <RadzenDataGridColumn TItem="Trip" Title="Xe & Lái xe">
+                                <Template Context="item">
+                                    @{
+                                        Vehicle? xe = tripService.GetVehicle(item.VehicleId);
+                                        Driver? lx = tripService.GetDriver(item.DriverId);
+                                    }
+                                    <div><strong>@xe?.LicensePlate</strong> (@xe?.Brand @xe?.Model)</div>
+                                    <small class="text-muted">Lái xe: @lx?.FullName</small>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="Trip" Title="Lộ trình">
+                                <Template Context="item">
+                                    @{
+                                        Booking? don = tripService.GetBooking(item.BookingId);
+                                    }
+                                    <div><strong>@don?.Destination</strong></div>
+                                    <small class="text-muted">@don?.Purpose</small>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="Trip" Title="Thời gian thực tế">
+                                <Template Context="item">
+                                    <div>Đi: @item.ActualDeparture?.ToString("dd/MM HH:mm")</div>
+                                    <small class="text-success">Về: @item.ActualReturn?.ToString("dd/MM HH:mm")</small>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="Trip" Title="Km ban đầu" Width="130px">
+                                <Template Context="item">
+                                    @item.StartKm.ToString("N0") km
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="Trip" Title="Thao tác" Sortable="false" Filterable="false" Width="150px">
+                                <Template Context="item">
+                                    <RadzenButton Text="Quyết toán" 
+                                                  Icon="receipt_long" 
+                                                  ButtonStyle="ButtonStyle.Success" 
+                                                  Size="ButtonSize.Small" 
+                                                  Click="@(() => MoFormQuyetToan(item))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+            }
+            else
+            {
+                <h2 class="h5 mb-3">Lịch sử quyết toán công tác</h2>
+
+                <RadzenDataGrid Data="@danhSachDaQuyetToan" TItem="Trip" AllowPaging="true" PageSize="10" AllowSorting="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Trip" Property="DispatchCode" Title="Mã lệnh" Width="130px" />
+                        <RadzenDataGridColumn TItem="Trip" Title="Phương tiện">
+                            <Template Context="item">
+                                @{
+                                    Vehicle? xe = tripService.GetVehicle(item.VehicleId);
+                                }
+                                <strong>@xe?.LicensePlate</strong>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Trip" Title="Lái xe" Width="160px">
+                            <Template Context="item">
+                                @tripService.GetDriver(item.DriverId)?.FullName
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Trip" Title="Km đầu - Km cuối">
+                            <Template Context="item">
+                                <div>@item.StartKm.ToString("N0") $\rightarrow$ @item.EndKm.ToString("N0")</div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Trip" Title="Tổng quãng đường">
+                            <Template Context="item">
+                                <span class="badge bg-primary">@((item.EndKm - item.StartKm).ToString("N0")) km</span>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Trip" Title="Nhiên liệu">
+                            <Template Context="item">
+                                @item.FuelUsed.ToString("N1") lít
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Trip" Title="Trạng thái" Width="140px">
+                            <Template Context="item">
+                                <span class="badge bg-success">Đã quyết toán</span>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Trip" Title="Ghi chú">
+                            <Template Context="item">
+                                <small class="text-muted">@item.Note</small>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    int tabHienTai = 0; // 0: Chờ quyết toán, 1: Đã quyết toán
+
+    List<Trip> danhSachChoQuyetToan = new List<Trip>();
+    List<Trip> danhSachDaQuyetToan = new List<Trip>();
+
+    Trip? chuyenDangQuyetToan = null;
+
+    double soKmKetThuc = 0;
+    double nhienLieuTieuThu = 0;
+    string ghiChuQuyetToan = "";
+
+    string thongBao = "";
+    bool coLoi = false;
+
+    protected override void OnInitialized()
+    {
+        authService.UserChanged += CapNhatTrang;
+        NapDuLieu();
+    }
+
+    private void CapNhatTrang()
+    {
+        NapDuLieu();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void NapDuLieu()
+    {
+        danhSachChoQuyetToan = tripService.GetPendingSettlementTrips();
+        danhSachDaQuyetToan = tripService.GetSettledTrips();
+    }
+
+    private void MoFormQuyetToan(Trip item)
+    {
+        chuyenDangQuyetToan = item;
+        // Mặc định gợi ý số Km kết thúc = Km ban đầu + 30km (dễ demo)
+        soKmKetThuc = item.StartKm + 45;
+        nhienLieuTieuThu = 8.5;
+        ghiChuQuyetToan = "";
+        thongBao = "";
+    }
+
+    private void DongFormQuyetToan()
+    {
+        chuyenDangQuyetToan = null;
+    }
+
+    private async Task XacNhanQuyetToan()
+    {
+        if (chuyenDangQuyetToan == null)
+        {
+            return;
+        }
+
+        if (soKmKetThuc < chuyenDangQuyetToan.StartKm)
+        {
+            thongBao = $"Số Km kết thúc ({soKmKetThuc:N0} km) phải lớn hơn hoặc bằng số Km ban đầu ({chuyenDangQuyetToan.StartKm:N0} km).";
+            coLoi = true;
+            return;
+        }
+
+        if (nhienLieuTieuThu < 0)
+        {
+            thongBao = "Nhiên liệu tiêu thụ không được âm.";
+            coLoi = true;
+            return;
+        }
+
+        var xacNhan = await dialog.Confirm(
+            $"Xác nhận hoàn tất quyết toán chuyến đi {chuyenDangQuyetToan.DispatchCode}? Hệ thống sẽ cập nhật số Km mới cho xe và đưa xe về trạng thái Sẵn sàng.",
+            "Xác nhận quyết toán");
+
+        if (xacNhan != true)
+        {
+            return;
+        }
+
+        string loi;
+        bool thanhCong = tripService.SettleTrip(chuyenDangQuyetToan.Id, soKmKetThuc, nhienLieuTieuThu, ghiChuQuyetToan, out loi);
+
+        if (!thanhCong)
+        {
+            thongBao = loi;
+            coLoi = true;
+            return;
+        }
+
+        string maChuyen = chuyenDangQuyetToan.DispatchCode;
+        DongFormQuyetToan();
+        NapDuLieu();
+
+        thongBao = $"Đã hoàn tất quyết toán chuyến công tác {maChuyen} thành công. Xe đã được cập nhật số Km mới và đưa về trạng thái Sẵn sàng!";
+        coLoi = false;
+        tabHienTai = 1; // Chuyển sang tab đã quyết toán
+    }
+
+    public void Dispose()
+    {
+        authService.UserChanged -= CapNhatTrang;
+    }
+}

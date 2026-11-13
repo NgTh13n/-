@@ -1,0 +1,53 @@
+@implements IDisposable
+
+@inject AuthService authService
+
+<RadzenPanelMenu class="main-menu">
+    <RadzenPanelMenuItem Text="Tổng quan" Icon="dashboard" Path="/" />
+
+    @if (authService.DaDangNhap)
+    {
+        <RadzenPanelMenuItem Text="Đăng ký phương tiện" Icon="assignment" Path="/bookings" />
+        <RadzenPanelMenuItem Text="Theo dõi chuyến đi" Icon="near_me" Path="/trips" />
+    }
+
+    @if (authService.CanApproveBookings)
+    {
+        <RadzenPanelMenuItem Text="Phê duyệt yêu cầu" Icon="fact_check" Path="/approvals" />
+    }
+
+    @if (authService.CanDispatch)
+    {
+        <RadzenPanelMenuItem Text="Điều động phương tiện" Icon="alt_route" Path="/dispatch" />
+    }
+
+    @if (authService.CanManageVehicles)
+    {
+        <RadzenPanelMenuItem Text="Quyết toán công tác" Icon="receipt_long" Path="/settlement" />
+        <RadzenPanelMenuItem Text="Quản lý phương tiện" Icon="directions_car" Path="/vehicles" />
+        <RadzenPanelMenuItem Text="Quản lý lái xe" Icon="badge" Path="/drivers" />
+    }
+
+    @if (authService.DaDangNhap)
+    {
+        <RadzenPanelMenuItem Text="Báo cáo & Thống kê" Icon="bar_chart" Path="/reports" />
+        <RadzenPanelMenuItem Text="Nhật ký hệ thống" Icon="history" Path="/logs" />
+    }
+</RadzenPanelMenu>
+
+@code {
+    protected override void OnInitialized()
+    {
+        authService.UserChanged += CapNhatMenu;
+    }
+
+    private void CapNhatMenu()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        authService.UserChanged -= CapNhatMenu;
+    }
+}

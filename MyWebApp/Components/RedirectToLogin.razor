@@ -1,0 +1,9 @@
+@inject NavigationManager nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Chuyển hướng về trang đăng nhập nếu chưa có phiên.
+        nav.NavigateTo("/login", replace: true);
+    }
+}
