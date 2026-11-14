@@ -1,13 +1,17 @@
 @page "/reports"
 @rendermode InteractiveServer
 
+@using MyWebApp.Models
 @using MyWebApp.Models.Enums
 @using MyWebApp.Helpers
+@using System.Text
 
 @inject MockDataService mockDataService
 @inject AuthService authService
+@inject IJSRuntime js
+@inject NotificationService notificationService
 
-<PageTitle>Báo cáo & Thống kê</PageTitle>
+<PageTitle>Báo cáo & Thống kê Nghiệp vụ CAND</PageTitle>
 
 @if (!authService.DaDangNhap)
 {
@@ -17,140 +21,396 @@
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-header-box">
         <div>
-            <h1>Báo cáo & Thống kê phương tiện</h1>
-            <p class="text-muted mb-0">Thống kê tần suất hoạt động, quãng đường và nhiên liệu tiêu thụ của đội xe</p>
+            <h1 class="page-header-title">
+                <RadzenIcon Icon="bar_chart" Style="color: var(--brand-navy);" />
+                Báo cáo & Thống kê phương tiện công vụ
+            </h1>
+            <p class="page-header-desc">Tổng hợp hiệu suất sử dụng, định mức nhiên liệu, biểu mẫu hành chính A4 và xuất dữ liệu</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-secondary-action" @onclick="XuatFileCsv">
+                <RadzenIcon Icon="file_download" Style="vertical-align: middle; margin-right: 4px;" />
+                Xuất file Excel / CSV
+            </button>
+            <button class="btn btn-primary-action" @onclick="InBaoCao">
+                <RadzenIcon Icon="print" Style="vertical-align: middle; margin-right: 4px;" />
+                In Báo cáo (Chuẩn A4)
+            </button>
         </div>
     </div>
 
-    @* BỘ LỌC THỐNG KÊ *@
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label">Lọc theo phương tiện</label>
-                    <select class="form-select" @bind="xeLocId">
-                        <option value="0">-- Tất cả phương tiện --</option>
-                        @foreach (Vehicle xe in mockDataService.Vehicles)
-                        {
-                            <option value="@xe.Id">@xe.LicensePlate - @xe.Brand @xe.Model</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Loại xe</label>
-                    <select class="form-select" @bind="loaiXeLoc">
-                        <option value="-1">-- Tất cả loại xe --</option>
-                        <option value="@((int)VehicleType.OTo)">Ô tô</option>
-                        <option value="@((int)VehicleType.XeMay)">Xe máy</option>
-                        <option value="@((int)VehicleType.XeTai)">Xe tải</option>
-                        <option value="@((int)VehicleType.XeChuyenDung)">Xe chuyên dụng</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <RadzenButton Text="Đặt lại bộ lọc" Icon="refresh" ButtonStyle="ButtonStyle.Light" Click="DatLaiLoc" />
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @* TỔNG KẾT CHỈ SỐ BÁO CÁO *@
+    @* 4 THẺ CHỈ SỐ NHANH (PHẲNG, GỌN, CHÍNH QUY) *@
     <div class="row g-3 mb-4">
-        <div class="col-md-3 col-6">
-            <div class="card p-3 shadow-sm border-start border-4 border-primary">
-                <div class="text-muted small">Tổng số chuyến công tác</div>
-                <h3 class="fw-bold mb-0 text-primary">@danhSachChuyenDaLoc.Count</h3>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Tổng số chuyến phục vụ</div>
+                    <div class="kpi-value text-primary">@danhSachChuyenDaLoc.Count</div>
+                    <div class="kpi-subtext">Quyết toán: @danhSachChuyenDaLoc.Count(t => t.IsSettled) chuyến</div>
+                </div>
+                <div class="kpi-icon-wrapper text-primary" style="background-color: #eff6ff;">
+                    <RadzenIcon Icon="commute" Style="font-size: 1.5rem;" />
+                </div>
             </div>
         </div>
-        <div class="col-md-3 col-6">
-            <div class="card p-3 shadow-sm border-start border-4 border-success">
-                <div class="text-muted small">Tổng quãng đường đã chạy</div>
-                <h3 class="fw-bold mb-0 text-success">@tongQuangDuong.ToString("N0") <small class="fs-6">km</small></h3>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Tổng km hành trình</div>
+                    <div class="kpi-value text-success">@tongQuangDuong.ToString("N0")</div>
+                    <div class="kpi-subtext">Đã hoàn thành nghiệm thu</div>
+                </div>
+                <div class="kpi-icon-wrapper text-success" style="background-color: #ecfdf5;">
+                    <RadzenIcon Icon="navigation" Style="font-size: 1.5rem;" />
+                </div>
             </div>
         </div>
-        <div class="col-md-3 col-6">
-            <div class="card p-3 shadow-sm border-start border-4 border-warning">
-                <div class="text-muted small">Tổng nhiên liệu tiêu thụ</div>
-                <h3 class="fw-bold mb-0 text-warning">@tongNhienLieu.ToString("N1") <small class="fs-6">lít</small></h3>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Nhiên liệu tiêu thụ</div>
+                    <div class="kpi-value text-warning">@tongNhienLieu.ToString("N1") L</div>
+                    <div class="kpi-subtext">Mức TB: @(tongQuangDuong > 0 ? (tongNhienLieu / tongQuangDuong * 100).ToString("N1") : "0") L/100km</div>
+                </div>
+                <div class="kpi-icon-wrapper text-warning" style="background-color: #fffbeb;">
+                    <RadzenIcon Icon="local_gas_station" Style="font-size: 1.5rem;" />
+                </div>
             </div>
         </div>
-        <div class="col-md-3 col-6">
-            <div class="card p-3 shadow-sm border-start border-4 border-info">
-                <div class="text-muted small">Chuyến hoàn thành quyết toán</div>
-                <h3 class="fw-bold mb-0 text-info">@danhSachChuyenDaLoc.Count(t => t.IsSettled)</h3>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Tỷ lệ cán bộ tự lái</div>
+                    <div class="kpi-value">@((double)danhSachChuyenDaLoc.Count(t => t.DriverMode == DriverMode.SelfDrive) / Math.Max(1, danhSachChuyenDaLoc.Count) * 100):N0%</div>
+                    <div class="kpi-subtext">An toàn tác chiến 100%</div>
+                </div>
+                <div class="kpi-icon-wrapper">
+                    <RadzenIcon Icon="person" Style="font-size: 1.5rem;" />
+                </div>
             </div>
         </div>
     </div>
 
-    @* BẢNG CHI TIẾT HIỆU SUẤT TỪNG PHƯƠNG TIỆN *@
-    <div class="card mb-4">
-        <div class="card-header bg-light fw-bold">
-            Thống kê tần suất và chỉ số theo từng phương tiện
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Mã xe</th>
-                            <th>Biển số</th>
-                            <th>Loại xe</th>
-                            <th>Số chỗ</th>
-                            <th>Km hiện tại</th>
-                            <th>Số chuyến đã phục vụ</th>
-                            <th>Tình trạng</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (Vehicle xe in danhSachXeDaLoc)
-                        {
-                            int soChuyen = mockDataService.Trips.Count(t => t.VehicleId == xe.Id);
-                            <tr>
-                                <td>@xe.VehicleCode</td>
-                                <td><strong>@xe.LicensePlate</strong></td>
-                                <td>@EnumHelper.TenVehicleType(xe.VehicleType)</td>
-                                <td>@xe.Seats</td>
-                                <td>@xe.CurrentKm.ToString("N0") km</td>
-                                <td><span class="badge bg-primary fs-6">@soChuyen chuyến</span></td>
-                                <td>
-                                    <span class="badge @LayMauTinhTrangXe(xe.Status)">
-                                        @EnumHelper.TenVehicleStatus(xe.Status)
-                                    </span>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    @* TABS BÁO CÁO ĐẦU RA *@
+    <RadzenTabs TabPosition="TabPosition.Top" Class="shadow-sm border rounded bg-white">
+        <Tabs>
+            @* TAB 1: HIỆU SUẤT TỪNG PHƯƠNG TIỆN *@
+            <RadzenTabsItem Text="Báo cáo Tần suất & Hiệu suất Phương tiện">
+                <div class="p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-secondary mb-0">Bảng theo dõi định mức và hoạt động của 8 phương tiện CAND</h5>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-light small text-center">
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Biển số xe</th>
+                                    <th>Chủng loại & Model</th>
+                                    <th>Số chỗ / Tải trọng</th>
+                                    <th>Odometer hiện tại</th>
+                                    <th>Số chuyến phục vụ</th>
+                                    <th>Tổng km vận hành</th>
+                                    <th>Nhiên liệu tiêu thụ</th>
+                                    <th>Định mức bình quân</th>
+                                    <th>Hiện trạng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{ int stt = 1; }
+                                @foreach (var xe in mockDataService.Vehicles)
+                                {
+                                    var chuyenCuaXe = mockDataService.Trips.Where(t => t.VehicleId == xe.Id).ToList();
+                                    double kmChay = chuyenCuaXe.Where(t => t.IsSettled).Sum(t => Math.Max(0, t.EndKm - t.StartKm));
+                                    double xangTieuThu = chuyenCuaXe.Where(t => t.IsSettled).Sum(t => t.FuelUsed);
+                                    double dinhMuc = kmChay > 0 ? (xangTieuThu / kmChay * 100) : 0;
+
+                                    <tr>
+                                        <td class="text-center">@(stt++)</td>
+                                        <td class="text-center fw-bold">@xe.LicensePlate</td>
+                                        <td>@xe.Brand @xe.Model (@EnumHelper.TenVehicleType(xe.VehicleType))</td>
+                                        <td class="text-center">@xe.Seats chỗ</td>
+                                        <td class="text-end fw-bold">@xe.CurrentKm.ToString("N0") km</td>
+                                        <td class="text-center"><span class="badge bg-primary">@chuyenCuaXe.Count</span></td>
+                                        <td class="text-end text-success fw-bold">@kmChay.ToString("N0") km</td>
+                                        <td class="text-end text-warning fw-bold">@xangTieuThu.ToString("N1") L</td>
+                                        <td class="text-end">@(dinhMuc > 0 ? $"{dinhMuc:N1} L/100km" : "Chưa có")</td>
+                                        <td class="text-center">
+                                            <span class="badge-status @xe.Status.BadgeClass()">
+                                                @xe.Status.Ten()
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </RadzenTabsItem>
+
+            @* TAB 2: SỔ NHẬT TRÌNH CÁC CHUYẾN ĐI *@
+            <RadzenTabsItem Text="Sổ Nhật trình Điều động Phương tiện">
+                <div class="p-3">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Lọc theo phương tiện</label>
+                            <select class="form-select form-select-sm" @bind="xeLocId">
+                                <option value="0">-- Tất cả 8 phương tiện --</option>
+                                @foreach (var x in mockDataService.Vehicles)
+                                {
+                                    <option value="@x.Id">@x.LicensePlate - @x.Brand @x.Model</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Phương án lái xe</label>
+                            <select class="form-select form-select-sm" @bind="phuongAnLaiLoc">
+                                <option value="-1">-- Tất cả phương án --</option>
+                                <option value="@((int)DriverMode.AssignedDriver)">Lái xe đơn vị bố trí</option>
+                                <option value="@((int)DriverMode.SelfDrive)">Cán bộ tự lái</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <RadzenButton Text="Đặt lại bộ lọc" Icon="refresh" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="DatLaiLoc" />
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-light small text-center">
+                                <tr>
+                                    <th>Mã lệnh LĐĐ</th>
+                                    <th>Biển số</th>
+                                    <th>Phương án & Người lái</th>
+                                    <th>Điểm đến / Nhiệm vụ</th>
+                                    <th>Thời gian xuất &rarr; về</th>
+                                    <th>Km đi &rarr; về</th>
+                                    <th>Quãng đường</th>
+                                    <th>Nhiên liệu</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (danhSachChuyenDaLoc.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted p-4">
+                                            Không tìm thấy chuyến công tác nào theo bộ lọc này.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var t in danhSachChuyenDaLoc)
+                                    {
+                                        var xe = mockDataService.Vehicles.FirstOrDefault(v => v.Id == t.VehicleId);
+                                        var don = mockDataService.Bookings.FirstOrDefault(b => b.Id == t.BookingId);
+                                        var lx = mockDataService.Drivers.FirstOrDefault(d => d.Id == t.DriverId);
+                                        double qd = Math.Max(0, t.EndKm - t.StartKm);
+
+                                        <tr>
+                                            <td class="text-center fw-bold">@t.DispatchCode</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-dark">@(xe?.LicensePlate ?? t.VehiclePlateSnapshot)</span>
+                                            </td>
+                                            <td>
+                                                @if (t.DriverMode == DriverMode.SelfDrive)
+                                                {
+                                                    <span class="badge bg-info text-dark">Tự lái</span>
+                                                    <span class="ms-1 small">@(string.IsNullOrEmpty(t.DriverNameSnapshot) ? "Cán bộ tự lái" : t.DriverNameSnapshot)</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Tài xế</span>
+                                                    <span class="ms-1 small">@(lx?.FullName ?? (string.IsNullOrEmpty(t.DriverNameSnapshot) ? "Lái xe đơn vị" : t.DriverNameSnapshot))</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <strong>@don?.Destination</strong>
+                                                <div class="small text-muted">@don?.WorkType</div>
+                                            </td>
+                                            <td class="small text-center">
+                                                @(t.ActualDeparture?.ToString("dd/MM HH:mm") ?? t.ScheduledStartAt.ToString("dd/MM HH:mm"))
+                                                <br />&darr;<br />
+                                                @(t.ActualReturn?.ToString("dd/MM HH:mm") ?? t.ScheduledEndAt.ToString("dd/MM HH:mm"))
+                                            </td>
+                                            <td class="small text-end">
+                                                @t.StartKm.ToString("N0") &rarr; @(t.EndKm > 0 ? t.EndKm.ToString("N0") : "...") km
+                                            </td>
+                                            <td class="text-end fw-bold text-success">
+                                                @(qd > 0 ? $"{qd:N0} km" : "-")
+                                            </td>
+                                            <td class="text-end text-warning fw-bold">
+                                                @(t.FuelUsed > 0 ? $"{t.FuelUsed:N1} L" : "-")
+                                            </td>
+                                            <td class="text-center">
+                                                @if (t.IsSettled)
+                                                {
+                                                    <span class="badge bg-success">Đã quyết toán</span>
+                                                }
+                                                else if (t.Status == TripStatus.InTransit)
+                                                {
+                                                    <span class="badge bg-primary">Đang di chuyển</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-info text-dark">@EnumHelper.TenTripStatus(t.Status)</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </RadzenTabsItem>
+
+            @* TAB 3: THỐNG KÊ THEO ĐƠN VỊ SỬ DỤNG *@
+            <RadzenTabsItem Text="Thống kê theo Đơn vị / Phòng ban">
+                <div class="p-3">
+                    <h5 class="fw-bold text-secondary mb-3">Tần suất và khối lượng công tác của các đơn vị trực thuộc Học viện</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-light small text-center">
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Đơn vị / Phòng ban</th>
+                                    <th>Số lượt đăng ký</th>
+                                    <th>Số chuyến hoàn thành</th>
+                                    <th>Tổng km phục vụ</th>
+                                    <th>Tổng nhiên liệu (lít)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    int sttDv = 1;
+                                    var danhSachPhongBan = mockDataService.Officers.Select(o => o.Department).Distinct().ToList();
+                                }
+                                @foreach (var dv in danhSachPhongBan)
+                                {
+                                    var officerIds = mockDataService.Officers.Where(o => o.Department == dv).Select(o => o.Id).ToList();
+                                    var bookingsCuaDv = mockDataService.Bookings.Where(b => officerIds.Contains(b.RequesterId)).ToList();
+                                    var bookingIds = bookingsCuaDv.Select(b => b.Id).ToList();
+                                    var tripsCuaDv = mockDataService.Trips.Where(t => bookingIds.Contains(t.BookingId)).ToList();
+                                    double kmDv = tripsCuaDv.Where(t => t.IsSettled).Sum(t => Math.Max(0, t.EndKm - t.StartKm));
+                                    double nhienLieuDv = tripsCuaDv.Where(t => t.IsSettled).Sum(t => t.FuelUsed);
+
+                                    <tr>
+                                        <td class="text-center">@(sttDv++)</td>
+                                        <td><strong>@dv</strong></td>
+                                        <td class="text-center"><span class="badge bg-primary">@bookingsCuaDv.Count</span></td>
+                                        <td class="text-center"><span class="badge bg-success">@tripsCuaDv.Count(t => t.Status == TripStatus.Returned)</span></td>
+                                        <td class="text-end fw-bold text-success">@kmDv.ToString("N0") km</td>
+                                        <td class="text-end fw-bold text-warning">@nhienLieuDv.ToString("N1") L</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </RadzenTabsItem>
+
+            @* TAB 4: MẪU VĂN BẢN IN ẤN HÀNH CHÍNH CAND *@
+            <RadzenTabsItem Text="Mẫu Văn bản In Hành chính CAND (A4)">
+                <div class="p-4 bg-light">
+                    <div class="d-flex justify-content-end mb-3">
+                        <RadzenButton Text="In trang này" Icon="print" ButtonStyle="ButtonStyle.Primary" Click="InBaoCao" />
+                    </div>
+
+                    <div id="printArea" class="bg-white p-5 shadow-sm border mx-auto" style="max-width: 900px; font-family: 'Times New Roman', Times, serif; color: #000;">
+                        @* QUỐC HIỆU TIÊU NGỮ *@
+                        <div class="d-flex justify-content-between text-center mb-4">
+                            <div>
+                                <div class="fw-bold">BỘ CÔNG AN</div>
+                                <div class="fw-bold text-decoration-underline">HỌC VIỆN AN NINH NHÂN DÂN</div>
+                                <div class="small">Số: 86/BC-HVANND-HC</div>
+                            </div>
+                            <div>
+                                <div class="fw-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                                <div class="fw-bold text-decoration-underline">Độc lập - Tự do - Hạnh phúc</div>
+                                <div class="small fst-italic">Hà Nội, ngày @DateTime.Today.Day tháng @DateTime.Today.Month năm @DateTime.Today.Year</div>
+                            </div>
+                        </div>
+
+                        <div class="text-center my-4">
+                            <h4 class="fw-bold text-uppercase mb-1">BÁO CÁO TỔNG HỢP</h4>
+                            <h5 class="fw-bold mb-1">TÌNH HÌNH QUẢN LÝ, ĐIỀU ĐỘNG VÀ SỬ DỤNG PHƯƠNG TIỆN CÔNG VỤ</h5>
+                            <div class="fst-italic small">(Phục vụ công tác thường xuyên và đột xuất của Học viện)</div>
+                        </div>
+
+                        <p><strong>I. TÌNH HÌNH QUÂN SỐ VÀ PHƯƠNG TIỆN BIÊN CHẾ:</strong></p>
+                        <ul>
+                            <li>Tổng số phương tiện quản lý: <strong>@mockDataService.Vehicles.Count xe</strong> (5 Ô tô con & SUV, 2 Xe bán tải nghiệp vụ, 1 Xe mô tô đặc chủng).</li>
+                            <li>Tổng số cán bộ lái xe biên chế: <strong>@mockDataService.Drivers.Count đồng chí</strong>.</li>
+                            <li>Tình trạng kỹ thuật: <strong>@mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.SanSang) xe</strong> sẵn sàng tác chiến, <strong>@mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.DangBaoDuong) xe</strong> đang bảo dưỡng xưởng định kỳ.</li>
+                        </ul>
+
+                        <p><strong>II. KẾT QUẢ ĐIỀU ĐỘNG CÔNG TÁC TRONG KỲ:</strong></p>
+                        <table class="table table-bordered text-center align-middle" style="border-color: #000;">
+                            <thead>
+                                <tr>
+                                    <th>Tổng số chuyến</th>
+                                    <th>Tổng km vận hành</th>
+                                    <th>Nhiên liệu tiêu thụ</th>
+                                    <th>Tỷ lệ cán bộ tự lái</th>
+                                    <th>Tỷ lệ an toàn</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold">@mockDataService.Trips.Count</td>
+                                    <td class="fw-bold">@tongQuangDuong.ToString("N0") km</td>
+                                    <td class="fw-bold">@tongNhienLieu.ToString("N1") lít</td>
+                                    <td class="fw-bold">@((double)mockDataService.Trips.Count(t => t.DriverMode == DriverMode.SelfDrive) / Math.Max(1, mockDataService.Trips.Count) * 100):N0%</td>
+                                    <td class="fw-bold text-success">100%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p><strong>III. ĐÁNH GIÁ CHẤP HÀNH KỶ LUẬT VÀ AN NINH AN TOÀN:</strong></p>
+                        <p class="text-justify" style="text-align: justify;">
+                            100% các chuyến công tác đều có kế hoạch được Lãnh đạo đơn vị phê duyệt và thực hiện thủ tục bàn giao, nghiệm thu theo đúng quy trình.
+                            Hệ thống đã kiểm soát chặt chẽ điều kiện người lái (kiểm tra hạn GPLX, phân quyền cán bộ tự lái) và chặn hoàn toàn các trường hợp vi phạm an toàn kỹ thuật.
+                        </p>
+
+                        @* PHẦN CHỮ KÝ *@
+                        <div class="row text-center mt-5">
+                            <div class="col-4">
+                                <div class="fw-bold">NGƯỜI LẬP BIỂU</div>
+                                <div class="fst-italic small">(Ký, ghi rõ họ tên)</div>
+                                <div style="height: 70px;"></div>
+                                <div class="fw-bold">@authService.CurrentUser?.FullName</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold">ĐỘI TRƯỞNG ĐỘI XE</div>
+                                <div class="fst-italic small">(Ký, ghi rõ họ tên)</div>
+                                <div style="height: 70px;"></div>
+                                <div class="fw-bold">Trần Văn Bình</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold">GIÁM ĐỐC HỌC VIỆN</div>
+                                <div class="fst-italic small">(Ký, đóng dấu)</div>
+                                <div style="height: 70px;"></div>
+                                <div class="fw-bold">Thiếu tướng GS.TS Nguyễn Văn An</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
 }
 
 @code {
     int xeLocId = 0;
-    int loaiXeLoc = -1;
-
-    private List<Vehicle> danhSachXeDaLoc
-    {
-        get
-        {
-            var res = mockDataService.Vehicles.AsEnumerable();
-
-            if (xeLocId > 0)
-            {
-                res = res.Where(x => x.Id == xeLocId);
-            }
-
-            if (loaiXeLoc != -1)
-            {
-                VehicleType vt = (VehicleType)loaiXeLoc;
-                res = res.Where(x => x.VehicleType == vt);
-            }
-
-            return res.ToList();
-        }
-    }
+    int phuongAnLaiLoc = -1;
 
     private List<Trip> danhSachChuyenDaLoc
     {
@@ -163,45 +423,68 @@ else
                 res = res.Where(t => t.VehicleId == xeLocId);
             }
 
-            if (loaiXeLoc != -1)
+            if (phuongAnLaiLoc != -1)
             {
-                VehicleType vt = (VehicleType)loaiXeLoc;
-                var listVehicleIds = mockDataService.Vehicles.Where(v => v.VehicleType == vt).Select(v => v.Id).ToList();
-                res = res.Where(t => listVehicleIds.Contains(t.VehicleId));
+                DriverMode dm = (DriverMode)phuongAnLaiLoc;
+                res = res.Where(t => t.DriverMode == dm);
             }
 
-            return res.ToList();
+            return res.OrderByDescending(t => t.Id).ToList();
         }
     }
 
     private double tongQuangDuong
     {
-        get
-        {
-            return danhSachChuyenDaLoc.Where(t => t.IsSettled).Sum(t => Math.Max(0, t.EndKm - t.StartKm));
-        }
+        get => danhSachChuyenDaLoc.Where(t => t.IsSettled).Sum(t => Math.Max(0, t.EndKm - t.StartKm));
     }
 
     private double tongNhienLieu
     {
-        get
-        {
-            return danhSachChuyenDaLoc.Where(t => t.IsSettled).Sum(t => t.FuelUsed);
-        }
+        get => danhSachChuyenDaLoc.Where(t => t.IsSettled).Sum(t => t.FuelUsed);
     }
 
     private void DatLaiLoc()
     {
         xeLocId = 0;
-        loaiXeLoc = -1;
+        phuongAnLaiLoc = -1;
     }
 
-    private string LayMauTinhTrangXe(VehicleStatus status)
+    private async Task InBaoCao()
     {
-        if (status == VehicleStatus.SanSang) return "bg-success";
-        if (status == VehicleStatus.DangDuocDieuDong) return "bg-primary";
-        if (status == VehicleStatus.DangBaoDuong) return "bg-warning text-dark";
-        if (status == VehicleStatus.NgungHoatDong) return "bg-danger";
-        return "bg-secondary";
+        await js.InvokeVoidAsync("window.print");
+    }
+
+    private async Task XuatFileCsv()
+    {
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Mã lệnh điều động,Biển số xe,Loại xe,Phương án lái,Người lái xe,Điểm đến,Thời gian xuất phát,Thời gian hoàn thành,Km xuất phát,Km kết thúc,Quãng đường (km),Nhiên liệu tiêu thụ (lít),Trạng thái quyết toán");
+
+            foreach (var t in danhSachChuyenDaLoc)
+            {
+                var xe = mockDataService.Vehicles.FirstOrDefault(v => v.Id == t.VehicleId);
+                var don = mockDataService.Bookings.FirstOrDefault(b => b.Id == t.BookingId);
+                var lx = mockDataService.Drivers.FirstOrDefault(d => d.Id == t.DriverId);
+
+                string nguoiLai = t.DriverMode == DriverMode.SelfDrive
+                    ? (string.IsNullOrEmpty(t.DriverNameSnapshot) ? "Cán bộ tự lái" : t.DriverNameSnapshot)
+                    : (lx?.FullName ?? (string.IsNullOrEmpty(t.DriverNameSnapshot) ? "Lái xe đơn vị" : t.DriverNameSnapshot));
+
+                string phuongAn = t.DriverMode == DriverMode.SelfDrive ? "Cán bộ tự lái" : "Lái xe đơn vị";
+                double qd = Math.Max(0, t.EndKm - t.StartKm);
+
+                sb.AppendLine($"\"{t.DispatchCode}\",\"{xe?.LicensePlate ?? t.VehiclePlateSnapshot}\",\"{xe?.Brand} {xe?.Model}\",\"{phuongAn}\",\"{nguoiLai}\",\"{don?.Destination}\",\"{t.ActualDeparture:dd/MM/yyyy HH:mm}\",\"{t.ActualReturn:dd/MM/yyyy HH:mm}\",{t.StartKm},{t.EndKm},{qd},{t.FuelUsed},\"{(t.IsSettled ? "Đã quyết toán" : "Chưa")}\"");
+            }
+
+            string filename = $"BaoCao_DieuDongXe_HVANND_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+            await js.InvokeVoidAsync("downloadCsvFile", filename, sb.ToString());
+
+            notificationService.Notify(NotificationSeverity.Success, "Xuất báo cáo thành công", $"Đã tải về tệp {filename} định dạng UTF-8 CSV tương thích Excel!", 4000);
+        }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "Lỗi xuất file", ex.Message, 4000);
+        }
     }
 }

@@ -19,44 +19,63 @@
 }
 else
 {
-    <h1>Quản lý phương tiện</h1>
-    <p class="text-muted">Danh sách phương tiện của đơn vị</p>
-    <RadzenButton Text="Thêm mới" Icon="add" Click="Add" ButtonStyle="ButtonStyle.Success" class="mb-3" />
+    <div class="page-header-box">
+        <div>
+            <h1 class="page-header-title">
+                <RadzenIcon Icon="directions_car" Style="color: var(--brand-navy);" />
+                Quản lý danh mục phương tiện
+            </h1>
+            <p class="page-header-desc">Hồ sơ kỹ thuật, thông số đăng ký và trạng thái sẵn sàng của phương tiện</p>
+        </div>
+        <div>
+            <button class="btn btn-primary-action" @onclick="Add">
+                <RadzenIcon Icon="add" Class="me-1 align-middle" />
+                Thêm phương tiện
+            </button>
+        </div>
+    </div>
 
     @if (message != "")
     {
-        <div class="alert @(isError ? "alert-danger" : "alert-success")">
+        <div class="alert @(isError ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm">
+            <RadzenIcon Icon="@(isError ? "error" : "check_circle")" Class="me-2" />
             @message
+            <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
         </div>
     }
 
     @if (selectedVehicle != null)
     {
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between">
-                <strong>Chi tiết phương tiện: @selectedVehicle.LicensePlate</strong>
+        <div class="gov-card gov-card-accent-primary mb-4">
+            <div class="gov-card-header">
+                <strong class="gov-card-header-title"><RadzenIcon Icon="directions_car" Class="me-1" /> Chi tiết phương tiện: @selectedVehicle.LicensePlate</strong>
                 <button class="btn btn-sm btn-outline-secondary" @onclick="CloseDetails">Đóng</button>
             </div>
-            <div class="card-body row">
-                <div class="col-md-3 mb-2">Mã: @selectedVehicle.VehicleCode</div>
-                <div class="col-md-3 mb-2">Loại: @EnumHelper.TenVehicleType(selectedVehicle.VehicleType)</div>
-                <div class="col-md-3 mb-2">Nhãn hiệu / Model: @selectedVehicle.Brand @selectedVehicle.Model</div>
-                <div class="col-md-3 mb-2">Số chỗ ngồi: @selectedVehicle.Seats</div>
-                <div class="col-md-3 mb-2">Năm sản xuất: @selectedVehicle.ManufactureYear</div>
-                <div class="col-md-3 mb-2">Số km hiện tại: @selectedVehicle.CurrentKm.ToString("N0")</div>
-                <div class="col-md-3 mb-2">Màu: @selectedVehicle.Color</div>
-                <div class="col-md-3 mb-2">Số khung: @selectedVehicle.ChassisNumber</div>
-                <div class="col-md-3 mb-2">Số máy: @selectedVehicle.EngineNumber</div>
-                <div class="col-md-3 mb-2">Ngày tiếp nhận: @selectedVehicle.ReceiveDate.ToString("dd/MM/yyyy")</div>
-                <div class="col-md-3 mb-2">Tình trạng: @EnumHelper.TenVehicleStatus(selectedVehicle.Status)</div>
-                <div class="col-md-9 mb-2">Ghi chú: @selectedVehicle.Note</div>
+            <div class="gov-card-body row">
+                <div class="col-md-3 mb-2"><strong>Mã:</strong> @selectedVehicle.VehicleCode</div>
+                <div class="col-md-3 mb-2"><strong>Loại:</strong> @EnumHelper.TenVehicleType(selectedVehicle.VehicleType)</div>
+                <div class="col-md-3 mb-2"><strong>Nhãn hiệu / Model:</strong> @selectedVehicle.Brand @selectedVehicle.Model</div>
+                <div class="col-md-3 mb-2"><strong>Số chỗ ngồi:</strong> @selectedVehicle.Seats</div>
+                <div class="col-md-3 mb-2"><strong>Năm sản xuất:</strong> @selectedVehicle.ManufactureYear</div>
+                <div class="col-md-3 mb-2"><strong>Số km hiện tại:</strong> @selectedVehicle.CurrentKm.ToString("N0") km</div>
+                <div class="col-md-3 mb-2"><strong>Màu:</strong> @selectedVehicle.Color</div>
+                <div class="col-md-3 mb-2"><strong>Số khung:</strong> @selectedVehicle.ChassisNumber</div>
+                <div class="col-md-3 mb-2"><strong>Số máy:</strong> @selectedVehicle.EngineNumber</div>
+                <div class="col-md-3 mb-2"><strong>Ngày tiếp nhận:</strong> @selectedVehicle.ReceiveDate.ToString("dd/MM/yyyy")</div>
+                <div class="col-md-3 mb-2"><strong>Tình trạng:</strong> @EnumHelper.TenVehicleStatus(selectedVehicle.Status)</div>
+                <div class="col-md-9 mb-2"><strong>Ghi chú:</strong> @selectedVehicle.Note</div>
             </div>
         </div>
     }
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <h2 class="h5">@(isEditing ? "Sửa phương tiện" : "Thêm phương tiện")</h2>
+    <div class="gov-card mb-4">
+        <div class="gov-card-header">
+            <h2 class="gov-card-header-title">
+                <RadzenIcon Icon="@(isEditing ? "edit" : "add")" Style="color: var(--brand-navy);" />
+                @(isEditing ? "Sửa phương tiện" : "Thêm phương tiện mới")
+            </h2>
+        </div>
+        <div class="gov-card-body">
 
             <EditForm Model="vehicle" OnValidSubmit="Save">
                 <DataAnnotationsValidator />

@@ -21,4 +21,7 @@ public class User
     public UserRole Role { get; set; }
 
     public string Phone { get; set; } = "";
+
+    // Liên kết với hồ sơ cán bộ (Officer)
+    public int? OfficerId { get; set; }
 }

@@ -19,6 +19,9 @@ builder.Services.AddScoped<DriverService>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<DispatchService>();
 builder.Services.AddScoped<TripService>();
+builder.Services.AddScoped<OfficerService>();
+builder.Services.AddScoped<MaintenanceService>();
+builder.Services.AddScoped<AppNotificationService>();
 
 builder.Services.AddRadzenComponents();
 

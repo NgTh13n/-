@@ -1,4 +1,5 @@
 using MyWebApp.Data;
+using MyWebApp.Helpers;
 using MyWebApp.Models;
 using MyWebApp.Models.Enums;
 
@@ -15,76 +16,40 @@ public class BookingService
         this.authService = authService;
     }
 
-    // Lấy danh sách yêu cầu đăng ký
-    // Nếu là Cán bộ / Chiến sĩ: chỉ lấy yêu cầu của chính mình
-    // Nếu là Lãnh đạo, Đội xe, Admin: lấy toàn bộ danh sách
+    // Lấy danh sách yêu cầu đăng ký (Cán bộ xem đơn của mình; Lãnh đạo/Đội xe/Admin xem tất cả)
     public List<Booking> GetAll()
     {
-        List<Booking> ketQua = new List<Booking>();
-        User? nguoiDungHienTai = authService.CurrentUser;
-
-        if (nguoiDungHienTai == null)
-        {
-            return ketQua;
-        }
-
-        bool laCanBo = nguoiDungHienTai.Role == UserRole.Officer;
-
-        foreach (Booking booking in duLieu.Bookings)
-        {
-            if (laCanBo)
-            {
-                if (booking.RequesterId == nguoiDungHienTai.Id)
-                {
-                    ketQua.Add(SaoChep(booking));
-                }
-            }
-            else
-            {
-                ketQua.Add(SaoChep(booking));
-            }
-        }
-
-        return ketQua;
+        var u = authService.CurrentUser;
+        if (u == null) return new();
+        var q = u.Role == UserRole.Officer ? duLieu.Bookings.Where(b => b.RequesterId == u.Id) : duLieu.Bookings;
+        return q.Select(SaoChep).ToList();
     }
 
-    // Lấy danh sách các yêu cầu đang chờ lãnh đạo phê duyệt
-    public List<Booking> GetPendingApprovals()
+    // Lấy danh sách yêu cầu đang chờ lãnh đạo phê duyệt
+    public List<Booking> GetPendingApprovals() =>
+        duLieu.Bookings.Where(b => b.Status == BookingStatus.PendingApproval).Select(SaoChep).ToList();
+
+    // Lấy danh sách yêu cầu cần bổ sung thông tin
+    public List<Booking> GetNeedAdjustmentBookings()
     {
-        List<Booking> ketQua = new List<Booking>();
-
-        foreach (Booking booking in duLieu.Bookings)
-        {
-            if (booking.Status == BookingStatus.PendingApproval)
-            {
-                ketQua.Add(SaoChep(booking));
-            }
-        }
-
-        return ketQua;
+        var u = authService.CurrentUser;
+        if (u == null) return new();
+        return duLieu.Bookings
+            .Where(b => b.Status == BookingStatus.NeedAdjustment && (u.Role != UserRole.Officer || b.RequesterId == u.Id))
+            .Select(SaoChep).ToList();
     }
 
-    // Lấy lịch sử các yêu cầu đã được xử lý duyệt hoặc từ chối
-    public List<Booking> GetApprovalHistory()
-    {
-        List<Booking> ketQua = new List<Booking>();
+    // Lấy lịch sử các yêu cầu đã được xử lý (đã duyệt, đã từ chối, v.v.)
+    public List<Booking> GetApprovalHistory() =>
+        duLieu.Bookings.Where(b => b.Status != BookingStatus.Draft && b.Status != BookingStatus.PendingApproval).Select(SaoChep).ToList();
 
-        foreach (Booking booking in duLieu.Bookings)
-        {
-            if (booking.Status != BookingStatus.Draft && booking.Status != BookingStatus.PendingApproval)
-            {
-                ketQua.Add(SaoChep(booking));
-            }
-        }
-
-        return ketQua;
-    }
+    public Booking? GetById(int id) =>
+        duLieu.Bookings.FirstOrDefault(x => x.Id == id) is { } b ? SaoChep(b) : null;
 
     // Tạo mới một yêu cầu đăng ký phương tiện
     public bool Create(Booking booking, bool guiDuyetNgay, out string loi)
     {
-        User? nguoiDung = authService.CurrentUser;
-
+        var nguoiDung = authService.CurrentUser;
         if (nguoiDung == null)
         {
             loi = "Vui lòng đăng nhập để thực hiện chức năng này.";
@@ -92,45 +57,45 @@ public class BookingService
         }
 
         loi = KiemTraDuLieu(booking);
+        if (loi != "") return false;
 
-        if (loi != "")
-        {
-            return false;
-        }
-
-        // Cấp mã Id tự tăng
-        int idMoi = 1;
-
-        foreach (Booking item in duLieu.Bookings)
-        {
-            if (item.Id >= idMoi)
-            {
-                idMoi = item.Id + 1;
-            }
-        }
+        int idMoi = duLieu.Bookings.Count > 0 ? duLieu.Bookings.Max(x => x.Id) + 1 : 1;
+        var phongDoi = duLieu.Departments.FirstOrDefault(d => d.Id == nguoiDung.DepartmentId);
 
         booking.Id = idMoi;
         booking.BookingCode = $"YC-{DateTime.Today.Year}-{idMoi:D3}";
         booking.RequesterId = nguoiDung.Id;
         booking.DepartmentId = nguoiDung.DepartmentId;
+        booking.DepartmentSnapshot = phongDoi?.Name ?? "Đơn vị CAND";
         booking.Status = guiDuyetNgay ? BookingStatus.PendingApproval : BookingStatus.Draft;
         booking.RejectionReason = "";
+        booking.NeedAdjustmentReason = "";
+        booking.CreatedAt = DateTime.Now;
+        if (guiDuyetNgay) booking.SubmittedAt = DateTime.Now;
 
         duLieu.Bookings.Add(SaoChep(booking));
 
-        // Ghi nhật ký hoạt động
+        string hanhDong = guiDuyetNgay ? "Gửi yêu cầu phê duyệt" : "Tạo bản nháp yêu cầu";
+        duLieu.AddStatusHistory(
+            "VehicleRequest",
+            booking.Id,
+            "None",
+            booking.Status.ToString(),
+            nguoiDung.OfficerId ?? nguoiDung.Id,
+            nguoiDung.FullName,
+            $"{hanhDong}: {booking.BookingCode} đi {booking.Destination} ({EnumHelper.TenDriverMode(booking.PreferredDriverMode)})");
+
         GhiNhatKy(nguoiDung.Id,
-            guiDuyetNgay ? "Gửi yêu cầu phê duyệt" : "Tạo bản nháp yêu cầu",
+            hanhDong,
             $"Cán bộ {nguoiDung.FullName} đã tạo yêu cầu {booking.BookingCode} đi {booking.Destination}.");
 
         return true;
     }
 
-    // Chỉnh sửa yêu cầu (chỉ được sửa khi đang ở trạng thái Nháp hoặc Chờ phê duyệt)
+    // Chỉnh sửa yêu cầu (được sửa khi đang ở trạng thái Nháp, Chờ phê duyệt hoặc Yêu cầu bổ sung)
     public bool Update(Booking booking, bool guiDuyet, out string loi)
     {
-        User? nguoiDung = authService.CurrentUser;
-
+        var nguoiDung = authService.CurrentUser;
         if (nguoiDung == null)
         {
             loi = "Vui lòng đăng nhập để thực hiện.";
@@ -138,139 +103,165 @@ public class BookingService
         }
 
         loi = KiemTraDuLieu(booking);
+        if (loi != "") return false;
 
-        if (loi != "")
+        var donGoc = duLieu.Bookings.FirstOrDefault(x => x.Id == booking.Id);
+        if (donGoc == null)
         {
+            loi = "Không tìm thấy yêu cầu cần cập nhật.";
             return false;
         }
 
-        for (int i = 0; i < duLieu.Bookings.Count; i++)
+        if (donGoc.RequesterId != nguoiDung.Id && nguoiDung.Role != UserRole.Administrator)
         {
-            if (duLieu.Bookings[i].Id == booking.Id)
-            {
-                Booking donGoc = duLieu.Bookings[i];
-
-                // Chỉ người tạo hoặc Admin mới được sửa
-                if (donGoc.RequesterId != nguoiDung.Id && nguoiDung.Role != UserRole.Administrator)
-                {
-                    loi = "Bạn chỉ có thể chỉnh sửa yêu cầu do chính mình tạo.";
-                    return false;
-                }
-
-                // Chỉ cho phép sửa khi là Nháp hoặc Chờ duyệt
-                if (donGoc.Status != BookingStatus.Draft && donGoc.Status != BookingStatus.PendingApproval)
-                {
-                    loi = "Chỉ có thể sửa yêu cầu khi ở trạng thái Bản nháp hoặc Chờ phê duyệt.";
-                    return false;
-                }
-
-                if (guiDuyet)
-                {
-                    booking.Status = BookingStatus.PendingApproval;
-                }
-                else
-                {
-                    booking.Status = donGoc.Status;
-                }
-
-                booking.BookingCode = donGoc.BookingCode;
-                booking.RequesterId = donGoc.RequesterId;
-                booking.DepartmentId = donGoc.DepartmentId;
-                booking.RejectionReason = "";
-
-                duLieu.Bookings[i] = SaoChep(booking);
-
-                GhiNhatKy(nguoiDung.Id, "Cập nhật yêu cầu",
-                    $"Cán bộ {nguoiDung.FullName} đã cập nhật yêu cầu {booking.BookingCode}.");
-
-                return true;
-            }
+            loi = "Bạn chỉ có thể chỉnh sửa yêu cầu của chính mình.";
+            return false;
         }
 
-        loi = "Không tìm thấy yêu cầu cần cập nhật.";
-        return false;
+        if (donGoc.Status != BookingStatus.Draft && 
+            donGoc.Status != BookingStatus.PendingApproval && 
+            donGoc.Status != BookingStatus.NeedAdjustment)
+        {
+            loi = "Không thể chỉnh sửa yêu cầu đã được duyệt hoặc đang thực hiện.";
+            return false;
+        }
+
+        string trangThaiCu = donGoc.Status.ToString();
+        donGoc.WorkType = booking.WorkType;
+        donGoc.Purpose = booking.Purpose;
+        donGoc.TaskDescription = booking.TaskDescription;
+        donGoc.Departure = booking.Departure;
+        donGoc.Destination = booking.Destination;
+        donGoc.DepartureTime = booking.DepartureTime;
+        donGoc.ReturnTime = booking.ReturnTime;
+        donGoc.PassengerCount = booking.PassengerCount;
+        donGoc.RequestedVehicleType = booking.RequestedVehicleType;
+        donGoc.PreferredDriverMode = booking.PreferredDriverMode;
+        donGoc.Notes = booking.Notes;
+
+        if (guiDuyet)
+        {
+            donGoc.Status = BookingStatus.PendingApproval;
+            donGoc.SubmittedAt = DateTime.Now;
+            donGoc.NeedAdjustmentReason = "";
+            donGoc.RejectionReason = "";
+
+            duLieu.AddStatusHistory(
+                "VehicleRequest",
+                donGoc.Id,
+                trangThaiCu,
+                "PendingApproval",
+                nguoiDung.OfficerId ?? nguoiDung.Id,
+                nguoiDung.FullName,
+                "Cán bộ đã bổ sung/chỉnh sửa thông tin và gửi lại lãnh đạo phê duyệt.");
+        }
+
+        GhiNhatKy(nguoiDung.Id, "Cập nhật yêu cầu",
+            $"Cán bộ {nguoiDung.FullName} đã cập nhật yêu cầu {booking.BookingCode}.");
+
+        return true;
     }
 
     // Gửi phê duyệt từ bản nháp
     public bool SendApproval(int bookingId, out string loi)
     {
-        User? nguoiDung = authService.CurrentUser;
-
+        var nguoiDung = authService.CurrentUser;
         if (nguoiDung == null)
         {
             loi = "Vui lòng đăng nhập.";
             return false;
         }
 
-        for (int i = 0; i < duLieu.Bookings.Count; i++)
+        var don = duLieu.Bookings.FirstOrDefault(x => x.Id == bookingId);
+        if (don == null)
         {
-            if (duLieu.Bookings[i].Id == bookingId)
-            {
-                if (duLieu.Bookings[i].Status != BookingStatus.Draft)
-                {
-                    loi = "Chỉ có thể gửi phê duyệt cho yêu cầu đang ở trạng thái Bản nháp.";
-                    return false;
-                }
-
-                duLieu.Bookings[i].Status = BookingStatus.PendingApproval;
-
-                GhiNhatKy(nguoiDung.Id, "Gửi duyệt yêu cầu",
-                    $"Đã gửi yêu cầu {duLieu.Bookings[i].BookingCode} đến lãnh đạo phê duyệt.");
-
-                loi = "";
-                return true;
-            }
+            loi = "Không tìm thấy yêu cầu.";
+            return false;
         }
 
-        loi = "Không tìm thấy yêu cầu.";
-        return false;
+        if (don.Status != BookingStatus.Draft && don.Status != BookingStatus.NeedAdjustment)
+        {
+            loi = "Chỉ có thể gửi phê duyệt cho yêu cầu đang ở trạng thái Bản nháp hoặc Yêu cầu bổ sung.";
+            return false;
+        }
+
+        string trangThaiCu = don.Status.ToString();
+        don.Status = BookingStatus.PendingApproval;
+        don.SubmittedAt = DateTime.Now;
+        don.NeedAdjustmentReason = "";
+
+        duLieu.AddStatusHistory(
+            "VehicleRequest",
+            bookingId,
+            trangThaiCu,
+            "PendingApproval",
+            nguoiDung.OfficerId ?? nguoiDung.Id,
+            nguoiDung.FullName,
+            "Gửi yêu cầu tới Lãnh đạo phê duyệt.");
+
+        GhiNhatKy(nguoiDung.Id, "Gửi duyệt yêu cầu",
+            $"Đã gửi yêu cầu {don.BookingCode} đến lãnh đạo phê duyệt.");
+
+        loi = "";
+        return true;
     }
 
-    // Hủy yêu cầu (áp dụng cho đơn nháp hoặc đơn đang chờ duyệt)
-    public bool Cancel(int bookingId, out string loi)
+    // Hủy yêu cầu (áp dụng cho đơn nháp, đơn chờ duyệt hoặc đơn cần bổ sung)
+    public bool Cancel(int bookingId, string lyDo, out string loi)
     {
-        User? nguoiDung = authService.CurrentUser;
-
+        var nguoiDung = authService.CurrentUser;
         if (nguoiDung == null)
         {
             loi = "Vui lòng đăng nhập.";
             return false;
         }
 
-        for (int i = 0; i < duLieu.Bookings.Count; i++)
+        var don = duLieu.Bookings.FirstOrDefault(x => x.Id == bookingId);
+        if (don == null)
         {
-            if (duLieu.Bookings[i].Id == bookingId)
-            {
-                Booking don = duLieu.Bookings[i];
-
-                if (don.RequesterId != nguoiDung.Id && nguoiDung.Role != UserRole.Administrator)
-                {
-                    loi = "Bạn chỉ có thể hủy yêu cầu của chính mình.";
-                    return false;
-                }
-
-                if (don.Status != BookingStatus.Draft && don.Status != BookingStatus.PendingApproval)
-                {
-                    loi = "Không thể hủy yêu cầu đã được duyệt hoặc đang thực hiện.";
-                    return false;
-                }
-
-                don.Status = BookingStatus.Cancelled;
-
-                GhiNhatKy(nguoiDung.Id, "Hủy yêu cầu",
-                    $"Cán bộ {nguoiDung.FullName} đã hủy yêu cầu {don.BookingCode}.");
-
-                loi = "";
-                return true;
-            }
+            loi = "Không tìm thấy yêu cầu cần hủy.";
+            return false;
         }
 
-        loi = "Không tìm thấy yêu cầu cần hủy.";
-        return false;
+        if (don.RequesterId != nguoiDung.Id && nguoiDung.Role != UserRole.Administrator)
+        {
+            loi = "Bạn chỉ có thể hủy yêu cầu của chính mình.";
+            return false;
+        }
+
+        if (don.Status != BookingStatus.Draft && 
+            don.Status != BookingStatus.PendingApproval && 
+            don.Status != BookingStatus.NeedAdjustment)
+        {
+            loi = "Không thể hủy yêu cầu đã được duyệt hoặc đang thực hiện.";
+            return false;
+        }
+
+        string trangThaiCu = don.Status.ToString();
+        don.Status = BookingStatus.Cancelled;
+        don.CancellationReason = lyDo;
+
+        duLieu.AddStatusHistory(
+            "VehicleRequest",
+            don.Id,
+            trangThaiCu,
+            "Cancelled",
+            nguoiDung.OfficerId ?? nguoiDung.Id,
+            nguoiDung.FullName,
+            string.IsNullOrWhiteSpace(lyDo) ? "Người đề nghị rút/hủy yêu cầu" : $"Hủy yêu cầu: {lyDo}");
+
+        GhiNhatKy(nguoiDung.Id, "Hủy yêu cầu",
+            $"Cán bộ {nguoiDung.FullName} đã hủy yêu cầu {don.BookingCode}.");
+
+        loi = "";
+        return true;
     }
 
-    // Lãnh đạo phê duyệt yêu cầu
-    public bool Approve(int bookingId, out string loi)
+    public bool Cancel(int bookingId, out string loi) =>
+        Cancel(bookingId, "Cán bộ tự rút yêu cầu", out loi);
+
+    // Lãnh đạo phê duyệt yêu cầu (kèm ý kiến chỉ đạo)
+    public bool Approve(int bookingId, string yKienChiDao, out string loi)
     {
         if (!authService.CanApproveBookings)
         {
@@ -278,32 +269,99 @@ public class BookingService
             return false;
         }
 
-        User nguoiDung = authService.CurrentUser!;
-
-        for (int i = 0; i < duLieu.Bookings.Count; i++)
+        var don = duLieu.Bookings.FirstOrDefault(x => x.Id == bookingId);
+        if (don == null)
         {
-            if (duLieu.Bookings[i].Id == bookingId)
-            {
-                if (duLieu.Bookings[i].Status != BookingStatus.PendingApproval)
-                {
-                    loi = "Yêu cầu này không ở trạng thái chờ phê duyệt.";
-                    return false;
-                }
-
-                // Sau khi lãnh đạo duyệt, chuyển sang trạng thái Chờ điều động
-                duLieu.Bookings[i].Status = BookingStatus.PendingDispatch;
-                duLieu.Bookings[i].RejectionReason = "";
-
-                GhiNhatKy(nguoiDung.Id, "Phê duyệt yêu cầu",
-                    $"Lãnh đạo {nguoiDung.FullName} đã phê duyệt yêu cầu {duLieu.Bookings[i].BookingCode}. Chuyển sang chờ điều động.");
-
-                loi = "";
-                return true;
-            }
+            loi = "Không tìm thấy yêu cầu cần phê duyệt.";
+            return false;
         }
 
-        loi = "Không tìm thấy yêu cầu cần phê duyệt.";
-        return false;
+        if (don.Status != BookingStatus.PendingApproval)
+        {
+            loi = "Yêu cầu này không ở trạng thái chờ phê duyệt.";
+            return false;
+        }
+
+        var nguoiDung = authService.CurrentUser!;
+        don.Status = BookingStatus.Approved;
+        don.ApprovalOfficerId = nguoiDung.OfficerId ?? nguoiDung.Id;
+        don.ApprovalAt = DateTime.Now;
+        don.ApprovalComment = yKienChiDao;
+        don.RejectionReason = "";
+        don.NeedAdjustmentReason = "";
+
+        string comment = string.IsNullOrWhiteSpace(yKienChiDao) 
+            ? "Lãnh đạo đồng ý phê duyệt yêu cầu" 
+            : $"Phê duyệt: {yKienChiDao}";
+
+        duLieu.AddStatusHistory(
+            "VehicleRequest",
+            bookingId,
+            "PendingApproval",
+            "Approved",
+            nguoiDung.OfficerId ?? nguoiDung.Id,
+            nguoiDung.FullName,
+            comment);
+
+        GhiNhatKy(nguoiDung.Id, "Phê duyệt yêu cầu",
+            $"Lãnh đạo {nguoiDung.FullName} đã phê duyệt yêu cầu {don.BookingCode}. Chuyển sang chờ điều động.");
+
+        loi = "";
+        return true;
+    }
+
+    public bool Approve(int bookingId, out string loi) =>
+        Approve(bookingId, "Đồng ý phê duyệt, giao Đội xe điều phối.", out loi);
+
+    // Lãnh đạo yêu cầu bổ sung / chỉnh sửa thông tin (bắt buộc nhập nội dung yêu cầu)
+    public bool RequestAdjustment(int bookingId, string noiDungBoSung, out string loi)
+    {
+        if (!authService.CanApproveBookings)
+        {
+            loi = "Bạn không có quyền xử lý yêu cầu.";
+            return false;
+        }
+
+        noiDungBoSung = (noiDungBoSung ?? "").Trim();
+        if (string.IsNullOrEmpty(noiDungBoSung))
+        {
+            loi = "Vui lòng nhập nội dung chỉ đạo cần bổ sung / chỉnh sửa.";
+            return false;
+        }
+
+        var don = duLieu.Bookings.FirstOrDefault(x => x.Id == bookingId);
+        if (don == null)
+        {
+            loi = "Không tìm thấy yêu cầu cần xử lý.";
+            return false;
+        }
+
+        if (don.Status != BookingStatus.PendingApproval)
+        {
+            loi = "Chỉ có thể yêu cầu bổ sung đối với yêu cầu đang chờ phê duyệt.";
+            return false;
+        }
+
+        var nguoiDung = authService.CurrentUser!;
+        don.Status = BookingStatus.NeedAdjustment;
+        don.NeedAdjustmentReason = noiDungBoSung;
+        don.ApprovalOfficerId = nguoiDung.OfficerId ?? nguoiDung.Id;
+        don.ApprovalAt = DateTime.Now;
+
+        duLieu.AddStatusHistory(
+            "VehicleRequest",
+            bookingId,
+            "PendingApproval",
+            "NeedAdjustment",
+            nguoiDung.OfficerId ?? nguoiDung.Id,
+            nguoiDung.FullName,
+            $"Yêu cầu bổ sung: {noiDungBoSung}");
+
+        GhiNhatKy(nguoiDung.Id, "Yêu cầu bổ sung thông tin",
+            $"Lãnh đạo {nguoiDung.FullName} yêu cầu cán bộ bổ sung thông tin cho yêu cầu {don.BookingCode}. Nội dung: {noiDungBoSung}");
+
+        loi = "";
+        return true;
     }
 
     // Lãnh đạo từ chối yêu cầu (bắt buộc nhập lý do)
@@ -315,51 +373,56 @@ public class BookingService
             return false;
         }
 
-        lyDo = lyDo.Trim();
-
+        lyDo = (lyDo ?? "").Trim();
         if (string.IsNullOrEmpty(lyDo))
         {
             loi = "Vui lòng nhập lý do từ chối yêu cầu.";
             return false;
         }
 
-        User nguoiDung = authService.CurrentUser!;
-
-        for (int i = 0; i < duLieu.Bookings.Count; i++)
+        var don = duLieu.Bookings.FirstOrDefault(x => x.Id == bookingId);
+        if (don == null)
         {
-            if (duLieu.Bookings[i].Id == bookingId)
-            {
-                if (duLieu.Bookings[i].Status != BookingStatus.PendingApproval)
-                {
-                    loi = "Yêu cầu này không ở trạng thái chờ phê duyệt.";
-                    return false;
-                }
-
-                duLieu.Bookings[i].Status = BookingStatus.Rejected;
-                duLieu.Bookings[i].RejectionReason = lyDo;
-
-                GhiNhatKy(nguoiDung.Id, "Từ chối yêu cầu",
-                    $"Lãnh đạo {nguoiDung.FullName} đã từ chối yêu cầu {duLieu.Bookings[i].BookingCode}. Lý do: {lyDo}");
-
-                loi = "";
-                return true;
-            }
+            loi = "Không tìm thấy yêu cầu cần từ chối.";
+            return false;
         }
 
-        loi = "Không tìm thấy yêu cầu cần từ chối.";
-        return false;
+        if (don.Status != BookingStatus.PendingApproval)
+        {
+            loi = "Yêu cầu này không ở trạng thái chờ phê duyệt.";
+            return false;
+        }
+
+        var nguoiDung = authService.CurrentUser!;
+        don.Status = BookingStatus.Rejected;
+        don.RejectionReason = lyDo;
+        don.ApprovalOfficerId = nguoiDung.OfficerId ?? nguoiDung.Id;
+        don.ApprovalAt = DateTime.Now;
+
+        duLieu.AddStatusHistory(
+            "VehicleRequest",
+            bookingId,
+            "PendingApproval",
+            "Rejected",
+            nguoiDung.OfficerId ?? nguoiDung.Id,
+            nguoiDung.FullName,
+            $"Từ chối: {lyDo}");
+
+        GhiNhatKy(nguoiDung.Id, "Từ chối yêu cầu",
+            $"Lãnh đạo {nguoiDung.FullName} đã từ chối yêu cầu {don.BookingCode}. Lý do: {lyDo}");
+
+        loi = "";
+        return true;
     }
 
     // Lấy tên người tạo yêu cầu
     public string GetRequesterName(int requesterId)
     {
-        foreach (User user in duLieu.Users)
-        {
-            if (user.Id == requesterId)
-            {
-                return user.FullName;
-            }
-        }
+        if (duLieu.Users.FirstOrDefault(u => u.Id == requesterId) is { } user)
+            return user.FullName;
+
+        if (duLieu.Officers.FirstOrDefault(o => o.Id == requesterId) is { } cb)
+            return $"{cb.RankOrTitle} {cb.FullName}";
 
         return "Không xác định";
     }
@@ -367,10 +430,11 @@ public class BookingService
     // Kiểm tra tính hợp lệ của dữ liệu yêu cầu
     private string KiemTraDuLieu(Booking booking)
     {
-        booking.Purpose = booking.Purpose.Trim();
-        booking.Departure = booking.Departure.Trim();
-        booking.Destination = booking.Destination.Trim();
-        booking.WorkType = booking.WorkType.Trim();
+        booking.Purpose = (booking.Purpose ?? "").Trim();
+        booking.Departure = (booking.Departure ?? "").Trim();
+        booking.Destination = (booking.Destination ?? "").Trim();
+        booking.WorkType = (booking.WorkType ?? "").Trim();
+        booking.TaskDescription = (booking.TaskDescription ?? "").Trim();
 
         if (string.IsNullOrEmpty(booking.Purpose))
         {
@@ -392,7 +456,7 @@ public class BookingService
             return "Số lượng người tham gia phải lớn hơn 0.";
         }
 
-        // Kiểm tra thời gian khởi hành không được trong quá khứ quá 30 phút (trừ trường hợp ghi nhận bù)
+        // Thời gian khởi hành không được trong quá khứ quá 30 phút
         if (booking.DepartureTime < DateTime.Now.AddMinutes(-30))
         {
             return "Thời gian khởi hành không được chọn trong quá khứ.";
@@ -415,15 +479,7 @@ public class BookingService
     // Ghi nhật ký vào danh sách In-Memory
     private void GhiNhatKy(int userId, string action, string description)
     {
-        int idMoi = 1;
-
-        foreach (ActivityLog log in duLieu.ActivityLogs)
-        {
-            if (log.Id >= idMoi)
-            {
-                idMoi = log.Id + 1;
-            }
-        }
+        int idMoi = duLieu.ActivityLogs.Count > 0 ? duLieu.ActivityLogs.Max(x => x.Id) + 1 : 1;
 
         duLieu.ActivityLogs.Add(new ActivityLog
         {
@@ -444,16 +500,27 @@ public class BookingService
             BookingCode = b.BookingCode,
             RequesterId = b.RequesterId,
             DepartmentId = b.DepartmentId,
+            DepartmentSnapshot = b.DepartmentSnapshot,
             WorkType = b.WorkType,
             Purpose = b.Purpose,
+            TaskDescription = b.TaskDescription,
             Departure = b.Departure,
             Destination = b.Destination,
             DepartureTime = b.DepartureTime,
             ReturnTime = b.ReturnTime,
             PassengerCount = b.PassengerCount,
             RequestedVehicleType = b.RequestedVehicleType,
+            PreferredDriverMode = b.PreferredDriverMode,
             Status = b.Status,
-            RejectionReason = b.RejectionReason
+            RejectionReason = b.RejectionReason,
+            NeedAdjustmentReason = b.NeedAdjustmentReason,
+            ApprovalOfficerId = b.ApprovalOfficerId,
+            ApprovalAt = b.ApprovalAt,
+            ApprovalComment = b.ApprovalComment,
+            CancellationReason = b.CancellationReason,
+            CreatedAt = b.CreatedAt,
+            SubmittedAt = b.SubmittedAt,
+            Notes = b.Notes
         };
     }
 }

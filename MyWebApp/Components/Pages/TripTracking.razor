@@ -2,254 +2,559 @@
 @rendermode InteractiveServer
 @implements IDisposable
 
+@using MyWebApp.Models
 @using MyWebApp.Models.Enums
 @using MyWebApp.Helpers
+@using MyWebApp.Data
 
 @inject TripService tripService
 @inject DialogService dialog
 @inject AuthService authService
+@inject MockDataService mockDataService
 
-<PageTitle>Theo dõi chuyến công tác</PageTitle>
+<PageTitle>Theo dõi & Bàn giao xe công tác</PageTitle>
 
 @if (!authService.DaDangNhap)
 {
-    <div class="alert alert-warning">
-        Vui lòng đăng nhập để theo dõi các chuyến công tác.
+    <div class="alert alert-warning shadow-sm">
+        <RadzenIcon Icon="lock" Class="me-2" />
+        Vui lòng đăng nhập để theo dõi và thực hiện quy trình bàn giao, hoàn trả phương tiện công tác.
     </div>
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-header-box">
         <div>
-            <h1>Theo dõi chuyến công tác</h1>
-            <p class="text-muted mb-0">Giám sát lộ trình, cập nhật xuất phát, báo sự cố và xác nhận trở về</p>
+            <h1 class="page-header-title">
+                <RadzenIcon Icon="near_me" Style="color: var(--brand-navy);" />
+                Theo dõi hành trình & Bàn giao xe công tác
+            </h1>
+            <p class="page-header-desc">Biên bản bàn giao xe trước xuất phát, giám sát hành trình và nghiệm thu hoàn trả phương tiện</p>
         </div>
     </div>
 
-    @if (thongBao != "")
+    @if (!string.IsNullOrEmpty(thongBao))
     {
-        <div class="alert @(coLoi ? "alert-danger" : "alert-success")">
+        <div class="alert @(coLoi ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm" role="alert">
+            <RadzenIcon Icon="@(coLoi ? "error" : "check_circle")" Class="me-2" />
             @thongBao
+            <button type="button" class="btn-close" @onclick="() => thongBao = string.Empty"></button>
         </div>
     }
 
-    @* HỘP THOẠI BÁO SỰ CỐ / YÊU CẦU HỖ TRỢ *@
-    @if (chuyenDangBaoSuCo != null)
+    @* 1. BIÊN BẢN BÀN GIAO PHƯƠNG TIỆN (HANDOVER) *@
+    @if (chuyenDangBanGiao != null)
     {
-        <div class="card mb-4 border-danger">
-            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-                <strong>BÁO CÁO SỰ CỐ / CẦN HỖ TRỢ — CHUYẾN ĐI @chuyenDangBaoSuCo.DispatchCode</strong>
-                <button class="btn btn-sm btn-outline-light" @onclick="DongBaoSuCo">Đóng</button>
+        var xe = tripService.GetVehicle(chuyenDangBanGiao.VehicleId);
+        var don = tripService.GetBooking(chuyenDangBanGiao.BookingId);
+
+        <div class="gov-card gov-card-accent-primary mb-4">
+            <div class="gov-card-header">
+                <strong class="gov-card-header-title text-primary"><RadzenIcon Icon="assignment" Class="me-1" /> BIÊN BẢN BÀN GIAO PHƯƠNG TIỆN XUẤT PHÁT: @chuyenDangBanGiao.DispatchCode</strong>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="DongBanGiao">Đóng</button>
             </div>
             <div class="card-body">
-                @{
-                    Vehicle? xe = tripService.GetVehicle(chuyenDangBaoSuCo.VehicleId);
-                    Driver? lx = tripService.GetDriver(chuyenDangBaoSuCo.DriverId);
-                }
-                <p>Xe: <strong>@xe?.LicensePlate</strong> (@xe?.Brand @xe?.Model) | Lái xe: <strong>@lx?.FullName</strong> (SĐT: @lx?.Phone)</p>
-                <div class="mb-3">
-                    <label class="form-label text-danger"><strong>Nội dung sự cố / Nội dung cần chi viện hỗ trợ <span class="text-danger">*</span>:</strong></label>
-                    <textarea class="form-control" rows="3" @bind="noiDungSuCo" placeholder="Mô tả cụ thể sự cố (thủng lốp, hỏng hóc, sự cố giao thông, cần lực lượng hỗ trợ...)..."></textarea>
+                <div class="p-3 bg-light rounded mb-3 border">
+                    <div class="row g-2">
+                        <div class="col-md-4"><strong>Lệnh điều động:</strong> <span class="badge bg-primary">@chuyenDangBanGiao.DispatchCode</span></div>
+                        <div class="col-md-4"><strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model)</div>
+                        <div class="col-md-4">
+                            <strong>Phương án lái:</strong> 
+                            <span class="badge @(chuyenDangBanGiao.DriverMode == DriverMode.SelfDrive ? "bg-info text-dark" : "bg-secondary")">
+                                @EnumHelper.TenDriverMode(chuyenDangBanGiao.DriverMode)
+                            </span>
+                        </div>
+
+                        <div class="col-md-4"><strong>Người điều khiển:</strong> @chuyenDangBanGiao.DriverNameSnapshot</div>
+                        <div class="col-md-4"><strong>Cán bộ đề nghị:</strong> @chuyenDangBanGiao.RequesterNameSnapshot</div>
+                        <div class="col-md-4"><strong>Tuyến đến:</strong> @don?.Destination</div>
+                    </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <RadzenButton Text="Phát tín hiệu cần hỗ trợ" Icon="warning" ButtonStyle="ButtonStyle.Danger" Click="XacNhanBaoSuCo" />
-                    <RadzenButton Text="Hủy bỏ" Icon="close" ButtonStyle="ButtonStyle.Light" Click="DongBaoSuCo" />
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Chỉ số Km ban đầu (Đồng hồ Odometer) <span class="text-danger">*</span>:</label>
+                        <input type="number" class="form-control" @bind="bgStartKm" min="0" step="1" />
+                        <small class="text-muted">Chỉ số Odometer hiện tại của xe</small>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Mức nhiên liệu ban đầu <span class="text-danger">*</span>:</label>
+                        <select class="form-select" @bind="bgFuelStartLevel">
+                            <option value="100% (Đầy bình)">100% (Đầy bình)</option>
+                            <option value="75% (3/4 bình)">75% (3/4 bình)</option>
+                            <option value="50% (1/2 bình)">50% (1/2 bình)</option>
+                            <option value="25% (1/4 bình)">25% (1/4 bình)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Trang bị / Phụ kiện kèm theo:</label>
+                        <input type="text" class="form-control" @bind="bgAccessories" placeholder="Đầy đủ giấy tờ, kích xe, lốp dự phòng, còi ưu tiên..." />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Tình trạng ngoại quan, kỹ thuật phương tiện trước khi giao <span class="text-danger">*</span>:</label>
+                        <textarea class="form-control" rows="2" @bind="bgConditionBefore" placeholder="Xe sạch sẽ, hoạt động tốt, hệ thống phanh, đèn còi còi ưu tiên bình thường..."></textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 border-top pt-2">
+                    <RadzenButton Text="Xác nhận Bàn giao & Bắt đầu chuyến đi" 
+                                  Icon="check_circle" 
+                                  ButtonStyle="ButtonStyle.Success" 
+                                  Click="XacNhanBanGiao" />
+                    <RadzenButton Text="Bỏ qua" 
+                                  Icon="close" 
+                                  ButtonStyle="ButtonStyle.Light" 
+                                  Click="DongBanGiao" />
                 </div>
             </div>
         </div>
     }
 
-    @* XEM CHI TIẾT CHUYẾN ĐI *@
+    @* 2. BIÊN BẢN HOÀN TRẢ & NGHIỆM THU PHƯƠNG TIỆN (RETURN) *@
+    @if (chuyenDangHoanTra != null)
+    {
+        var xe = tripService.GetVehicle(chuyenDangHoanTra.VehicleId);
+        var don = tripService.GetBooking(chuyenDangHoanTra.BookingId);
+        double quangDuong = htEndKm >= chuyenDangHoanTra.StartKm ? (htEndKm - chuyenDangHoanTra.StartKm) : 0;
+
+        <div class="gov-card gov-card-accent-success mb-4">
+            <div class="gov-card-header">
+                <strong class="gov-card-header-title text-success"><RadzenIcon Icon="task_alt" Class="me-1" /> BIÊN BẢN NGHIỆM THU HOÀN TRẢ PHƯƠNG TIỆN: @chuyenDangHoanTra.DispatchCode</strong>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="DongHoanTra">Đóng</button>
+            </div>
+            <div class="card-body">
+                <div class="p-3 bg-light rounded mb-3 border">
+                    <div class="row g-2">
+                        <div class="col-md-4"><strong>Lệnh điều động:</strong> @chuyenDangHoanTra.DispatchCode</div>
+                        <div class="col-md-4"><strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model)</div>
+                        <div class="col-md-4"><strong>Người điều khiển:</strong> @chuyenDangHoanTra.DriverNameSnapshot</div>
+                        <div class="col-md-4"><strong>Khởi hành lúc:</strong> @chuyenDangHoanTra.HandoverAt?.ToString("dd/MM/yyyy HH:mm")</div>
+                        <div class="col-md-4"><strong>Km bàn giao ban đầu:</strong> @chuyenDangHoanTra.StartKm.ToString("N0") km</div>
+                        <div class="col-md-4"><strong>Nhiên liệu lúc giao:</strong> @chuyenDangHoanTra.FuelStartLevel</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Chỉ số Km kết thúc (Odometer về) <span class="text-danger">*</span>:</label>
+                        <input type="number" class="form-control" @bind="htEndKm" min="@chuyenDangHoanTra.StartKm" step="1" />
+                        <small class="text-muted">Phải $\ge$ @chuyenDangHoanTra.StartKm.ToString("N0") km</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Tổng quãng đường thực tế:</label>
+                        <div class="form-control bg-light text-primary fw-bold">
+                            @quangDuong.ToString("N0") km
+                        </div>
+                        <small class="text-success">Tự động tính: Km về - Km đi</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Nhiên liệu còn lại:</label>
+                        <select class="form-select" @bind="htFuelEndLevel">
+                            <option value="100% (Đầy)">100% (Đầy bình)</option>
+                            <option value="80%">80%</option>
+                            <option value="60%">60%</option>
+                            <option value="40%">40%</option>
+                            <option value="20%">20%</option>
+                            <option value="Cạn (Đèn báo)">Cạn (Đèn báo)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Nhiên liệu tiêu thụ ước tính (lít):</label>
+                        <input type="number" class="form-control" @bind="htFuelUsed" min="0" step="0.5" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Tình trạng phương tiện khi bàn giao hoàn trả <span class="text-danger">*</span>:</label>
+                        <input type="text" class="form-control" @bind="htConditionAfter" placeholder="Bình thường, vệ sinh sạch sẽ, không có hư hỏng..." />
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="switchIncident" @bind="htHasIncident" />
+                            <label class="form-check-label fw-bold text-danger" for="switchIncident">
+                                Có sự cố, va quẹt hoặc phát sinh hư hỏng kỹ thuật trong quá trình công tác
+                            </label>
+                        </div>
+
+                        @if (htHasIncident)
+                        {
+                            <div class="alert alert-danger p-2 mb-0">
+                                <label class="form-label fw-bold text-danger mb-1">Mô tả cụ thể sự cố / hư hỏng phát sinh <span class="text-danger">*</span>:</label>
+                                <textarea class="form-control" rows="2" @bind="htIncidentNote" placeholder="Mô tả cụ thể: trầy xước ba-đờ-sốc, nứt kính, tiếng kêu lạ động cơ, cần đưa vào xưởng kiểm tra..."></textarea>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Ghi chú hoàn trả / thanh toán (nếu có):</label>
+                        <input type="text" class="form-control" @bind="htGeneralNote" placeholder="Ví dụ: Đã rửa xe, đã bàn giao đủ chìa khóa và giấy tờ lưu hành..." />
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 border-top pt-2">
+                    <RadzenButton Text="Xác nhận Nghiệm thu & Giải phóng xe" 
+                                  Icon="verified" 
+                                  ButtonStyle="ButtonStyle.Success" 
+                                  Click="XacNhanHoanTra" />
+                    <RadzenButton Text="Bỏ qua" 
+                                  Icon="close" 
+                                  ButtonStyle="ButtonStyle.Light" 
+                                  Click="DongHoanTra" />
+                </div>
+            </div>
+        </div>
+    }
+
+    @* 3. HỘP THOẠI BÁO CÁO SỰ CỐ / YÊU CẦU HỖ TRỢ TRÊN ĐƯỜNG *@
+    @if (chuyenDangBaoSuCo != null)
+    {
+        <div class="gov-card gov-card-accent-danger mb-4">
+            <div class="gov-card-header">
+                <strong class="gov-card-header-title text-danger"><RadzenIcon Icon="emergency" Class="me-1" /> PHÁT TÍN HIỆU CẦN HỖ TRỢ KHẨN CẤP — CHUYẾN @chuyenDangBaoSuCo.DispatchCode</strong>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="() => chuyenDangBaoSuCo = null">Đóng</button>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">
+                    Phương tiện: <strong>@chuyenDangBaoSuCo.VehiclePlateSnapshot</strong> 
+                    | Người điều khiển: <strong>@chuyenDangBaoSuCo.DriverNameSnapshot</strong>
+                </p>
+                <div class="mb-3">
+                    <label class="form-label text-danger fw-bold">Nội dung sự cố / Tọa độ, địa điểm cần chi viện <span class="text-danger">*</span>:</label>
+                    <textarea class="form-control" rows="3" @bind="noiDungSuCo" placeholder="Mô tả rõ sự cố kỹ thuật (nổ lốp, chết máy, tai nạn va chạm...) hoặc tình huống nghiệp vụ cần chi viện khẩn cấp..."></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <RadzenButton Text="Phát tín hiệu cứu trợ khẩn cấp" Icon="warning" ButtonStyle="ButtonStyle.Danger" Click="XacNhanBaoSuCo" />
+                    <RadzenButton Text="Hủy bỏ" Icon="close" ButtonStyle="ButtonStyle.Light" Click="() => chuyenDangBaoSuCo = null" />
+                </div>
+            </div>
+        </div>
+    }
+
+    @* CHI TIẾT CHUYẾN ĐI *@
     @if (chuyenDangXem != null)
     {
-        Booking? don = tripService.GetBooking(chuyenDangXem.BookingId);
-        Vehicle? xe = tripService.GetVehicle(chuyenDangXem.VehicleId);
-        Driver? lx = tripService.GetDriver(chuyenDangXem.DriverId);
+        var xe = tripService.GetVehicle(chuyenDangXem.VehicleId);
+        var don = tripService.GetBooking(chuyenDangXem.BookingId);
 
-        <div class="card mb-4 border-info">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <strong>CHI TIẾT CHUYẾN CÔNG TÁC: @chuyenDangXem.DispatchCode</strong>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="DongChiTiet">Đóng</button>
+        <div class="gov-card gov-card-accent-primary mb-4">
+            <div class="gov-card-header">
+                <strong class="gov-card-header-title text-primary"><RadzenIcon Icon="info" Class="me-1" /> HỒ SƠ CHUYẾN CÔNG TÁC: @chuyenDangXem.DispatchCode</strong>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="() => chuyenDangXem = null">Đóng</button>
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-3"><strong>Mã lệnh điều động:</strong> @chuyenDangXem.DispatchCode</div>
-                    <div class="col-md-3"><strong>Mã yêu cầu:</strong> @don?.BookingCode</div>
-                    <div class="col-md-3"><strong>Cán bộ đăng ký:</strong> @tripService.GetUser(don?.RequesterId ?? 0)?.FullName</div>
+                    <div class="col-md-3"><strong>Mã lệnh điều động:</strong> <span class="badge bg-primary">@chuyenDangXem.DispatchCode</span></div>
+                    <div class="col-md-3"><strong>Yêu cầu gốc:</strong> @don?.BookingCode</div>
+                    <div class="col-md-3"><strong>Cán bộ đề nghị:</strong> @chuyenDangXem.RequesterNameSnapshot</div>
                     <div class="col-md-3">
                         <strong>Trạng thái:</strong> 
-                        <span class="badge @LayMauTrangThaiChuyen(chuyenDangXem.Status)">
-                            @EnumHelper.TenTripStatus(chuyenDangXem.Status)
+                        <span class="badge-status @chuyenDangXem.Status.BadgeClass()">
+                            @chuyenDangXem.Status.Ten()
                         </span>
+                        @if (chuyenDangXem.IsOverdue)
+                        {
+                            <span class="badge-status badge-status-danger ms-1">QUÁ HẠN</span>
+                        }
                     </div>
+
+                    <div class="col-md-6"><strong>Phương tiện:</strong> @chuyenDangXem.VehiclePlateSnapshot (@xe?.Brand @xe?.Model)</div>
+                    <div class="col-md-6"><strong>Người điều khiển:</strong> @chuyenDangXem.DriverNameSnapshot (@EnumHelper.TenDriverMode(chuyenDangXem.DriverMode))</div>
 
                     <div class="col-md-6"><strong>Lộ trình:</strong> @don?.Departure $\rightarrow$ @don?.Destination</div>
                     <div class="col-md-6"><strong>Mục đích:</strong> @don?.Purpose</div>
 
-                    <div class="col-md-6"><strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model - @xe?.Seats chỗ)</div>
-                    <div class="col-md-6"><strong>Lái xe phụ trách:</strong> @lx?.FullName (SĐT: @lx?.Phone)</div>
-
-                    <div class="col-md-3"><strong>Km ban đầu:</strong> @chuyenDangXem.StartKm.ToString("N0") km</div>
-                    <div class="col-md-3">
-                        <strong>Km kết thúc:</strong> 
-                        @(chuyenDangXem.IsSettled ? $"{chuyenDangXem.EndKm:N0} km" : "Chưa quyết toán")
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Khởi hành thực tế:</strong> 
-                        @(chuyenDangXem.ActualDeparture?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa xuất phát")
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Trở về thực tế:</strong> 
-                        @(chuyenDangXem.ActualReturn?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa về")
+                    <div class="col-md-6">
+                        <div class="p-2 border rounded bg-light">
+                            <strong class="text-primary"><RadzenIcon Icon="login" Class="me-1" /> Bàn giao xuất phát:</strong>
+                            <div>Thời gian: @(chuyenDangXem.HandoverAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa bàn giao")</div>
+                            <div>Odometer đi: <strong>@chuyenDangXem.StartKm.ToString("N0") km</strong> | Xăng: @chuyenDangXem.FuelStartLevel</div>
+                            <div class="text-muted small">Tình trạng: @chuyenDangXem.ConditionBefore</div>
+                        </div>
                     </div>
 
-                    @if (!string.IsNullOrEmpty(chuyenDangXem.Note))
+                    <div class="col-md-6">
+                        <div class="p-2 border rounded bg-light">
+                            <strong class="text-success"><RadzenIcon Icon="logout" Class="me-1" /> Nghiệm thu hoàn trả:</strong>
+                            <div>Thời gian về: @(chuyenDangXem.ReturnedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa hoàn trả")</div>
+                            <div>Odometer về: <strong>@(chuyenDangXem.EndKm > 0 ? $"{chuyenDangXem.EndKm:N0} km" : "---")</strong> | Quãng đường: <strong>@chuyenDangXem.DistanceKm.ToString("N0") km</strong></div>
+                            <div>Xăng tiêu thụ: @chuyenDangXem.FuelUsed.ToString("N1") lít | Mức về: @chuyenDangXem.FuelEndLevel</div>
+                            <div class="text-muted small">Tình trạng: @chuyenDangXem.ConditionAfter</div>
+                        </div>
+                    </div>
+
+                    @if (chuyenDangXem.HasIncident)
                     {
                         <div class="col-12">
-                            <div class="alert alert-secondary mb-0">
-                                <strong>Ghi chú / Nhật ký hành trình:</strong> @chuyenDangXem.Note
+                            <div class="alert alert-danger py-2 mb-0">
+                                <strong><RadzenIcon Icon="warning" Class="me-1" /> Sự cố phát sinh:</strong> @chuyenDangXem.IncidentNote
                             </div>
                         </div>
                     }
+
+                    @* Audit Trail *@
+                    <div class="col-12 pt-2 border-top">
+                        <h6 class="text-secondary mb-2"><RadzenIcon Icon="history" Class="me-1" /> Tiến trình xử lý (Audit Trail):</h6>
+                        @{
+                            var histories = mockDataService.StatusHistories
+                                .Where(h => h.EntityType == "Trip" && h.EntityId == chuyenDangXem.Id)
+                                .OrderBy(h => h.ChangedAt)
+                                .ToList();
+                        }
+                        @if (histories.Count > 0)
+                        {
+                            <ul class="list-group list-group-flush small">
+                                @foreach (var h in histories)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-1">
+                                        <div>
+                                            <span class="text-muted me-2">@h.ChangedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                            <strong>@h.ChangedByFullName:</strong> @h.Comment
+                                        </div>
+                                        <span class="badge bg-light text-dark border">@h.ToStatus</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
     }
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex gap-2">
-                    <RadzenButton Text="@($"Đang thực hiện ({danhSachChuyenDangChay.Count})")" 
-                                  ButtonStyle="@(tabHienTai == 0 ? ButtonStyle.Primary : ButtonStyle.Light)" 
-                                  Click="@(() => tabHienTai = 0)" />
+    @* DANH SÁCH CÁC CHUYẾN ĐI (TABS PHÂN LOẠI) *@
+    <RadzenTabs @bind-SelectedIndex="tabHienTai" Class="shadow-sm">
+        <Tabs>
+            @* TAB 1: CHỜ BÀN GIAO XUẤT PHÁT *@
+            <RadzenTabsItem Text="@($"Chờ bàn giao xe ({danhSachChoBanGiao.Count})")" Icon="key">
+                <RadzenDataGrid Data="@danhSachChoBanGiao" 
+                                TItem="Trip" 
+                                AllowPaging="true" 
+                                PageSize="8" 
+                                AllowSorting="true" 
+                                EmptyText="Không có chuyến nào đang chờ bàn giao xe.">
+                    <Columns>
+                        <RadzenDataGridColumn Property="DispatchCode" Title="Mã lệnh" Width="130px">
+                            <Template Context="item">
+                                <span class="fw-bold text-primary">@item.DispatchCode</span>
+                            </Template>
+                        </RadzenDataGridColumn>
 
-                    <RadzenButton Text="@($"Tất cả chuyến đi ({danhSachTatCa.Count})")" 
-                                  ButtonStyle="@(tabHienTai == 1 ? ButtonStyle.Primary : ButtonStyle.Light)" 
-                                  Click="@(() => tabHienTai = 1)" />
-                </div>
-            </div>
+                        <RadzenDataGridColumn Property="VehiclePlateSnapshot" Title="Phương tiện" Width="150px">
+                            <Template Context="item">
+                                <span class="badge bg-dark">@item.VehiclePlateSnapshot</span>
+                            </Template>
+                        </RadzenDataGridColumn>
 
-            <RadzenDataGrid Data="@(tabHienTai == 0 ? danhSachChuyenDangChay : danhSachTatCa)" TItem="Trip" AllowPaging="true" PageSize="10" AllowSorting="true">
-                <Columns>
-                    <RadzenDataGridColumn TItem="Trip" Property="DispatchCode" Title="Mã lệnh" Width="130px" />
-                    <RadzenDataGridColumn TItem="Trip" Title="Xe & Lái xe">
-                        <Template Context="item">
-                            @{
-                                Vehicle? xe = tripService.GetVehicle(item.VehicleId);
-                                Driver? lx = tripService.GetDriver(item.DriverId);
-                            }
-                            <div><strong>@xe?.LicensePlate</strong> <small class="text-muted">(@xe?.Brand)</small></div>
-                            <small class="text-muted">Lái xe: @lx?.FullName</small>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Trip" Title="Điểm đến & Mục đích">
-                        <Template Context="item">
-                            @{
-                                Booking? don = tripService.GetBooking(item.BookingId);
-                            }
-                            <div><strong>@don?.Destination</strong></div>
-                            <small class="text-muted">@don?.Purpose</small>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Trip" Title="Thời gian thực tế">
-                        <Template Context="item">
-                            @if (item.ActualDeparture.HasValue)
-                            {
-                                <div><small class="text-success">Đi: @item.ActualDeparture.Value.ToString("dd/MM HH:mm")</small></div>
-                            }
-                            else
-                            {
-                                <div><small class="text-muted">Chưa xuất phát</small></div>
-                            }
+                        <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="180px">
+                            <Template Context="item">
+                                <div><strong>@item.DriverNameSnapshot</strong></div>
+                                <div class="text-muted small">@EnumHelper.TenDriverMode(item.DriverMode)</div>
+                            </Template>
+                        </RadzenDataGridColumn>
 
-                            @if (item.ActualReturn.HasValue)
-                            {
-                                <div><small class="text-primary">Về: @item.ActualReturn.Value.ToString("dd/MM HH:mm")</small></div>
-                            }
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Trip" Title="Trạng thái" Width="140px">
-                        <Template Context="item">
-                            <span class="badge @LayMauTrangThaiChuyen(item.Status)">
-                                @EnumHelper.TenTripStatus(item.Status)
-                            </span>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Trip" Title="Hành động" Sortable="false" Filterable="false" Width="220px">
-                        <Template Context="item">
-                            <div class="d-flex flex-wrap gap-1">
+                        <RadzenDataGridColumn Property="ScheduledStartAt" Title="Lịch xuất phát" Width="160px">
+                            <Template Context="item">
+                                @item.ScheduledStartAt.ToString("dd/MM/yyyy HH:mm")
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Title="Thao tác" Sortable="false" Filterable="false" Width="180px">
+                            <Template Context="item">
+                                <div class="d-flex gap-1">
+                                    <RadzenButton Icon="visibility" 
+                                                  ButtonStyle="ButtonStyle.Light" 
+                                                  Size="ButtonSize.Small" 
+                                                  Title="Xem chi tiết" 
+                                                  Click="@(() => XemChiTiet(item))" />
+
+                                    <RadzenButton Text="Bàn giao xe" 
+                                                  Icon="key" 
+                                                  ButtonStyle="ButtonStyle.Primary" 
+                                                  Size="ButtonSize.Small" 
+                                                  Click="@(() => MoFormBanGiao(item))" />
+                                </div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenTabsItem>
+
+            @* TAB 2: ĐANG THỰC HIỆN NHIỆM VỤ *@
+            <RadzenTabsItem Text="@($"Đang công tác / Sử dụng ({danhSachDangSuDung.Count})")" Icon="directions_car">
+                <RadzenDataGrid Data="@danhSachDangSuDung" 
+                                TItem="Trip" 
+                                AllowPaging="true" 
+                                PageSize="8" 
+                                AllowSorting="true" 
+                                EmptyText="Hiện không có phương tiện nào đang lưu thông trên đường.">
+                    <Columns>
+                        <RadzenDataGridColumn Property="DispatchCode" Title="Mã lệnh" Width="130px">
+                            <Template Context="item">
+                                <span class="fw-bold text-primary">@item.DispatchCode</span>
+                                @if (item.IsOverdue)
+                                {
+                                    <div class="badge bg-danger small">QUÁ HẠN TRẢ</div>
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="VehiclePlateSnapshot" Title="Phương tiện" Width="140px">
+                            <Template Context="item">
+                                <span class="badge bg-dark">@item.VehiclePlateSnapshot</span>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="180px">
+                            <Template Context="item">
+                                <div><strong>@item.DriverNameSnapshot</strong></div>
+                                <div class="text-muted small">@EnumHelper.TenDriverMode(item.DriverMode)</div>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="HandoverAt" Title="Bắt đầu lúc" Width="150px">
+                            <Template Context="item">
+                                @item.HandoverAt?.ToString("dd/MM/yyyy HH:mm")
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="ScheduledEndAt" Title="Hạn trả dự kiến" Width="150px">
+                            <Template Context="item">
+                                <span class="@(item.IsOverdue ? "text-danger fw-bold" : "")">
+                                    @item.ScheduledEndAt.ToString("dd/MM/yyyy HH:mm")
+                                </span>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="Status" Title="Tình trạng" Width="140px">
+                            <Template Context="item">
+                                <span class="badge-status @item.Status.BadgeClass()">
+                                    @item.Status.Ten()
+                                </span>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Title="Thao tác" Sortable="false" Filterable="false" Width="220px">
+                            <Template Context="item">
+                                <div class="d-flex gap-1">
+                                    <RadzenButton Icon="visibility" 
+                                                  ButtonStyle="ButtonStyle.Light" 
+                                                  Size="ButtonSize.Small" 
+                                                  Title="Xem chi tiết" 
+                                                  Click="@(() => XemChiTiet(item))" />
+
+                                    <RadzenButton Text="Hoàn trả" 
+                                                  Icon="check_circle" 
+                                                  ButtonStyle="ButtonStyle.Success" 
+                                                  Size="ButtonSize.Small" 
+                                                  Title="Lập biên bản hoàn trả xe" 
+                                                  Click="@(() => MoFormHoanTra(item))" />
+
+                                    @if (item.Status == TripStatus.NeedSupport)
+                                    {
+                                        <RadzenButton Text="Khắc phục xong" 
+                                                      Icon="build" 
+                                                      ButtonStyle="ButtonStyle.Info" 
+                                                      Size="ButtonSize.Small" 
+                                                      Click="@(() => KhacPhucSuCo(item))" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenButton Icon="warning" 
+                                                      ButtonStyle="ButtonStyle.Danger" 
+                                                      Size="ButtonSize.Small" 
+                                                      Title="Báo sự cố khẩn cấp" 
+                                                      Click="@(() => MoFormBaoSuCo(item))" />
+                                    }
+                                </div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenTabsItem>
+
+            @* TAB 3: TẤT CẢ / LỊCH SỬ HOÀN THÀNH *@
+            <RadzenTabsItem Text="@($"Lịch sử / Tất cả ({danhSachTatCa.Count})")" Icon="history">
+                <RadzenDataGrid Data="@danhSachTatCa" 
+                                TItem="Trip" 
+                                AllowPaging="true" 
+                                PageSize="8" 
+                                AllowSorting="true" 
+                                EmptyText="Chưa có chuyến công tác nào trong lịch sử.">
+                    <Columns>
+                        <RadzenDataGridColumn Property="DispatchCode" Title="Mã lệnh" Width="130px" />
+                        <RadzenDataGridColumn Property="VehiclePlateSnapshot" Title="Phương tiện" Width="140px" />
+                        <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="180px" />
+                        <RadzenDataGridColumn Property="StartKm" Title="Hành trình Km" Width="170px">
+                            <Template Context="item">
+                                <div>@item.StartKm.ToString("N0") $\rightarrow$ @(item.EndKm > 0 ? $"{item.EndKm:N0}" : "---")</div>
+                                @if (item.EndKm > item.StartKm)
+                                {
+                                    <div class="text-success small fw-bold">(@((item.EndKm - item.StartKm).ToString("N0")) km)</div>
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="FuelUsed" Title="Nhiên liệu" Width="120px">
+                            <Template Context="item">
+                                @(item.FuelUsed > 0 ? $"{item.FuelUsed:N1} L" : "---")
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="Status" Title="Trạng thái" Width="140px">
+                            <Template Context="item">
+                                <span class="badge-status @item.Status.BadgeClass()">
+                                    @item.Status.Ten()
+                                </span>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Title="Thao tác" Sortable="false" Filterable="false" Width="80px">
+                            <Template Context="item">
                                 <RadzenButton Icon="visibility" 
                                               ButtonStyle="ButtonStyle.Light" 
                                               Size="ButtonSize.Small" 
                                               Title="Xem chi tiết" 
                                               Click="@(() => XemChiTiet(item))" />
-
-                                @* 1. Nút xuất phát *@
-                                @if (item.Status == TripStatus.WaitingDeparture)
-                                {
-                                    <RadzenButton Text="Xuất phát" 
-                                                  Icon="play_arrow" 
-                                                  ButtonStyle="ButtonStyle.Success" 
-                                                  Size="ButtonSize.Small" 
-                                                  Click="@(() => XuatPhat(item))" />
-                                }
-
-                                @* 2. Nút báo sự cố & về đích *@
-                                @if (item.Status == TripStatus.InTransit)
-                                {
-                                    <RadzenButton Text="Báo sự cố" 
-                                                  Icon="warning" 
-                                                  ButtonStyle="ButtonStyle.Danger" 
-                                                  Size="ButtonSize.Small" 
-                                                  Click="@(() => MoBaoSuCo(item))" />
-
-                                    <RadzenButton Text="Đã về" 
-                                                  Icon="check_circle" 
-                                                  ButtonStyle="ButtonStyle.Primary" 
-                                                  Size="ButtonSize.Small" 
-                                                  Click="@(() => XacNhanDaVe(item))" />
-                                }
-
-                                @* 3. Khi đang cần hỗ trợ *@
-                                @if (item.Status == TripStatus.NeedSupport)
-                                {
-                                    <RadzenButton Text="Đã khắc phục" 
-                                                  Icon="play_arrow" 
-                                                  ButtonStyle="ButtonStyle.Success" 
-                                                  Size="ButtonSize.Small" 
-                                                  Click="@(() => TiepTucDiChuyen(item))" />
-
-                                    <RadzenButton Text="Đã về" 
-                                                  Icon="check_circle" 
-                                                  ButtonStyle="ButtonStyle.Primary" 
-                                                  Size="ButtonSize.Small" 
-                                                  Click="@(() => XacNhanDaVe(item))" />
-                                }
-
-                                @if (item.Status == TripStatus.Returned && !item.IsSettled)
-                                {
-                                    <span class="badge bg-warning text-dark align-self-center">Chờ quyết toán</span>
-                                }
-                            </div>
-                        </Template>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
-        </div>
-    </div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
 }
 
 @code {
-    int tabHienTai = 0; // 0: Đang thực hiện, 1: Tất cả
+    int tabHienTai = 1; // Mặc định mở Tab Đang sử dụng
 
-    List<Trip> danhSachChuyenDangChay = new List<Trip>();
-    List<Trip> danhSachTatCa = new List<Trip>();
+    List<Trip> danhSachChoBanGiao = new();
+    List<Trip> danhSachDangSuDung = new();
+    List<Trip> danhSachTatCa = new();
 
-    Trip? chuyenDangXem = null;
-    Trip? chuyenDangBaoSuCo = null;
+    Trip? chuyenDangXem;
+    Trip? chuyenDangBanGiao;
+    Trip? chuyenDangHoanTra;
+    Trip? chuyenDangBaoSuCo;
+
+    // Biến cho form Bàn giao
+    double bgStartKm = 0;
+    string bgFuelStartLevel = "100% (Đầy bình)";
+    string bgConditionBefore = "Xe sạch sẽ, đầy đủ giấy tờ, không trầy xước, đèn còi còi ưu tiên hoạt động tốt";
+    string bgAccessories = "Sổ đăng kiểm, bảo hiểm, kích xe, lốp dự phòng";
+
+    // Biến cho form Hoàn trả
+    double htEndKm = 0;
+    string htFuelEndLevel = "80%";
+    double htFuelUsed = 8.5;
+    string htConditionAfter = "Xe nguyên vẹn, nội thất sạch sẽ, không có va chạm phát sinh";
+    bool htHasIncident = false;
+    string htIncidentNote = "";
+    string htGeneralNote = "Đã hoàn trả đầy đủ chìa khóa và giấy tờ lưu hành";
+
     string noiDungSuCo = "";
-
     string thongBao = "";
     bool coLoi = false;
 
@@ -267,7 +572,8 @@ else
 
     private void NapDuLieu()
     {
-        danhSachChuyenDangChay = tripService.GetActiveTrips();
+        danhSachChoBanGiao = tripService.GetPendingHandoverTrips();
+        danhSachDangSuDung = tripService.GetInUseTrips();
         danhSachTatCa = tripService.GetAllTrips();
     }
 
@@ -276,24 +582,40 @@ else
         chuyenDangXem = item;
     }
 
-    private void DongChiTiet()
+    // --- XỬ LÝ BÀN GIAO ---
+    private void MoFormBanGiao(Trip item)
     {
-        chuyenDangXem = null;
+        var xe = tripService.GetVehicle(item.VehicleId);
+        chuyenDangBanGiao = item;
+        chuyenDangHoanTra = null;
+        chuyenDangBaoSuCo = null;
+
+        bgStartKm = xe?.CurrentKm ?? item.StartKm;
+        bgFuelStartLevel = "100% (Đầy bình)";
+        bgConditionBefore = "Xe sạch sẽ, đầy đủ giấy tờ, không trầy xước, đèn còi ưu tiên hoạt động tốt";
+        bgAccessories = "Sổ đăng kiểm, bảo hiểm, kích xe, lốp dự phòng";
+        thongBao = "";
     }
 
-    private async Task XuatPhat(Trip item)
+    private void DongBanGiao()
     {
-        var xacNhan = await dialog.Confirm(
-            $"Xác nhận chuyến đi {item.DispatchCode} bắt đầu xuất phát lúc này?",
-            "Xác nhận xuất phát");
+        chuyenDangBanGiao = null;
+    }
 
-        if (xacNhan != true)
-        {
-            return;
-        }
+    private async Task XacNhanBanGiao()
+    {
+        if (chuyenDangBanGiao == null) return;
+
+        var xacNhan = await dialog.Confirm(
+            $"Xác nhận hoàn tất thủ tục bàn giao xe {chuyenDangBanGiao.VehiclePlateSnapshot} cho {chuyenDangBanGiao.DriverNameSnapshot}?",
+            "Xác nhận bàn giao xe",
+            new ConfirmOptions { OkButtonText = "Xác nhận bàn giao", CancelButtonText = "Bỏ qua" });
+
+        if (xacNhan != true) return;
 
         string loi;
-        bool thanhCong = tripService.UpdateTripStatus(item.Id, TripStatus.InTransit, null, out loi);
+        string conditionFull = $"{bgConditionBefore} (Trang bị: {bgAccessories})";
+        bool thanhCong = tripService.HandoverVehicle(chuyenDangBanGiao.Id, bgStartKm, bgFuelStartLevel, conditionFull, out loi);
 
         if (!thanhCong)
         {
@@ -302,29 +624,102 @@ else
             return;
         }
 
+        string maLenh = chuyenDangBanGiao.DispatchCode;
+        DongBanGiao();
         NapDuLieu();
-        thongBao = $"Chuyến đi {item.DispatchCode} đã xuất phát thành công.";
+
+        thongBao = $"Đã bàn giao xe cho chuyến {maLenh} thành công. Chuyến đi đã chuyển sang trạng thái Đang sử dụng.";
         coLoi = false;
+        tabHienTai = 1; // Chuyển sang Tab Đang sử dụng
     }
 
-    private void MoBaoSuCo(Trip item)
+    // --- XỬ LÝ HOÀN TRẢ ---
+    private void MoFormHoanTra(Trip item)
+    {
+        chuyenDangHoanTra = item;
+        chuyenDangBanGiao = null;
+        chuyenDangBaoSuCo = null;
+
+        htEndKm = item.StartKm + 45; // Gợi ý mặc định số km thực tế
+        htFuelEndLevel = "80%";
+        htFuelUsed = 8.5;
+        htConditionAfter = "Xe nguyên vẹn, nội thất sạch sẽ, không có va chạm phát sinh";
+        htHasIncident = false;
+        htIncidentNote = "";
+        htGeneralNote = "Đã hoàn trả đầy đủ chìa khóa và giấy tờ lưu hành";
+        thongBao = "";
+    }
+
+    private void DongHoanTra()
+    {
+        chuyenDangHoanTra = null;
+    }
+
+    private async Task XacNhanHoanTra()
+    {
+        if (chuyenDangHoanTra == null) return;
+
+        if (htEndKm < chuyenDangHoanTra.StartKm)
+        {
+            thongBao = $"Số Km kết thúc ({htEndKm:N0} km) không được nhỏ hơn Km ban đầu ({chuyenDangHoanTra.StartKm:N0} km).";
+            coLoi = true;
+            return;
+        }
+
+        if (htHasIncident && string.IsNullOrWhiteSpace(htIncidentNote))
+        {
+            thongBao = "Đồng chí đã đánh dấu có sự cố phát sinh, bắt buộc phải nhập mô tả cụ thể sự cố.";
+            coLoi = true;
+            return;
+        }
+
+        var xacNhan = await dialog.Confirm(
+            $"Xác nhận nghiệm thu hoàn trả phương tiện cho chuyến {chuyenDangHoanTra.DispatchCode}?",
+            "Xác nhận hoàn trả",
+            new ConfirmOptions { OkButtonText = "Xác nhận hoàn trả", CancelButtonText = "Bỏ qua" });
+
+        if (xacNhan != true) return;
+
+        string loi;
+        bool thanhCong = tripService.ReturnVehicle(
+            chuyenDangHoanTra.Id,
+            htEndKm,
+            htFuelEndLevel,
+            htFuelUsed,
+            htConditionAfter,
+            htHasIncident,
+            htIncidentNote,
+            htGeneralNote,
+            out loi);
+
+        if (!thanhCong)
+        {
+            thongBao = loi;
+            coLoi = true;
+            return;
+        }
+
+        string maLenh = chuyenDangHoanTra.DispatchCode;
+        DongHoanTra();
+        NapDuLieu();
+
+        thongBao = $"Đã hoàn tất nghiệm thu hoàn trả xe cho chuyến {maLenh}. Phương tiện đã được giải phóng về trạng thái Sẵn sàng!";
+        coLoi = false;
+        tabHienTai = 2; // Chuyển sang Tab Lịch sử
+    }
+
+    // --- SỰ CỐ ---
+    private void MoFormBaoSuCo(Trip item)
     {
         chuyenDangBaoSuCo = item;
-        noiDungSuCo = "";
-    }
-
-    private void DongBaoSuCo()
-    {
-        chuyenDangBaoSuCo = null;
+        chuyenDangBanGiao = null;
+        chuyenDangHoanTra = null;
         noiDungSuCo = "";
     }
 
     private void XacNhanBaoSuCo()
     {
-        if (chuyenDangBaoSuCo == null)
-        {
-            return;
-        }
+        if (chuyenDangBaoSuCo == null) return;
 
         if (string.IsNullOrWhiteSpace(noiDungSuCo))
         {
@@ -334,7 +729,7 @@ else
         }
 
         string loi;
-        bool thanhCong = tripService.UpdateTripStatus(chuyenDangBaoSuCo.Id, TripStatus.NeedSupport, noiDungSuCo, out loi);
+        bool thanhCong = tripService.ReportIncident(chuyenDangBaoSuCo.Id, noiDungSuCo, out loi);
 
         if (!thanhCong)
         {
@@ -344,17 +739,17 @@ else
         }
 
         string maChuyen = chuyenDangBaoSuCo.DispatchCode;
-        DongBaoSuCo();
+        chuyenDangBaoSuCo = null;
         NapDuLieu();
 
-        thongBao = $"Đã phát tín hiệu cảnh báo sự cố cho chuyến đi {maChuyen}.";
+        thongBao = $"Đã phát tín hiệu cảnh báo sự cố khẩn cấp cho chuyến {maChuyen}.";
         coLoi = false;
     }
 
-    private void TiepTucDiChuyen(Trip item)
+    private void KhacPhucSuCo(Trip item)
     {
         string loi;
-        bool thanhCong = tripService.UpdateTripStatus(item.Id, TripStatus.InTransit, "Đã khắc phục sự cố, tiếp tục hành trình.", out loi);
+        bool thanhCong = tripService.ResumeTrip(item.Id, "Đã khắc phục sự cố, tiếp tục hành trình an toàn.", out loi);
 
         if (!thanhCong)
         {
@@ -366,57 +761,6 @@ else
         NapDuLieu();
         thongBao = $"Chuyến đi {item.DispatchCode} đã tiếp tục hành trình bình thường.";
         coLoi = false;
-    }
-
-    private async Task XacNhanDaVe(Trip item)
-    {
-        var xacNhan = await dialog.Confirm(
-            $"Xác nhận phương tiện của chuyến đi {item.DispatchCode} đã trở về đơn vị an toàn?",
-            "Xác nhận trở về");
-
-        if (xacNhan != true)
-        {
-            return;
-        }
-
-        string loi;
-        bool thanhCong = tripService.UpdateTripStatus(item.Id, TripStatus.Returned, null, out loi);
-
-        if (!thanhCong)
-        {
-            thongBao = loi;
-            coLoi = true;
-            return;
-        }
-
-        NapDuLieu();
-        thongBao = $"Chuyến đi {item.DispatchCode} đã trở về an toàn. Yêu cầu chuyển sang trạng thái chờ quyết toán.";
-        coLoi = false;
-    }
-
-    private string LayMauTrangThaiChuyen(TripStatus status)
-    {
-        if (status == TripStatus.WaitingDeparture)
-        {
-            return "bg-warning text-dark";
-        }
-
-        if (status == TripStatus.InTransit)
-        {
-            return "bg-primary";
-        }
-
-        if (status == TripStatus.NeedSupport)
-        {
-            return "bg-danger";
-        }
-
-        if (status == TripStatus.Returned)
-        {
-            return "bg-success";
-        }
-
-        return "bg-secondary";
     }
 
     public void Dispose()

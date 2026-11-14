@@ -1,0 +1,140 @@
+@using MyWebApp.Models
+@using MyWebApp.Services
+@inject AppNotificationService notifService
+@inject AuthService authService
+@inject NavigationManager nav
+@implements IDisposable
+
+<div class="notification-wrapper">
+    <button type="button" 
+            class="btn-notification-bell @(coThongBaoChuaDoc ? "has-unread" : "") @(dangMo ? "active" : "")" 
+            @onclick="ToggleDropdown" 
+            title="Thông báo hệ thống">
+        <RadzenIcon Icon="notifications" Style="font-size: 1.2rem;" />
+        @if (soLuongChuaDoc > 0)
+        {
+            <span class="notification-badge">@(soLuongChuaDoc > 99 ? "99+" : soLuongChuaDoc.ToString())</span>
+        }
+    </button>
+
+    @if (dangMo)
+    {
+        <div class="notification-backdrop" @onclick="DongDropdown"></div>
+
+        <div class="notification-dropdown">
+            <div class="notification-dropdown-header">
+                <div class="d-flex align-items-center gap-2">
+                    <RadzenIcon Icon="notifications" Style="font-size: 1.05rem; color: #ffd166;" />
+                    <strong style="font-size: 0.88rem; color: #ffffff;">Thông báo hệ thống</strong>
+                    @if (soLuongChuaDoc > 0)
+                    {
+                        <span class="badge bg-danger rounded-pill px-2 py-1" style="font-size: 0.68rem; font-weight: 600;">@soLuongChuaDoc mới</span>
+                    }
+                </div>
+                @if (soLuongChuaDoc > 0)
+                {
+                    <button type="button" class="btn-mark-all-read" @onclick="DanhDauTatCaDaDoc" title="Đánh dấu tất cả là đã đọc">
+                        <RadzenIcon Icon="done_all" Style="font-size: 0.85rem;" />
+                        Đã đọc tất cả
+                    </button>
+                }
+            </div>
+
+            <div class="notification-dropdown-body">
+                @if (danhSachThongBao.Count == 0)
+                {
+                    <div class="notification-empty">
+                        <RadzenIcon Icon="notifications_none" Style="font-size: 2.4rem; color: #94a3b8;" />
+                        <div class="mt-2 text-dark fw-semibold" style="font-size: 0.85rem;">Không có thông báo mới</div>
+                        <div class="text-secondary small mt-1" style="font-size: 0.75rem;">Mọi yêu cầu điều phối và duyệt xe đều đã được cập nhật.</div>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var item in danhSachThongBao)
+                    {
+                        <div class="notification-item @(!item.IsRead ? "unread" : "")" @onclick="() => MoThongBao(item)">
+                            <div class="notification-icon-wrap" style="background-color: @(item.IconColor)15; color: @item.IconColor;">
+                                <RadzenIcon Icon="@item.Icon" Style="font-size: 1.1rem;" />
+                            </div>
+                            <div class="notification-content">
+                                <div class="d-flex align-items-center justify-content-between gap-1">
+                                    <div class="notification-title @(!item.IsRead ? "fw-bold" : "")">@item.Title</div>
+                                    @if (!item.IsRead)
+                                    {
+                                        <span class="notification-dot" title="Chưa đọc"></span>
+                                    }
+                                </div>
+                                <div class="notification-desc">@item.Message</div>
+                                <div class="notification-time">
+                                    <RadzenIcon Icon="schedule" Style="font-size: 0.72rem; vertical-align: middle;" />
+                                    <span>@item.TimeDisplay</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="notification-dropdown-footer">
+                <span class="text-muted" style="font-size: 0.72rem;">Học viện An ninh nhân dân • Quản lý phương tiện công vụ</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool dangMo = false;
+    private List<AppNotification> danhSachThongBao = new();
+    private int soLuongChuaDoc => danhSachThongBao.Count(x => !x.IsRead);
+    private bool coThongBaoChuaDoc => soLuongChuaDoc > 0;
+
+    protected override void OnInitialized()
+    {
+        authService.UserChanged += TaiLaiDuLieu;
+        notifService.OnChanged += TaiLaiDuLieu;
+        TaiLaiDuLieu();
+    }
+
+    private void TaiLaiDuLieu()
+    {
+        danhSachThongBao = notifService.GetNotifications();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleDropdown()
+    {
+        dangMo = !dangMo;
+        if (dangMo)
+        {
+            danhSachThongBao = notifService.GetNotifications();
+        }
+    }
+
+    private void DongDropdown()
+    {
+        dangMo = false;
+    }
+
+    private void DanhDauTatCaDaDoc()
+    {
+        notifService.MarkAllAsRead();
+        danhSachThongBao = notifService.GetNotifications();
+    }
+
+    private void MoThongBao(AppNotification item)
+    {
+        notifService.MarkAsRead(item.Id);
+        dangMo = false;
+        if (!string.IsNullOrWhiteSpace(item.TargetUrl))
+        {
+            nav.NavigateTo(item.TargetUrl);
+        }
+    }
+
+    public void Dispose()
+    {
+        authService.UserChanged -= TaiLaiDuLieu;
+        notifService.OnChanged -= TaiLaiDuLieu;
+    }
+}

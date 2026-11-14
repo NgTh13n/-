@@ -1,10 +1,17 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 
+@using MyWebApp.Models.Enums
+@using MyWebApp.Data
+
 @inject AuthService authService
+@inject MockDataService mockDataService
 @inject NavigationManager nav
+@inject NotificationService notificationService
+@inject DialogService dialogService
 
 <RadzenDialog />
+<RadzenNotification />
 
 @if (!authService.DaDangNhap)
 {
@@ -25,20 +32,50 @@ else
                     </div>
                 </div>
 
-                <div class="header-account">
+                @* BỘ CHUYỂN VAI TRÒ NHANH TINH TẾ (PHẲNG, GỌN, CHÍNH QUY) *@
+                <div class="d-flex align-items-center gap-2">
+                    <div class="role-switcher-box d-none d-sm-flex">
+                        <span class="text-white-50 small px-1" style="font-size: 0.72rem;">Vai trò:</span>
+                        <button class="role-pill-btn @(authService.CurrentUser?.Role == UserRole.Administrator ? "active" : "")"
+                                @onclick="() => ChuyenVaiTro(UserRole.Administrator)">
+                            Admin
+                        </button>
+                        <button class="role-pill-btn @(authService.CurrentUser?.Role == UserRole.FleetManager ? "active" : "")"
+                                @onclick="() => ChuyenVaiTro(UserRole.FleetManager)">
+                            Đội xe
+                        </button>
+                        <button class="role-pill-btn @(authService.CurrentUser?.Role == UserRole.Leader ? "active" : "")"
+                                @onclick="() => ChuyenVaiTro(UserRole.Leader)">
+                            Lãnh đạo
+                        </button>
+                        <button class="role-pill-btn @(authService.CurrentUser?.Role == UserRole.Officer ? "active" : "")"
+                                @onclick="() => ChuyenVaiTro(UserRole.Officer)">
+                            Cán bộ
+                        </button>
+                    </div>
+
+                    <button class="btn-reset-seed" @onclick="XacNhanResetData" title="Khôi phục dữ liệu mẫu ban đầu">
+                        <RadzenIcon Icon="restart_alt" Style="font-size: 0.95rem;" />
+                        <span class="d-none d-md-inline">Reset Dữ liệu</span>
+                    </button>
+                </div>
+
+                <div class="header-account d-flex align-items-center gap-3">
                     @if (authService.CurrentUser != null)
                     {
-                        <div class="current-user">
-                            <strong>@authService.CurrentUser.FullName</strong>
-                            <span>@authService.GetRoleName(authService.CurrentUser.Role)</span>
+                        <div class="current-user text-end d-none d-md-block">
+                            <strong class="text-white" style="font-size: 0.82rem;">@authService.CurrentUser.FullName</strong>
+                            <span class="text-white-50" style="font-size: 0.72rem;">@authService.GetRoleName(authService.CurrentUser.Role)</span>
                         </div>
                     }
 
-                    <RadzenButton Text="Đăng xuất"
+                    <NotificationBell />
+
+                    <RadzenButton Text="Thoát"
                                   Icon="logout"
                                   Click="DangXuat"
                                   ButtonStyle="ButtonStyle.Light"
-                                  Size="ButtonSize.Small" />
+                                  Size="ButtonSize.ExtraSmall" />
                 </div>
             </div>
         </RadzenHeader>
@@ -72,6 +109,33 @@ else
     private void ToggleSidebar()
     {
         sidebarExpanded = !sidebarExpanded;
+    }
+
+    private void ChuyenVaiTro(UserRole role)
+    {
+        authService.ChuyenVaiTroNhanh(role);
+        notificationService.Notify(NotificationSeverity.Info,
+            "Chuyển vai trò thành công",
+            $"Hiện đang đăng nhập với tư cách: {authService.CurrentUser?.FullName} ({authService.GetRoleName(role)})",
+            3000);
+    }
+
+    private async Task XacNhanResetData()
+    {
+        var xacNhan = await dialogService.Confirm(
+            "Bạn có chắc muốn khôi phục toàn bộ dữ liệu mẫu (8 xe CAND, 12 cán bộ, 4 lái xe, hồ sơ bảo dưỡng & lịch trình mẫu)?",
+            "Xác nhận Khôi phục Dữ liệu Gốc",
+            new ConfirmOptions() { OkButtonText = "Khôi phục", CancelButtonText = "Hủy bỏ" });
+
+        if (xacNhan == true)
+        {
+            mockDataService.ResetSeedData();
+            notificationService.Notify(NotificationSeverity.Success,
+                "Khôi phục thành công",
+                "Đã tái lập toàn bộ dữ liệu mẫu ban đầu theo đúng chuẩn Đặc tả kỹ thuật CAND!",
+                4000);
+            nav.NavigateTo(nav.Uri, forceLoad: true);
+        }
     }
 
     private void DangXuat()

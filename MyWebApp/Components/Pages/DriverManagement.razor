@@ -19,38 +19,56 @@
 }
 else
 {
-    <h1>Quản lý lái xe</h1>
-    <p class="text-muted">Danh sách cán bộ lái xe của đơn vị</p>
-
-    <RadzenButton Text="Thêm lái xe" Icon="person_add" Click="Them" ButtonStyle="ButtonStyle.Success" class="mb-3" />
+    <div class="page-header-box">
+        <div>
+            <h1 class="page-header-title">
+                <RadzenIcon Icon="badge" Style="color: var(--brand-navy);" />
+                Quản lý đội ngũ lái xe
+            </h1>
+            <p class="page-header-desc">Danh sách cán bộ lái xe, phân hạng bằng lái và trạng thái công tác</p>
+        </div>
+        <div>
+            <button class="btn btn-primary-action" @onclick="Them">
+                <RadzenIcon Icon="person_add" Class="me-1 align-middle" />
+                Thêm lái xe
+            </button>
+        </div>
+    </div>
 
     @if (thongBao != "")
     {
-        <div class="alert @(coLoi ? "alert-danger" : "alert-success")">
+        <div class="alert @(coLoi ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm">
+            <RadzenIcon Icon="@(coLoi ? "error" : "check_circle")" Class="me-2" />
             @thongBao
+            <button type="button" class="btn-close" @onclick="() => thongBao = string.Empty"></button>
         </div>
     }
 
     @if (laiXeDangXem != null)
     {
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between">
-                <strong>Chi tiết lái xe: @laiXeDangXem.FullName</strong>
+        <div class="gov-card gov-card-accent-primary mb-4">
+            <div class="gov-card-header">
+                <strong class="gov-card-header-title"><RadzenIcon Icon="badge" Class="me-1" /> Chi tiết lái xe: @laiXeDangXem.FullName</strong>
                 <button class="btn btn-sm btn-outline-secondary" @onclick="DongChiTiet">Đóng</button>
             </div>
-            <div class="card-body row">
-                <div class="col-md-3 mb-2">Mã lái xe: LX-@laiXeDangXem.Id.ToString("D3")</div>
-                <div class="col-md-3 mb-2">Họ và tên: @laiXeDangXem.FullName</div>
-                <div class="col-md-3 mb-2">Số điện thoại: @(string.IsNullOrEmpty(laiXeDangXem.Phone) ? "Chưa có" : laiXeDangXem.Phone)</div>
-                <div class="col-md-3 mb-2">Hạng giấy phép: @laiXeDangXem.LicenseType</div>
-                <div class="col-md-3 mb-2">Tình trạng: @EnumHelper.TenDriverStatus(laiXeDangXem.Status)</div>
+            <div class="gov-card-body row">
+                <div class="col-md-3 mb-2"><strong>Mã lái xe:</strong> LX-@laiXeDangXem.Id.ToString("D3")</div>
+                <div class="col-md-3 mb-2"><strong>Họ và tên:</strong> @laiXeDangXem.FullName</div>
+                <div class="col-md-3 mb-2"><strong>Số điện thoại:</strong> @(string.IsNullOrEmpty(laiXeDangXem.Phone) ? "Chưa có" : laiXeDangXem.Phone)</div>
+                <div class="col-md-3 mb-2"><strong>Hạng giấy phép:</strong> @laiXeDangXem.LicenseType</div>
+                <div class="col-md-3 mb-2"><strong>Tình trạng:</strong> @EnumHelper.TenDriverStatus(laiXeDangXem.Status)</div>
             </div>
         </div>
     }
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <h2 class="h5">@(dangSua ? "Cập nhật thông tin lái xe" : "Thêm lái xe mới")</h2>
+    <div class="gov-card mb-4">
+        <div class="gov-card-header">
+            <h2 class="gov-card-header-title">
+                <RadzenIcon Icon="@(dangSua ? "edit" : "person_add")" Style="color: var(--brand-navy);" />
+                @(dangSua ? "Cập nhật thông tin lái xe" : "Thêm lái xe mới")
+            </h2>
+        </div>
+        <div class="gov-card-body">
 
             <EditForm Model="laiXe" OnValidSubmit="Luu">
                 <DataAnnotationsValidator />

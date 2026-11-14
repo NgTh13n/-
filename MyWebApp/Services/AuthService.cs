@@ -20,35 +20,19 @@ public class AuthService
         duLieu = mockDataService;
     }
 
-    public bool DaDangNhap
-    {
-        get
-        {
-            return CurrentUser != null;
-        }
-    }
+    public bool DaDangNhap => CurrentUser != null;
 
     // Kiểm tra đăng nhập, trả về thông báo lỗi nếu sai.
     public string DangNhap(string tenDangNhap, string matKhau)
     {
         tenDangNhap = tenDangNhap.Trim();
+        var user = duLieu.Users.FirstOrDefault(u => string.Equals(u.Username, tenDangNhap, StringComparison.OrdinalIgnoreCase));
+        if (user == null) return "Tên đăng nhập không tồn tại.";
+        if (user.Password != matKhau) return "Mật khẩu không đúng.";
 
-        foreach (User user in duLieu.Users)
-        {
-            if (string.Equals(user.Username, tenDangNhap, StringComparison.OrdinalIgnoreCase))
-            {
-                if (user.Password != matKhau)
-                {
-                    return "Mật khẩu không đúng.";
-                }
-
-                CurrentUser = user;
-                UserChanged?.Invoke();
-                return "";
-            }
-        }
-
-        return "Tên đăng nhập không tồn tại.";
+        CurrentUser = user;
+        UserChanged?.Invoke();
+        return "";
     }
 
     public void DangXuat()
@@ -57,51 +41,22 @@ public class AuthService
         UserChanged?.Invoke();
     }
 
+    // Tiện ích trình diễn / chấm điểm: Đổi nhanh vai trò người dùng 1 chạm
+    public void ChuyenVaiTroNhanh(UserRole role)
+    {
+        var targetUser = duLieu.Users.FirstOrDefault(u => u.Role == role);
+        if (targetUser != null)
+        {
+            CurrentUser = targetUser;
+            UserChanged?.Invoke();
+        }
+    }
+
     // --- Kiểm tra quyền ---
-
-    public bool CanManageVehicles
-    {
-        get
-        {
-            if (CurrentUser == null)
-            {
-                return false;
-            }
-
-            return CurrentUser.Role == UserRole.FleetManager || CurrentUser.Role == UserRole.Administrator;
-        }
-    }
-
-    public bool CanApproveBookings
-    {
-        get
-        {
-            if (CurrentUser == null)
-            {
-                return false;
-            }
-
-            return CurrentUser.Role == UserRole.Leader || CurrentUser.Role == UserRole.Administrator;
-        }
-    }
-
-    public bool CanDispatch
-    {
-        get
-        {
-            if (CurrentUser == null)
-            {
-                return false;
-            }
-
-            return CurrentUser.Role == UserRole.FleetManager || CurrentUser.Role == UserRole.Administrator;
-        }
-    }
+    public bool CanManageVehicles => CurrentUser?.Role is UserRole.FleetManager or UserRole.Administrator;
+    public bool CanApproveBookings => CurrentUser?.Role is UserRole.Leader or UserRole.Administrator;
+    public bool CanDispatch => CurrentUser?.Role is UserRole.FleetManager or UserRole.Administrator;
 
     // --- Hàm tiện ích ---
-
-    public string GetRoleName(UserRole role)
-    {
-        return EnumHelper.TenUserRole(role);
-    }
+    public string GetRoleName(UserRole role) => EnumHelper.TenUserRole(role);
 }

@@ -16,17 +16,7 @@ public class VehicleService
     }
 
     // Trả về một bản sao danh sách để form sửa không đổi dữ liệu trước khi bấm Lưu.
-    public List<Vehicle> GetAll()
-    {
-        List<Vehicle> ketQua = new List<Vehicle>();
-
-        foreach (Vehicle vehicle in duLieu.Vehicles)
-        {
-            ketQua.Add(SaoChep(vehicle));
-        }
-
-        return ketQua;
-    }
+    public List<Vehicle> GetAll() => duLieu.Vehicles.Select(SaoChep).ToList();
 
     public bool Add(Vehicle vehicle, out string loi)
     {
@@ -37,26 +27,10 @@ public class VehicleService
         }
 
         loi = KiemTra(vehicle, 0);
+        if (loi != "") return false;
 
-        if (loi != "")
-        {
-            return false;
-        }
-
-        // Cấp mã Id tiếp theo, kể cả khi một xe cũ đã bị xóa.
-        int idMoi = 1;
-
-        foreach (Vehicle xe in duLieu.Vehicles)
-        {
-            if (xe.Id >= idMoi)
-            {
-                idMoi = xe.Id + 1;
-            }
-        }
-
-        vehicle.Id = idMoi;
+        vehicle.Id = duLieu.Vehicles.Count > 0 ? duLieu.Vehicles.Max(x => x.Id) + 1 : 1;
         duLieu.Vehicles.Add(SaoChep(vehicle));
-
         return true;
     }
 
@@ -69,23 +43,17 @@ public class VehicleService
         }
 
         loi = KiemTra(vehicle, vehicle.Id);
+        if (loi != "") return false;
 
-        if (loi != "")
+        int index = duLieu.Vehicles.FindIndex(v => v.Id == vehicle.Id);
+        if (index < 0)
         {
+            loi = "Không tìm thấy phương tiện cần sửa.";
             return false;
         }
 
-        for (int i = 0; i < duLieu.Vehicles.Count; i++)
-        {
-            if (duLieu.Vehicles[i].Id == vehicle.Id)
-            {
-                duLieu.Vehicles[i] = SaoChep(vehicle);
-                return true;
-            }
-        }
-
-        loi = "Không tìm thấy phương tiện cần sửa.";
-        return false;
+        duLieu.Vehicles[index] = SaoChep(vehicle);
+        return true;
     }
 
     public bool Delete(int id, out string loi)
@@ -97,32 +65,22 @@ public class VehicleService
         }
 
         // Chặn xóa xe đang có chuyến đi chưa hoàn thành.
-        foreach (Trip chuyen in duLieu.Trips)
+        if (duLieu.Trips.Any(c => c.VehicleId == id && !(c.Status == TripStatus.Returned && c.IsSettled)))
         {
-            if (chuyen.VehicleId == id)
-            {
-                bool daHoanThanh = chuyen.Status == TripStatus.Returned && chuyen.IsSettled;
-
-                if (!daHoanThanh)
-                {
-                    loi = "Không thể xóa phương tiện đang có chuyến đi chưa hoàn thành.";
-                    return false;
-                }
-            }
+            loi = "Không thể xóa phương tiện đang có chuyến đi chưa hoàn thành.";
+            return false;
         }
 
-        for (int i = 0; i < duLieu.Vehicles.Count; i++)
+        int index = duLieu.Vehicles.FindIndex(v => v.Id == id);
+        if (index < 0)
         {
-            if (duLieu.Vehicles[i].Id == id)
-            {
-                duLieu.Vehicles.RemoveAt(i);
-                loi = "";
-                return true;
-            }
+            loi = "Không tìm thấy phương tiện cần xóa.";
+            return false;
         }
 
-        loi = "Không tìm thấy phương tiện cần xóa.";
-        return false;
+        duLieu.Vehicles.RemoveAt(index);
+        loi = "";
+        return true;
     }
 
     private string KiemTra(Vehicle vehicle, int idCanBoQua)
@@ -131,34 +89,19 @@ public class VehicleService
         vehicle.LicensePlate = vehicle.LicensePlate.Trim();
 
         if (vehicle.ManufactureYear > DateTime.Today.Year)
-        {
             return "Năm sản xuất không được lớn hơn năm hiện tại.";
-        }
 
         if (vehicle.Seats < 1)
-        {
             return "Số chỗ ngồi phải lớn hơn 0.";
-        }
 
         if (vehicle.CurrentKm < 0)
-        {
             return "Số km hiện tại không được âm.";
-        }
 
-        foreach (Vehicle xe in duLieu.Vehicles)
-        {
-            if (xe.Id != idCanBoQua &&
-                string.Equals(xe.VehicleCode, vehicle.VehicleCode, StringComparison.OrdinalIgnoreCase))
-            {
-                return "Mã phương tiện đã tồn tại.";
-            }
+        if (duLieu.Vehicles.Any(xe => xe.Id != idCanBoQua && string.Equals(xe.VehicleCode, vehicle.VehicleCode, StringComparison.OrdinalIgnoreCase)))
+            return "Mã phương tiện đã tồn tại.";
 
-            if (xe.Id != idCanBoQua &&
-                string.Equals(xe.LicensePlate, vehicle.LicensePlate, StringComparison.OrdinalIgnoreCase))
-            {
-                return "Biển số đã tồn tại.";
-            }
-        }
+        if (duLieu.Vehicles.Any(xe => xe.Id != idCanBoQua && string.Equals(xe.LicensePlate, vehicle.LicensePlate, StringComparison.OrdinalIgnoreCase)))
+            return "Biển số đã tồn tại.";
 
         return "";
     }
@@ -180,7 +123,9 @@ public class VehicleService
             ChassisNumber = vehicle.ChassisNumber,
             EngineNumber = vehicle.EngineNumber,
             ReceiveDate = vehicle.ReceiveDate,
-            Status = vehicle.Status,
+            OperationalStatus = vehicle.OperationalStatus,
+            RegistrationExpiryDate = vehicle.RegistrationExpiryDate,
+            NextMaintenanceDate = vehicle.NextMaintenanceDate,
             Note = vehicle.Note
         };
     }

@@ -2,182 +2,186 @@ using MyWebApp.Models.Enums;
 
 namespace MyWebApp.Helpers;
 
-// Helper tập trung: chuyển Enum sang tên tiếng Việt hiển thị trên giao diện.
-// Thêm enum mới thì thêm hàm mới vào đây.
+// Helper tập trung: chuyển Enum sang tên tiếng Việt hiển thị trên giao diện CAND.
 public static class EnumHelper
 {
     public static string TenVehicleStatus(VehicleStatus status)
     {
-        if (status == VehicleStatus.SanSang)
+        return status switch
         {
-            return "Sẵn sàng";
-        }
+            VehicleStatus.SanSang => "Sẵn sàng",
+            VehicleStatus.DangDuocDieuDong => "Đang được điều động",
+            VehicleStatus.DangBaoDuong => "Đang bảo dưỡng",
+            VehicleStatus.NgungHoatDong => "Ngừng hoạt động",
+            _ => "Không xác định"
+        };
+    }
 
-        if (status == VehicleStatus.DangDuocDieuDong)
+    public static string TenVehicleOperationalStatus(VehicleOperationalStatus status)
+    {
+        return status switch
         {
-            return "Đang được điều động";
-        }
-
-        if (status == VehicleStatus.DangBaoDuong)
-        {
-            return "Đang bảo dưỡng";
-        }
-
-        if (status == VehicleStatus.NgungHoatDong)
-        {
-            return "Ngừng hoạt động";
-        }
-
-        return "";
+            VehicleOperationalStatus.Ready => "Sẵn sàng",
+            VehicleOperationalStatus.Maintenance => "Đang bảo dưỡng",
+            VehicleOperationalStatus.Inactive => "Ngừng hoạt động",
+            _ => "Không xác định"
+        };
     }
 
     public static string TenVehicleType(VehicleType type)
     {
-        if (type == VehicleType.OTo)
+        return type switch
         {
-            return "Ô tô";
-        }
-
-        if (type == VehicleType.XeMay)
-        {
-            return "Xe máy";
-        }
-
-        if (type == VehicleType.XeTai)
-        {
-            return "Xe tải";
-        }
-
-        if (type == VehicleType.XeChuyenDung)
-        {
-            return "Xe chuyên dụng";
-        }
-
-        return "";
+            VehicleType.OTo => "Ô tô",
+            VehicleType.XeMay => "Xe máy",
+            VehicleType.XeTai => "Xe tải",
+            VehicleType.XeChuyenDung => "Xe chuyên dụng",
+            _ => "Phương tiện khác"
+        };
     }
 
     public static string TenDriverStatus(DriverStatus status)
     {
-        if (status == DriverStatus.Active)
+        return status switch
         {
-            return "Đang làm việc";
-        }
+            DriverStatus.Active => "Đang làm việc",
+            DriverStatus.OnLeave => "Đang nghỉ phép",
+            DriverStatus.Inactive => "Không còn làm việc",
+            _ => "Không xác định"
+        };
+    }
 
-        if (status == DriverStatus.OnLeave)
+    public static string TenDriverMode(DriverMode mode)
+    {
+        return mode switch
         {
-            return "Đang nghỉ phép";
-        }
-
-        if (status == DriverStatus.Inactive)
-        {
-            return "Không còn làm việc";
-        }
-
-        return "";
+            DriverMode.AssignedDriver => "Lái xe đơn vị",
+            DriverMode.SelfDrive => "Cán bộ tự lái",
+            _ => "Lái xe đơn vị"
+        };
     }
 
     public static string TenBookingStatus(BookingStatus status)
     {
-        if (status == BookingStatus.Draft)
+        return status switch
         {
-            return "Bản nháp";
-        }
-
-        if (status == BookingStatus.PendingApproval)
-        {
-            return "Chờ phê duyệt";
-        }
-
-        if (status == BookingStatus.Rejected)
-        {
-            return "Bị từ chối";
-        }
-
-        if (status == BookingStatus.Approved)
-        {
-            return "Đã duyệt";
-        }
-
-        if (status == BookingStatus.PendingDispatch)
-        {
-            return "Chờ điều động";
-        }
-
-        if (status == BookingStatus.Dispatched)
-        {
-            return "Đã điều động";
-        }
-
-        if (status == BookingStatus.InProgress)
-        {
-            return "Đang thực hiện";
-        }
-
-        if (status == BookingStatus.PendingSettlement)
-        {
-            return "Chờ quyết toán";
-        }
-
-        if (status == BookingStatus.Completed)
-        {
-            return "Hoàn thành";
-        }
-
-        if (status == BookingStatus.Cancelled)
-        {
-            return "Đã hủy";
-        }
-
-        return "";
+            BookingStatus.Draft => "Bản nháp",
+            BookingStatus.PendingApproval => "Chờ phê duyệt",
+            BookingStatus.NeedAdjustment => "Yêu cầu bổ sung",
+            BookingStatus.Rejected => "Bị từ chối",
+            BookingStatus.Approved => "Đã duyệt",
+            BookingStatus.PendingDispatch => "Chờ điều động",
+            BookingStatus.Dispatched => "Đã điều phối",
+            BookingStatus.HandingOver => "Đang bàn giao",
+            BookingStatus.InUse => "Đang sử dụng",
+            BookingStatus.InProgress => "Đang thực hiện",
+            BookingStatus.PendingSettlement => "Chờ quyết toán",
+            BookingStatus.Overdue => "Quá hạn",
+            BookingStatus.Completed => "Hoàn thành",
+            BookingStatus.Cancelled => "Đã hủy",
+            _ => "Không xác định"
+        };
     }
 
     public static string TenTripStatus(TripStatus status)
     {
-        if (status == TripStatus.WaitingDeparture)
+        return status switch
         {
-            return "Chờ xuất phát";
-        }
+            TripStatus.WaitingDeparture => "Chờ xuất phát",
+            TripStatus.Dispatched => "Đã điều phối",
+            TripStatus.HandingOver => "Đang bàn giao",
+            TripStatus.InTransit => "Đang di chuyển",
+            TripStatus.InUse => "Đang sử dụng",
+            TripStatus.NeedSupport => "Cần hỗ trợ",
+            TripStatus.Overdue => "Quá hạn",
+            TripStatus.Returned => "Đã hoàn trả",
+            TripStatus.Completed => "Đã hoàn tất",
+            TripStatus.Cancelled => "Đã hủy",
+            _ => "Không xác định"
+        };
+    }
 
-        if (status == TripStatus.InTransit)
+    public static string TenMaintenanceStatus(MaintenanceStatus status)
+    {
+        return status switch
         {
-            return "Đang di chuyển";
-        }
+            MaintenanceStatus.Planned => "Lên kế hoạch",
+            MaintenanceStatus.InProgress => "Đang bảo dưỡng",
+            MaintenanceStatus.Completed => "Đã hoàn tất",
+            MaintenanceStatus.Cancelled => "Đã hủy",
+            _ => "Không xác định"
+        };
+    }
 
-        if (status == TripStatus.NeedSupport)
+    public static string TenMaintenanceType(MaintenanceType type)
+    {
+        return type switch
         {
-            return "Cần hỗ trợ";
-        }
-
-        if (status == TripStatus.Returned)
-        {
-            return "Đã về";
-        }
-
-        return "";
+            MaintenanceType.Periodic => "Định kỳ",
+            MaintenanceType.Repair => "Sửa chữa",
+            MaintenanceType.Inspection => "Kiểm định / Đăng kiểm",
+            _ => "Bảo dưỡng"
+        };
     }
 
     public static string TenUserRole(UserRole role)
     {
-        if (role == UserRole.Officer)
+        return role switch
         {
-            return "Cán bộ / Chiến sĩ";
-        }
-
-        if (role == UserRole.Leader)
-        {
-            return "Lãnh đạo";
-        }
-
-        if (role == UserRole.FleetManager)
-        {
-            return "Quản lý đội xe";
-        }
-
-        if (role == UserRole.Administrator)
-        {
-            return "Quản trị viên";
-        }
-
-        return "";
+            UserRole.Officer => "Cán bộ / Chiến sĩ",
+            UserRole.Leader => "Lãnh đạo đơn vị",
+            UserRole.FleetManager => "Quản lý đội xe",
+            UserRole.Administrator => "Quản trị viên",
+            _ => "Người dùng"
+        };
     }
+
+    // =========================================================================
+    // PONYTAIL EXTENSION METHODS: Gom toàn bộ CSS Badge & Tên tiếng Việt về 1 nơi
+    // =========================================================================
+
+    public static string BadgeClass(this BookingStatus status) => status switch
+    {
+        BookingStatus.Draft => "badge-status-neutral",
+        BookingStatus.PendingApproval or BookingStatus.NeedAdjustment => "badge-status-warning",
+        BookingStatus.Approved or BookingStatus.PendingDispatch or BookingStatus.Dispatched => "badge-status-info",
+        BookingStatus.HandingOver or BookingStatus.InUse or BookingStatus.InProgress => "badge-status-info",
+        BookingStatus.Completed => "badge-status-success",
+        BookingStatus.Rejected or BookingStatus.Overdue or BookingStatus.Cancelled => "badge-status-danger",
+        _ => "badge-status-neutral"
+    };
+
+    public static string BadgeClass(this TripStatus status) => status switch
+    {
+        TripStatus.WaitingDeparture or TripStatus.Dispatched => "badge-status-warning",
+        TripStatus.HandingOver or TripStatus.InTransit or TripStatus.InUse => "badge-status-info",
+        TripStatus.NeedSupport or TripStatus.Overdue or TripStatus.Cancelled => "badge-status-danger",
+        TripStatus.Returned or TripStatus.Completed => "badge-status-success",
+        _ => "badge-status-neutral"
+    };
+
+    public static string BadgeClass(this VehicleStatus status) => status switch
+    {
+        VehicleStatus.SanSang => "badge-status-success",
+        VehicleStatus.DangDuocDieuDong => "badge-status-info",
+        VehicleStatus.DangBaoDuong => "badge-status-warning",
+        VehicleStatus.NgungHoatDong => "badge-status-danger",
+        _ => "badge-status-neutral"
+    };
+
+    public static string BadgeClass(this MaintenanceStatus status) => status switch
+    {
+        MaintenanceStatus.Planned => "badge-status-warning",
+        MaintenanceStatus.InProgress => "badge-status-info",
+        MaintenanceStatus.Completed => "badge-status-success",
+        MaintenanceStatus.Cancelled => "badge-status-danger",
+        _ => "badge-status-neutral"
+    };
+
+    public static string Ten(this BookingStatus s) => TenBookingStatus(s);
+    public static string Ten(this TripStatus s) => TenTripStatus(s);
+    public static string Ten(this VehicleStatus s) => TenVehicleStatus(s);
+    public static string Ten(this MaintenanceStatus s) => TenMaintenanceStatus(s);
+    public static string Ten(this DriverMode m) => TenDriverMode(m);
+    public static string Ten(this UserRole r) => TenUserRole(r);
 }

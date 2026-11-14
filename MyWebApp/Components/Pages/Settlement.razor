@@ -19,17 +19,22 @@
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-header-box">
         <div>
-            <h1>Quyết toán chuyến công tác</h1>
-            <p class="text-muted mb-0">Nghiệm thu hành trình, ghi nhận chỉ số Km, lượng nhiên liệu và hoàn tất hồ sơ</p>
+            <h1 class="page-header-title">
+                <RadzenIcon Icon="receipt_long" Style="color: var(--brand-navy);" />
+                Quyết toán chuyến công tác
+            </h1>
+            <p class="page-header-desc">Nghiệm thu hành trình, ghi nhận chỉ số Km, lượng nhiên liệu và hoàn tất hồ sơ</p>
         </div>
     </div>
 
     @if (thongBao != "")
     {
-        <div class="alert @(coLoi ? "alert-danger" : "alert-success")">
+        <div class="alert @(coLoi ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm">
+            <RadzenIcon Icon="@(coLoi ? "error" : "check_circle")" Class="me-2" />
             @thongBao
+            <button type="button" class="btn-close" @onclick="() => thongBao = string.Empty"></button>
         </div>
     }
 
@@ -40,10 +45,10 @@ else
         Vehicle? xe = tripService.GetVehicle(chuyenDangQuyetToan.VehicleId);
         Driver? lx = tripService.GetDriver(chuyenDangQuyetToan.DriverId);
 
-        <div class="card mb-4 border-success shadow-sm">
-            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                <strong>PHIẾU QUYẾT TOÁN CHUYẾN CÔNG TÁC: @chuyenDangQuyetToan.DispatchCode</strong>
-                <button class="btn btn-sm btn-outline-light" @onclick="DongFormQuyetToan">Đóng</button>
+        <div class="gov-card gov-card-accent-success mb-4">
+            <div class="gov-card-header">
+                <strong class="gov-card-header-title text-success"><RadzenIcon Icon="receipt" Class="me-1" /> PHIẾU QUYẾT TOÁN CHUYẾN CÔNG TÁC: @chuyenDangQuyetToan.DispatchCode</strong>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="DongFormQuyetToan">Đóng</button>
             </div>
             <div class="card-body">
                 <div class="p-3 bg-light rounded mb-3">

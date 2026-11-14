@@ -1,243 +1,247 @@
 @page "/"
 @rendermode InteractiveServer
 
+@using MyWebApp.Models
 @using MyWebApp.Models.Enums
 @using MyWebApp.Helpers
 
 @inject MockDataService mockDataService
 @inject AuthService authService
+@inject NavigationManager nav
 
-<PageTitle>Tổng quan hệ thống</PageTitle>
+<PageTitle>Tổng quan điều hành phương tiện</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+@* TIÊU ĐỀ TRANG CHÍNH QUY *@
+<div class="page-header-box">
     <div>
-        <h1>Tổng quan quản lý phương tiện</h1>
-        <p class="text-muted mb-0">Hệ thống thông tin điều hành & sử dụng phương tiện công tác</p>
+        <h1 class="page-header-title">
+            <RadzenIcon Icon="dashboard" Style="color: var(--brand-navy);" />
+            Tổng quan điều hành phương tiện công vụ
+        </h1>
+        <p class="page-header-desc">
+            Theo dõi trạng thái sẵn sàng chiến đấu, điều động công tác và an toàn kỹ thuật phương tiện Học viện
+        </p>
     </div>
-    @if (authService.CurrentUser != null)
-    {
-        <div class="text-end">
-            <span class="badge bg-primary fs-6 p-2">
-                @authService.CurrentUser.FullName (@authService.GetRoleName(authService.CurrentUser.Role))
-            </span>
-        </div>
-    }
+    <div class="d-flex align-items-center gap-2">
+        @if (authService.CanManageVehicles)
+        {
+            <a href="/bookings" class="btn btn-primary-action text-decoration-none">
+                <RadzenIcon Icon="add_circle" Class="me-1 align-middle" />
+                Lập yêu cầu mới
+            </a>
+        }
+    </div>
 </div>
 
-@* THẺ CHỈ SỐ NHANH *@
+@* 4 THẺ CHỈ SỐ CỐT LÕI (THIẾT KẾ PHẲNG, TINH TẾ, KHÔNG RỐI MẮT) *@
 <div class="row g-3 mb-4">
-    <div class="col-md-2 col-sm-4 col-6">
-        <div class="card h-100 shadow-sm border-0 border-top border-3 border-primary">
-            <div class="card-body">
-                <p class="text-muted small mb-1">Tổng phương tiện</p>
-                <h3 class="fw-bold mb-0 text-primary">@tongSoXe</h3>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Tổng xe biên chế</div>
+                <div class="kpi-value">@tongSoXe</div>
+                <div class="kpi-subtext">Đầy đủ 8 xe theo định mức</div>
+            </div>
+            <div class="kpi-icon-wrapper">
+                <RadzenIcon Icon="directions_car" Style="font-size: 1.5rem;" />
             </div>
         </div>
     </div>
-    <div class="col-md-2 col-sm-4 col-6">
-        <div class="card h-100 shadow-sm border-0 border-top border-3 border-success">
-            <div class="card-body">
-                <p class="text-muted small mb-1">Sẵn sàng</p>
-                <h3 class="fw-bold mb-0 text-success">@soXeSanSang</h3>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Sẵn sàng xuất kích</div>
+                <div class="kpi-value text-success">@soXeSanSang</div>
+                <div class="kpi-subtext">Đạt chuẩn kỹ thuật vận hành</div>
+            </div>
+            <div class="kpi-icon-wrapper kpi-icon-success">
+                <RadzenIcon Icon="check_circle" Style="font-size: 1.5rem;" />
             </div>
         </div>
     </div>
-    <div class="col-md-2 col-sm-4 col-6">
-        <div class="card h-100 shadow-sm border-0 border-top border-3 border-info">
-            <div class="card-body">
-                <p class="text-muted small mb-1">Đang điều động</p>
-                <h3 class="fw-bold mb-0 text-info">@soXeDangDieuDong</h3>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Đang làm nhiệm vụ</div>
+                <div class="kpi-value text-primary">@soXeDangCongTac</div>
+                <div class="kpi-subtext">Hoạt động ngoài địa bàn</div>
+            </div>
+            <div class="kpi-icon-wrapper kpi-icon-primary">
+                <RadzenIcon Icon="near_me" Style="font-size: 1.5rem;" />
             </div>
         </div>
     </div>
-    <div class="col-md-2 col-sm-4 col-6">
-        <div class="card h-100 shadow-sm border-0 border-top border-3 border-warning">
-            <div class="card-body">
-                <p class="text-muted small mb-1">Đang bảo dưỡng</p>
-                <h3 class="fw-bold mb-0 text-warning">@soXeBaoDuong</h3>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Chờ phê duyệt</div>
+                <div class="kpi-value text-warning">@soDonChoDuyet</div>
+                <div class="kpi-subtext">Yêu cầu cần lãnh đạo ký</div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-sm-4 col-6">
-        <div class="card h-100 shadow-sm border-0 border-top border-3 border-danger">
-            <div class="card-body">
-                <p class="text-muted small mb-1">Chờ phê duyệt</p>
-                <h3 class="fw-bold mb-0 text-danger">@soDonChoDuyet</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 col-sm-4 col-6">
-        <div class="card h-100 shadow-sm border-0 border-top border-3 border-secondary">
-            <div class="card-body">
-                <p class="text-muted small mb-1">Đang di chuyển</p>
-                <h3 class="fw-bold mb-0 text-dark">@soChuyenDangChay</h3>
+            <div class="kpi-icon-wrapper kpi-icon-warning">
+                <RadzenIcon Icon="schedule" Style="font-size: 1.5rem;" />
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4 mb-4">
-    @* SỐ LƯỢNG THEO LOẠI XE *@
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light fw-bold">
-                Cơ cấu đội xe theo loại phương tiện
-            </div>
-            <div class="card-body">
-                <div class="row text-center g-3">
-                    <div class="col-6 col-sm-3">
-                        <div class="p-3 border rounded bg-light">
-                            <RadzenIcon Icon="directions_car" Style="font-size: 2rem;" class="text-primary mb-1" />
-                            <div class="small text-muted">Ô tô</div>
-                            <h4 class="fw-bold mb-0 mt-1">@soOTo</h4>
-                        </div>
-                    </div>
-                    <div class="col-6 col-sm-3">
-                        <div class="p-3 border rounded bg-light">
-                            <RadzenIcon Icon="two_wheeler" Style="font-size: 2rem;" class="text-success mb-1" />
-                            <div class="small text-muted">Xe máy</div>
-                            <h4 class="fw-bold mb-0 mt-1">@soXeMay</h4>
-                        </div>
-                    </div>
-                    <div class="col-6 col-sm-3">
-                        <div class="p-3 border rounded bg-light">
-                            <RadzenIcon Icon="local_shipping" Style="font-size: 2rem;" class="text-warning mb-1" />
-                            <div class="small text-muted">Xe tải</div>
-                            <h4 class="fw-bold mb-0 mt-1">@soXeTai</h4>
-                        </div>
-                    </div>
-                    <div class="col-6 col-sm-3">
-                        <div class="p-3 border rounded bg-light">
-                            <RadzenIcon Icon="airport_shuttle" Style="font-size: 2rem;" class="text-danger mb-1" />
-                            <div class="small text-muted">Chuyên dụng</div>
-                            <h4 class="fw-bold mb-0 mt-1">@soXeChuyenDung</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @* ĐỘI NGŨ LÁI XE *@
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light fw-bold">
-                Tình hình lực lượng lái xe
-            </div>
-            <div class="card-body">
-                <div class="row text-center g-3">
-                    <div class="col-4">
-                        <div class="p-3 border rounded bg-light">
-                            <div class="small text-muted">Tổng lái xe</div>
-                            <h4 class="fw-bold mb-0 text-primary">@mockDataService.Drivers.Count</h4>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="p-3 border rounded bg-light">
-                            <div class="small text-muted">Đang làm việc</div>
-                            <h4 class="fw-bold mb-0 text-success">@mockDataService.Drivers.Count(d => d.Status == DriverStatus.Active)</h4>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="p-3 border rounded bg-light">
-                            <div class="small text-muted">Nghỉ phép</div>
-                            <h4 class="fw-bold mb-0 text-warning">@mockDataService.Drivers.Count(d => d.Status == DriverStatus.OnLeave)</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-3 text-muted small text-center">
-                    Cán bộ lái xe sẵn sàng phục vụ các kế hoạch công tác đột xuất và thường xuyên của đơn vị.
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+@* NỘI DUNG TÁC CHIẾN 2 CỘT *@
 <div class="row g-4">
-    @* YÊU CẦU MỚI NHẤT *@
-    <div class="col-md-7">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <strong class="text-primary">Yêu cầu đăng ký phương tiện mới nhất</strong>
-                <a href="/bookings" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Mã</th>
-                                <th>Người đăng ký</th>
-                                <th>Điểm đến</th>
-                                <th>Thời gian</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (Booking b in danhSachYeuCauMoi)
-                            {
-                                User? ng = mockDataService.Users.FirstOrDefault(u => u.Id == b.RequesterId);
-                                <tr>
-                                    <td><strong>@b.BookingCode</strong></td>
-                                    <td>@(ng?.FullName ?? "Cán bộ")</td>
-                                    <td>@b.Destination</td>
-                                    <td><small>@b.DepartureTime.ToString("dd/MM HH:mm")</small></td>
-                                    <td>
-                                        <span class="badge @LayMauTrangThaiDon(b.Status)">
-                                            @EnumHelper.TenBookingStatus(b.Status)
-                                        </span>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+    @* CỘT TRÁI: PHƯƠNG TIỆN ĐANG HOẠT ĐỘNG TRÊN TUYẾN *@
+    <div class="col-lg-8">
+        <div class="gov-card h-100">
+            <div class="gov-card-header">
+                <div class="gov-card-header-title">
+                    <RadzenIcon Icon="alt_route" Style="font-size: 1.2rem; color: var(--brand-navy);" />
+                    Phương tiện đang thực hiện nhiệm vụ công tác
                 </div>
+                <a href="/trips" class="btn btn-sm btn-outline-secondary" style="font-size: 0.75rem;">
+                    Xem chi tiết nhật trình
+                </a>
             </div>
-        </div>
-    </div>
-
-    @* CÁC CHUYẾN ĐI ĐANG THỰC HIỆN *@
-    <div class="col-md-5">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <strong class="text-success">Chuyến công tác đang thực hiện</strong>
-                <a href="/trips" class="btn btn-sm btn-outline-success">Theo dõi</a>
-            </div>
-            <div class="card-body p-0">
+            <div class="gov-card-body p-0">
                 @if (danhSachChuyenDangChay.Count == 0)
                 {
-                    <div class="text-center text-muted p-4">
-                        Hiện không có chuyến công tác nào đang di chuyển ngoài địa bàn.
+                    <div class="p-4 text-center text-muted">
+                        <RadzenIcon Icon="local_parking" Style="font-size: 2.2rem; opacity: 0.3;" class="d-block mb-1" />
+                        Hiện không có phương tiện nào đang di chuyển ngoài đơn vị. Tất cả xe đều tập kết tại bãi đỗ.
                     </div>
                 }
                 else
                 {
-                    <div class="list-group list-group-flush">
-                        @foreach (Trip t in danhSachChuyenDangChay)
-                        {
-                            Vehicle? xe = mockDataService.Vehicles.FirstOrDefault(v => v.Id == t.VehicleId);
-                            Driver? lx = mockDataService.Drivers.FirstOrDefault(d => d.Id == t.DriverId);
-                            Booking? don = mockDataService.Bookings.FirstOrDefault(b => b.Id == t.BookingId);
-
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <strong>@t.DispatchCode</strong>
-                                    <span class="badge @LayMauTrangThaiChuyen(t.Status)">
-                                        @EnumHelper.TenTripStatus(t.Status)
-                                    </span>
-                                </div>
-                                <div class="small mt-1">
-                                    Xe: <strong>@xe?.LicensePlate</strong> (@xe?.Brand) — Lái xe: @lx?.FullName
-                                </div>
-                                <div class="small text-muted">
-                                    Điểm đến: <strong>@don?.Destination</strong> (Đi: @t.ActualDeparture?.ToString("dd/MM HH:mm"))
-                                </div>
-                                @if (t.Status == TripStatus.NeedSupport)
+                    <div class="gov-table-container border-0">
+                        <table class="gov-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã lệnh</th>
+                                    <th>Phương tiện</th>
+                                    <th>Người lái xe</th>
+                                    <th>Tuyến công tác</th>
+                                    <th>Thời gian dự kiến</th>
+                                    <th class="text-center">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (Trip t in danhSachChuyenDangChay)
                                 {
-                                    <div class="small text-danger fw-bold mt-1">
-                                        @t.Note
-                                    </div>
+                                    Vehicle? xe = mockDataService.Vehicles.FirstOrDefault(v => v.Id == t.VehicleId);
+                                    Driver? lx = mockDataService.Drivers.FirstOrDefault(d => d.Id == t.DriverId);
+                                    Booking? don = mockDataService.Bookings.FirstOrDefault(b => b.Id == t.BookingId);
+                                    bool isOverdue = DateTime.Now > t.ScheduledEndAt;
+
+                                    <tr>
+                                        <td class="fw-bold text-secondary">@t.DispatchCode</td>
+                                        <td>
+                                            <div class="fw-semibold">@(xe?.LicensePlate ?? t.VehiclePlateSnapshot)</div>
+                                            <div class="small text-muted">@xe?.Brand @xe?.Model</div>
+                                        </td>
+                                        <td>
+                                            @if (t.DriverMode == DriverMode.SelfDrive)
+                                            {
+                                                <span class="badge-status badge-status-info mb-1">Cán bộ tự lái</span>
+                                                <div class="small">@(string.IsNullOrEmpty(t.DriverNameSnapshot) ? "Cán bộ" : t.DriverNameSnapshot)</div>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge-status badge-status-neutral mb-1">Lái xe đơn vị</span>
+                                                <div class="small">@(lx?.FullName ?? (string.IsNullOrEmpty(t.DriverNameSnapshot) ? "Tài xế" : t.DriverNameSnapshot))</div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="fw-medium">@don?.Destination</div>
+                                            <div class="small text-muted">@don?.WorkType</div>
+                                        </td>
+                                        <td class="small">
+                                            <div>Xuất phát: @(t.ActualDeparture?.ToString("HH:mm dd/MM") ?? t.ScheduledStartAt.ToString("HH:mm dd/MM"))</div>
+                                            <div class="@(isOverdue ? "text-danger fw-bold" : "text-muted")">
+                                                Hẹn trả: @t.ScheduledEndAt.ToString("HH:mm dd/MM")
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (isOverdue)
+                                            {
+                                                <span class="badge-status badge-status-danger">Quá hạn trả xe</span>
+                                            }
+                                            else if (t.Status == TripStatus.NeedSupport)
+                                            {
+                                                <span class="badge-status badge-status-danger">Sự cố kỹ thuật</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge-status badge-status-info">Đang công tác</span>
+                                            }
+                                        </td>
+                                    </tr>
                                 }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* CỘT PHẢI: YÊU CẦU MỚI & THÔNG BÁO KỸ THUẬT *@
+    <div class="col-lg-4">
+        @* 1. DANH SÁCH YÊU CẦU MỚI *@
+        <div class="gov-card mb-4">
+            <div class="gov-card-header">
+                <div class="gov-card-header-title">
+                    <RadzenIcon Icon="assignment" Style="font-size: 1.15rem; color: var(--brand-navy);" />
+                    Yêu cầu đăng ký mới
+                </div>
+                <a href="/bookings" class="small text-decoration-none text-muted">Xem tất cả</a>
+            </div>
+            <div class="gov-card-body p-0">
+                <div class="list-group list-group-flush border-0">
+                    @foreach (Booking b in danhSachYeuCauMoi)
+                    {
+                        Officer? officer = mockDataService.Officers.FirstOrDefault(o => o.Id == b.RequesterId);
+                        <div class="list-group-item px-3 py-2 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="small text-primary">@b.BookingCode</strong>
+                                <span class="badge-status @b.Status.BadgeClass()">
+                                    @b.Status.Ten()
+                                </span>
+                            </div>
+                            <div class="small fw-medium">@(officer?.FullName ?? "Cán bộ") — @(officer?.Department ?? b.DepartmentSnapshot)</div>
+                            <div class="small text-muted">Tuyến: @b.Destination (@b.DepartureTime.ToString("dd/MM HH:mm"))</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* 2. GIÁM SÁT AN TOÀN KỸ THUẬT (TIÊU CHÍ 5) *@
+        <div class="gov-card">
+            <div class="gov-card-header">
+                <div class="gov-card-header-title text-danger">
+                    <RadzenIcon Icon="gshield" Style="font-size: 1.15rem;" />
+                    Kiểm soát an toàn & Điều kiện xe
+                </div>
+            </div>
+            <div class="gov-card-body p-3">
+                @if (danhSachCanhBao.Count == 0)
+                {
+                    <div class="text-center text-success py-2">
+                        <RadzenIcon Icon="verified" Style="font-size: 1.8rem;" class="mb-1" />
+                        <div class="small fw-medium">Toàn bộ xe và lái xe đạt chuẩn an toàn</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var cb in danhSachCanhBao)
+                        {
+                            <div class="p-2 rounded bg-light border-start border-3 border-danger" style="background-color: #fef2f2 !important;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small text-danger">@cb.TieuDe</strong>
+                                    <span class="badge-status badge-status-danger" style="font-size: 0.68rem;">@cb.LoaiCanhBao</span>
+                                </div>
+                                <div class="small text-secondary" style="font-size: 0.78rem;">@cb.NoiDung</div>
                             </div>
                         }
                     </div>
@@ -250,18 +254,20 @@
 @code {
     int tongSoXe = 0;
     int soXeSanSang = 0;
-    int soXeDangDieuDong = 0;
-    int soXeBaoDuong = 0;
+    int soXeDangCongTac = 0;
     int soDonChoDuyet = 0;
-    int soChuyenDangChay = 0;
 
-    int soOTo = 0;
-    int soXeMay = 0;
-    int soXeTai = 0;
-    int soXeChuyenDung = 0;
+    List<Booking> danhSachYeuCauMoi = new();
+    List<Trip> danhSachChuyenDangChay = new();
 
-    List<Booking> danhSachYeuCauMoi = new List<Booking>();
-    List<Trip> danhSachChuyenDangChay = new List<Trip>();
+    class CanhBaoItem
+    {
+        public string TieuDe { get; set; } = "";
+        public string NoiDung { get; set; } = "";
+        public string LoaiCanhBao { get; set; } = "";
+    }
+
+    List<CanhBaoItem> danhSachCanhBao = new();
 
     protected override void OnInitialized()
     {
@@ -272,36 +278,41 @@
     {
         tongSoXe = mockDataService.Vehicles.Count;
         soXeSanSang = mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.SanSang);
-        soXeDangDieuDong = mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.DangDuocDieuDong);
-        soXeBaoDuong = mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.DangBaoDuong);
-
-        soOTo = mockDataService.Vehicles.Count(x => x.VehicleType == VehicleType.OTo);
-        soXeMay = mockDataService.Vehicles.Count(x => x.VehicleType == VehicleType.XeMay);
-        soXeTai = mockDataService.Vehicles.Count(x => x.VehicleType == VehicleType.XeTai);
-        soXeChuyenDung = mockDataService.Vehicles.Count(x => x.VehicleType == VehicleType.XeChuyenDung);
-
+        soXeDangCongTac = mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.DangDuocDieuDong);
         soDonChoDuyet = mockDataService.Bookings.Count(b => b.Status == BookingStatus.PendingApproval);
-        soChuyenDangChay = mockDataService.Trips.Count(t => t.Status == TripStatus.InTransit || t.Status == TripStatus.NeedSupport);
 
-        danhSachYeuCauMoi = mockDataService.Bookings.OrderByDescending(b => b.Id).Take(5).ToList();
-        danhSachChuyenDangChay = mockDataService.Trips.Where(t => t.Status == TripStatus.InTransit || t.Status == TripStatus.NeedSupport).ToList();
-    }
+        danhSachChuyenDangChay = mockDataService.Trips
+            .Where(t => t.Status == TripStatus.InTransit || t.Status == TripStatus.NeedSupport)
+            .ToList();
 
-    private string LayMauTrangThaiDon(BookingStatus status)
-    {
-        if (status == BookingStatus.PendingApproval) return "bg-warning text-dark";
-        if (status == BookingStatus.PendingDispatch) return "bg-info text-dark";
-        if (status == BookingStatus.InProgress) return "bg-primary";
-        if (status == BookingStatus.Completed) return "bg-success";
-        if (status == BookingStatus.Rejected) return "bg-danger";
-        return "bg-secondary";
-    }
+        danhSachYeuCauMoi = mockDataService.Bookings
+            .OrderByDescending(b => b.Id)
+            .Take(4)
+            .ToList();
 
-    private string LayMauTrangThaiChuyen(TripStatus status)
-    {
-        if (status == TripStatus.InTransit) return "bg-primary";
-        if (status == TripStatus.NeedSupport) return "bg-danger";
-        if (status == TripStatus.Returned) return "bg-success";
-        return "bg-secondary";
+        // Cảnh báo an ninh & an toàn tác chiến
+        danhSachCanhBao.Clear();
+
+        var taiXeHetHan = mockDataService.Drivers.Where(d => d.LicenseExpiryDate < DateTime.Today).ToList();
+        foreach (var tx in taiXeHetHan)
+        {
+            danhSachCanhBao.Add(new CanhBaoItem
+            {
+                TieuDe = $"GPLX hết hạn: {tx.FullName}",
+                NoiDung = $"GPLX hạng {tx.LicenseCategory} đã hết hạn ({tx.LicenseExpiryDate:dd/MM/yyyy}). Đã khóa điều phối.",
+                LoaiCanhBao = "Khóa điều phối"
+            });
+        }
+
+        var xeDangSua = mockDataService.Vehicles.Where(v => v.Status == VehicleStatus.DangBaoDuong).ToList();
+        foreach (var x in xeDangSua)
+        {
+            danhSachCanhBao.Add(new CanhBaoItem
+            {
+                TieuDe = $"Bảo dưỡng: {x.LicensePlate}",
+                NoiDung = $"{x.Brand} {x.Model} đang bảo dưỡng xưởng kỹ thuật. Khóa xếp lịch.",
+                LoaiCanhBao = "Bảo dưỡng"
+            });
+        }
     }
 }

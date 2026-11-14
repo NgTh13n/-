@@ -5,46 +5,76 @@
 @inject AuthService authService
 @inject NavigationManager nav
 
-<PageTitle>Đăng nhập</PageTitle>
+<PageTitle>Đăng nhập - Học viện An ninh Nhân dân</PageTitle>
 
 <div class="login-wrapper">
     <div class="login-box">
         <div class="login-header">
             <img src="/logo-hvannd.png" alt="Logo Học viện An ninh Nhân dân" class="login-logo" />
             <h1>HỌC VIỆN AN NINH NHÂN DÂN</h1>
-            <p>Hệ thống quản lý sử dụng phương tiện</p>
+            <p>HỆ THỐNG QUẢN LÝ PHƯƠNG TIỆN CÔNG VỤ</p>
         </div>
 
-        @if (thongBaoLoi != "")
+        @if (!string.IsNullOrEmpty(thongBaoLoi))
         {
-            <div class="alert alert-danger">
-                @thongBaoLoi
+            <div class="alert alert-danger py-2 small d-flex align-items-center gap-2 mb-3">
+                <RadzenIcon Icon="error" Style="font-size: 1.1rem;" />
+                <div>@thongBaoLoi</div>
             </div>
         }
 
         <div class="mb-3">
-            <label class="form-label">Tên đăng nhập</label>
-            <input type="text" class="form-control" @bind="tenDangNhap" @bind:event="oninput" placeholder="Nhập tên đăng nhập..." />
+            <label class="form-label small fw-bold text-secondary mb-1">Tên đăng nhập</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted">
+                    <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                </span>
+                <input type="text" class="form-control" @bind="tenDangNhap" @bind:event="oninput" placeholder="Nhập tên đăng nhập..." />
+            </div>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Mật khẩu</label>
-            <input type="password" class="form-control" @bind="matKhau" @bind:event="oninput" @onkeydown="NhanEnter" placeholder="Nhập mật khẩu..." />
+            <label class="form-label small fw-bold text-secondary mb-1">Mật khẩu</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted">
+                    <RadzenIcon Icon="lock" Style="font-size: 1rem;" />
+                </span>
+                <input type="password" class="form-control" @bind="matKhau" @bind:event="oninput" @onkeydown="NhanEnter" placeholder="Nhập mật khẩu..." />
+            </div>
         </div>
 
-        <RadzenButton Text="Đăng nhập"
-                      Icon="login"
-                      Click="DangNhap"
-                      ButtonStyle="ButtonStyle.Primary"
-                      Style="width: 100%"
-                      Disabled="dangXuLy" />
+        <button class="btn btn-primary-action w-100 py-2 justify-content-center" @onclick="DangNhap" disabled="@dangXuLy">
+            @if (dangXuLy)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <span>Đang xác thực...</span>
+            }
+            else
+            {
+                <RadzenIcon Icon="login" Style="vertical-align: middle; margin-right: 6px;" />
+                <span>Đăng nhập hệ thống</span>
+            }
+        </button>
 
         <div class="login-hint">
-            <p><strong>Tài khoản demo:</strong></p>
-            <p>canbo / 123 — Cán bộ / Chiến sĩ</p>
-            <p>lanhdao / 123 — Lãnh đạo</p>
-            <p>doixe / 123 — Quản lý đội xe</p>
-            <p>admin / 123 — Quản trị viên</p>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold" style="font-size: 0.75rem;">CHỌN NHANH TÀI KHOẢN MẪU:</span>
+                <span class="text-muted" style="font-size: 0.7rem;">Mật khẩu: 123</span>
+            </div>
+            <div class="login-quick-roles">
+                <button type="button" class="login-role-chip" @onclick='() => ChonNhanhTaiKhoan("canbo")'>
+                    👮 Cán bộ
+                </button>
+                <button type="button" class="login-role-chip" @onclick='() => ChonNhanhTaiKhoan("lanhdao")'>
+                    ⭐ Lãnh đạo
+                </button>
+                <button type="button" class="login-role-chip" @onclick='() => ChonNhanhTaiKhoan("doixe")'>
+                    🚗 Đội xe
+                </button>
+                <button type="button" class="login-role-chip" @onclick='() => ChonNhanhTaiKhoan("admin")'>
+                    🛡️ Quản trị viên
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -64,6 +94,13 @@
         }
     }
 
+    private void ChonNhanhTaiKhoan(string user)
+    {
+        tenDangNhap = user;
+        matKhau = "123";
+        thongBaoLoi = "";
+    }
+
     private async Task NhanEnter(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
@@ -76,13 +113,13 @@
     {
         thongBaoLoi = "";
 
-        if (tenDangNhap == "")
+        if (string.IsNullOrWhiteSpace(tenDangNhap))
         {
             thongBaoLoi = "Vui lòng nhập tên đăng nhập.";
             return;
         }
 
-        if (matKhau == "")
+        if (string.IsNullOrWhiteSpace(matKhau))
         {
             thongBaoLoi = "Vui lòng nhập mật khẩu.";
             return;
@@ -91,11 +128,11 @@
         dangXuLy = true;
 
         // Tạm dừng ngắn để tránh cảm giác bấm không có phản hồi.
-        await Task.Delay(300);
+        await Task.Delay(200);
 
         string loi = authService.DangNhap(tenDangNhap, matKhau);
 
-        if (loi != "")
+        if (!string.IsNullOrEmpty(loi))
         {
             thongBaoLoi = loi;
             dangXuLy = false;

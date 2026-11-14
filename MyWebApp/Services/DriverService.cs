@@ -16,17 +16,7 @@ public class DriverService
     }
 
     // Lấy toàn bộ danh sách lái xe (trả về bản sao để tránh form sửa đụng dữ liệu gốc)
-    public List<Driver> GetAll()
-    {
-        List<Driver> ketQua = new List<Driver>();
-
-        foreach (Driver driver in duLieu.Drivers)
-        {
-            ketQua.Add(SaoChep(driver));
-        }
-
-        return ketQua;
-    }
+    public List<Driver> GetAll() => duLieu.Drivers.Select(SaoChep).ToList();
 
     // Thêm lái xe mới
     public bool Add(Driver driver, out string loi)
@@ -38,26 +28,10 @@ public class DriverService
         }
 
         loi = KiemTra(driver, 0);
+        if (loi != "") return false;
 
-        if (loi != "")
-        {
-            return false;
-        }
-
-        // Tự động sinh Id tăng dần
-        int idMoi = 1;
-
-        foreach (Driver item in duLieu.Drivers)
-        {
-            if (item.Id >= idMoi)
-            {
-                idMoi = item.Id + 1;
-            }
-        }
-
-        driver.Id = idMoi;
+        driver.Id = duLieu.Drivers.Count > 0 ? duLieu.Drivers.Max(x => x.Id) + 1 : 1;
         duLieu.Drivers.Add(SaoChep(driver));
-
         return true;
     }
 
@@ -71,23 +45,17 @@ public class DriverService
         }
 
         loi = KiemTra(driver, driver.Id);
+        if (loi != "") return false;
 
-        if (loi != "")
+        int index = duLieu.Drivers.FindIndex(d => d.Id == driver.Id);
+        if (index < 0)
         {
+            loi = "Không tìm thấy thông tin lái xe cần cập nhật.";
             return false;
         }
 
-        for (int i = 0; i < duLieu.Drivers.Count; i++)
-        {
-            if (duLieu.Drivers[i].Id == driver.Id)
-            {
-                duLieu.Drivers[i] = SaoChep(driver);
-                return true;
-            }
-        }
-
-        loi = "Không tìm thấy thông tin lái xe cần cập nhật.";
-        return false;
+        duLieu.Drivers[index] = SaoChep(driver);
+        return true;
     }
 
     // Xóa lái xe
@@ -100,32 +68,22 @@ public class DriverService
         }
 
         // Kiểm tra xem lái xe có đang được phân công chuyến đi chưa hoàn thành không
-        foreach (Trip chuyen in duLieu.Trips)
+        if (duLieu.Trips.Any(c => c.DriverId == id && !(c.Status == TripStatus.Returned && c.IsSettled)))
         {
-            if (chuyen.DriverId == id)
-            {
-                bool daXongChuyen = chuyen.Status == TripStatus.Returned && chuyen.IsSettled;
-
-                if (!daXongChuyen)
-                {
-                    loi = "Không thể xóa lái xe đang tham gia chuyến đi chưa hoàn thành.";
-                    return false;
-                }
-            }
+            loi = "Không thể xóa lái xe đang tham gia chuyến đi chưa hoàn thành.";
+            return false;
         }
 
-        for (int i = 0; i < duLieu.Drivers.Count; i++)
+        int index = duLieu.Drivers.FindIndex(d => d.Id == id);
+        if (index < 0)
         {
-            if (duLieu.Drivers[i].Id == id)
-            {
-                duLieu.Drivers.RemoveAt(i);
-                loi = "";
-                return true;
-            }
+            loi = "Không tìm thấy thông tin lái xe cần xóa.";
+            return false;
         }
 
-        loi = "Không tìm thấy thông tin lái xe cần xóa.";
-        return false;
+        duLieu.Drivers.RemoveAt(index);
+        loi = "";
+        return true;
     }
 
     // Kiểm tra dữ liệu hợp lệ
@@ -136,26 +94,13 @@ public class DriverService
         driver.LicenseType = driver.LicenseType.Trim();
 
         if (string.IsNullOrEmpty(driver.FullName))
-        {
             return "Vui lòng nhập họ và tên lái xe.";
-        }
 
         if (string.IsNullOrEmpty(driver.LicenseType))
-        {
             return "Vui lòng nhập hạng giấy phép lái xe.";
-        }
 
-        // Kiểm tra trùng số điện thoại
-        if (!string.IsNullOrEmpty(driver.Phone))
-        {
-            foreach (Driver item in duLieu.Drivers)
-            {
-                if (item.Id != idCanBoQua && string.Equals(item.Phone, driver.Phone, StringComparison.OrdinalIgnoreCase))
-                {
-                    return "Số điện thoại này đã được đăng ký cho một lái xe khác.";
-                }
-            }
-        }
+        if (!string.IsNullOrEmpty(driver.Phone) && duLieu.Drivers.Any(d => d.Id != idCanBoQua && string.Equals(d.Phone, driver.Phone, StringComparison.OrdinalIgnoreCase)))
+            return "Số điện thoại này đã được đăng ký cho một lái xe khác.";
 
         return "";
     }
@@ -166,10 +111,15 @@ public class DriverService
         return new Driver
         {
             Id = driver.Id,
+            OfficerId = driver.OfficerId,
             FullName = driver.FullName,
             Phone = driver.Phone,
-            LicenseType = driver.LicenseType,
-            Status = driver.Status
+            LicenseCategory = driver.LicenseCategory,
+            LicenseNumberDemo = driver.LicenseNumberDemo,
+            LicenseExpiryDate = driver.LicenseExpiryDate,
+            IsActive = driver.IsActive,
+            Status = driver.Status,
+            Notes = driver.Notes
         };
     }
 }
