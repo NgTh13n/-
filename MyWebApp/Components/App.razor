@@ -31,6 +31,22 @@
             link.click();
             document.body.removeChild(link);
         };
+        window.cuonLenForm = function (elementId) {
+            setTimeout(function () {
+                if (elementId) {
+                    var el = document.getElementById(elementId);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        var input = el.querySelector('input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled])');
+                        if (input) {
+                            try { input.focus(); } catch (e) { }
+                        }
+                        return;
+                    }
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 60);
+        };
     </script>
 </body>
 

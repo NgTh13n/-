@@ -13,6 +13,7 @@
 @inject DialogService dialog
 @inject AuthService authService
 @inject MockDataService mockDataService
+@inject IJSRuntime js
 
 <PageTitle>Bảo dưỡng kỹ thuật phương tiện</PageTitle>
 
@@ -98,6 +99,7 @@ else
         </div>
     </div>
 
+    <div id="khu-vuc-bao-duong">
     @* FORM LẬP PHIẾU BẢO DƯỠNG MỚI *@
     @if (dangLapPhieu)
     {
@@ -222,6 +224,7 @@ else
             </div>
         </div>
     }
+    </div>
 
     @* BẢNG DANH SÁCH HỒ SƠ BẢO DƯỠNG *@
     <div class="card shadow-sm border-0">
@@ -408,7 +411,7 @@ else
         danhSachXe = vehicleService.GetAll();
     }
 
-    private void MoFormLapPhieu()
+    private async Task MoFormLapPhieu()
     {
         phieuMoi = new MaintenanceRecord
         {
@@ -422,6 +425,7 @@ else
         phieuDangNghiemThu = null;
         chuyenTrangThaiXeNgay = true;
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-bao-duong");
     }
 
     private void CapNhatThongTinXe()
@@ -458,13 +462,14 @@ else
         coLoi = false;
     }
 
-    private void MoNghiemThu(MaintenanceRecord item)
+    private async Task MoNghiemThu(MaintenanceRecord item)
     {
         phieuDangNghiemThu = item;
         dangLapPhieu = false;
         ngayNghiemThu = DateTime.Today;
         ghiChuNghiemThu = "Đạt tiêu chuẩn an toàn kỹ thuật CAND, nghiệm thu xuất xưởng đưa về sẵn sàng.";
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-bao-duong");
     }
 
     private async Task XacNhanNghiemThu()

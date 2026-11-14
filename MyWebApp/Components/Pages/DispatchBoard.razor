@@ -11,6 +11,7 @@
 @inject DialogService dialog
 @inject AuthService authService
 @inject MockDataService mockDataService
+@inject IJSRuntime js
 
 <PageTitle>Điều động phương tiện</PageTitle>
 
@@ -42,6 +43,7 @@ else
         </div>
     }
 
+    <div id="khu-vuc-dieu-xe">
     @* FORM LẬP LỆNH ĐIỀU ĐỘNG *@
     @if (yeuCauDangDieuDong != null)
     {
@@ -231,6 +233,7 @@ else
             </div>
         </div>
     }
+    </div>
 
     @* TABS ĐIỀU PHỐI: HÀNG CHỜ ĐIỀU ĐỘNG VS DANH SÁCH LỆNH *@
     <RadzenTabs @bind-SelectedIndex="tabHienTai" Class="shadow-sm">
@@ -429,7 +432,7 @@ else
         danhSachLenhDieuDong = dispatchService.GetAllDispatchOrders();
     }
 
-    private void MoFormDieuDong(Booking don)
+    private async Task MoFormDieuDong(Booking don)
     {
         yeuCauDangDieuDong = don;
         xeDuocChonId = 0;
@@ -441,6 +444,7 @@ else
 
         danhSachXeKhaDung = dispatchService.GetEligibleVehicles(don);
         danhSachLaiXeKhaDung = dispatchService.GetEligibleDrivers();
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-dieu-xe");
     }
 
     private void ChonPhuongAnLai(DriverMode mode)
@@ -545,9 +549,10 @@ else
         tabHienTai = 1;
     }
 
-    private void XemChiTietLenh(Trip item)
+    private async Task XemChiTietLenh(Trip item)
     {
         lenhDangXem = item;
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-dieu-xe");
     }
 
     private void DongChiTietLenh()

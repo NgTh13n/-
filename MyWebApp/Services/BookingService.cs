@@ -265,7 +265,7 @@ public class BookingService
     {
         if (!authService.CanApproveBookings)
         {
-            loi = "Bạn không có quyền phê duyệt yêu cầu sử dụng phương tiện.";
+            loi = "Chỉ Lãnh đạo đơn vị mới có thẩm quyền phê duyệt yêu cầu sử dụng phương tiện.";
             return false;
         }
 
@@ -318,7 +318,7 @@ public class BookingService
     {
         if (!authService.CanApproveBookings)
         {
-            loi = "Bạn không có quyền xử lý yêu cầu.";
+            loi = "Chỉ Lãnh đạo đơn vị mới có thẩm quyền yêu cầu bổ sung thông tin hồ sơ.";
             return false;
         }
 
@@ -369,7 +369,7 @@ public class BookingService
     {
         if (!authService.CanApproveBookings)
         {
-            loi = "Bạn không có quyền từ chối yêu cầu.";
+            loi = "Chỉ Lãnh đạo đơn vị mới có thẩm quyền từ chối yêu cầu sử dụng phương tiện.";
             return false;
         }
 

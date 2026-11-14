@@ -92,7 +92,7 @@
 <div class="row g-4">
     @* CỘT TRÁI: PHƯƠNG TIỆN ĐANG HOẠT ĐỘNG TRÊN TUYẾN *@
     <div class="col-lg-8">
-        <div class="gov-card h-100">
+        <div class="gov-card">
             <div class="gov-card-header">
                 <div class="gov-card-header-title">
                     <RadzenIcon Icon="alt_route" Style="font-size: 1.2rem; color: var(--brand-navy);" />
@@ -105,9 +105,10 @@
             <div class="gov-card-body p-0">
                 @if (danhSachChuyenDangChay.Count == 0)
                 {
-                    <div class="p-4 text-center text-muted">
-                        <RadzenIcon Icon="local_parking" Style="font-size: 2.2rem; opacity: 0.3;" class="d-block mb-1" />
-                        Hiện không có phương tiện nào đang di chuyển ngoài đơn vị. Tất cả xe đều tập kết tại bãi đỗ.
+                    <div class="p-5 text-center text-muted">
+                        <RadzenIcon Icon="local_parking" Style="font-size: 2.6rem; opacity: 0.35;" class="d-block mb-2 mx-auto text-primary" />
+                        <div class="fw-semibold text-secondary" style="font-size: 0.95rem;">Hiện không có phương tiện nào đang di chuyển ngoài đơn vị</div>
+                        <div class="small text-muted mt-1">Toàn bộ 8 phương tiện biên chế đang tập kết an toàn tại bãi đỗ Học viện.</div>
                     </div>
                 }
                 else
@@ -218,31 +219,43 @@
         @* 2. GIÁM SÁT AN TOÀN KỸ THUẬT (TIÊU CHÍ 5) *@
         <div class="gov-card">
             <div class="gov-card-header">
-                <div class="gov-card-header-title text-danger">
-                    <RadzenIcon Icon="gshield" Style="font-size: 1.15rem;" />
+                <div class="gov-card-header-title">
+                    <RadzenIcon Icon="security" Style="font-size: 1.15rem; color: #dc2626;" />
                     Kiểm soát an toàn & Điều kiện xe
                 </div>
+                @if (danhSachCanhBao.Count > 0)
+                {
+                    <span class="badge bg-danger rounded-pill px-2" style="font-size: 0.7rem; font-weight: 600;">@danhSachCanhBao.Count cảnh báo</span>
+                }
             </div>
-            <div class="gov-card-body p-3">
+            <div class="gov-card-body p-0">
                 @if (danhSachCanhBao.Count == 0)
                 {
-                    <div class="text-center text-success py-2">
-                        <RadzenIcon Icon="verified" Style="font-size: 1.8rem;" class="mb-1" />
-                        <div class="small fw-medium">Toàn bộ xe và lái xe đạt chuẩn an toàn</div>
+                    <div class="p-3 text-center text-success">
+                        <RadzenIcon Icon="verified" Style="font-size: 1.8rem;" class="mb-1 text-success" />
+                        <div class="small fw-semibold">100% xe & lái xe đạt chuẩn an toàn tác chiến</div>
+                        <div class="text-muted small mt-1">Không có vi phạm hay phương tiện cần bảo dưỡng khẩn cấp</div>
                     </div>
                 }
                 else
                 {
-                    <div class="d-flex flex-column gap-2">
+                    <div class="list-group list-group-flush border-0">
                         @foreach (var cb in danhSachCanhBao)
                         {
-                            <div class="p-2 rounded bg-light border-start border-3 border-danger" style="background-color: #fef2f2 !important;">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <strong class="small text-danger">@cb.TieuDe</strong>
-                                    <span class="badge-status badge-status-danger" style="font-size: 0.68rem;">@cb.LoaiCanhBao</span>
+                            <a href="@cb.Url" class="list-group-item list-group-item-action px-3 py-2 border-bottom d-flex align-items-start gap-2 text-decoration-none">
+                                <div class="p-1 rounded mt-1 flex-shrink-0" style="background-color: @(cb.IconColor)15; color: @cb.IconColor;">
+                                    <RadzenIcon Icon="@cb.Icon" Style="font-size: 1.1rem; display: block;" />
                                 </div>
-                                <div class="small text-secondary" style="font-size: 0.78rem;">@cb.NoiDung</div>
-                            </div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong class="small text-dark text-truncate">@cb.TieuDe</strong>
+                                        <span class="badge-status @(cb.LoaiCanhBao == "Khóa điều phối" ? "badge-status-danger" : "badge-status-warning") flex-shrink-0 ms-1">
+                                            @cb.LoaiCanhBao
+                                        </span>
+                                    </div>
+                                    <div class="small text-secondary" style="font-size: 0.76rem; line-height: 1.35;">@cb.NoiDung</div>
+                                </div>
+                            </a>
                         }
                     </div>
                 }
@@ -265,6 +278,9 @@
         public string TieuDe { get; set; } = "";
         public string NoiDung { get; set; } = "";
         public string LoaiCanhBao { get; set; } = "";
+        public string Icon { get; set; } = "warning";
+        public string IconColor { get; set; } = "#dc2626";
+        public string Url { get; set; } = "/";
     }
 
     List<CanhBaoItem> danhSachCanhBao = new();
@@ -300,7 +316,10 @@
             {
                 TieuDe = $"GPLX hết hạn: {tx.FullName}",
                 NoiDung = $"GPLX hạng {tx.LicenseCategory} đã hết hạn ({tx.LicenseExpiryDate:dd/MM/yyyy}). Đã khóa điều phối.",
-                LoaiCanhBao = "Khóa điều phối"
+                LoaiCanhBao = "Khóa điều phối",
+                Icon = "person_off",
+                IconColor = "#dc2626",
+                Url = "/drivers"
             });
         }
 
@@ -311,7 +330,10 @@
             {
                 TieuDe = $"Bảo dưỡng: {x.LicensePlate}",
                 NoiDung = $"{x.Brand} {x.Model} đang bảo dưỡng xưởng kỹ thuật. Khóa xếp lịch.",
-                LoaiCanhBao = "Bảo dưỡng"
+                LoaiCanhBao = "Bảo dưỡng",
+                Icon = "build",
+                IconColor = "#f59e0b",
+                Url = "/vehicles"
             });
         }
     }

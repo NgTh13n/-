@@ -86,7 +86,7 @@ else
             <div class="kpi-card">
                 <div>
                     <div class="kpi-label">Tỷ lệ cán bộ tự lái</div>
-                    <div class="kpi-value">@((double)danhSachChuyenDaLoc.Count(t => t.DriverMode == DriverMode.SelfDrive) / Math.Max(1, danhSachChuyenDaLoc.Count) * 100):N0%</div>
+                    <div class="kpi-value text-info">@($"{((double)danhSachChuyenDaLoc.Count(t => t.DriverMode == DriverMode.SelfDrive) / Math.Max(1, danhSachChuyenDaLoc.Count) * 100):N0}%")</div>
                     <div class="kpi-subtext">An toàn tác chiến 100%</div>
                 </div>
                 <div class="kpi-icon-wrapper">

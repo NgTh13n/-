@@ -8,6 +8,7 @@
 @inject TripService tripService
 @inject DialogService dialog
 @inject AuthService authService
+@inject IJSRuntime js
 
 <PageTitle>Quyết toán chuyến công tác</PageTitle>
 
@@ -45,7 +46,7 @@ else
         Vehicle? xe = tripService.GetVehicle(chuyenDangQuyetToan.VehicleId);
         Driver? lx = tripService.GetDriver(chuyenDangQuyetToan.DriverId);
 
-        <div class="gov-card gov-card-accent-success mb-4">
+        <div id="form-quyet-toan" class="gov-card gov-card-accent-success mb-4">
             <div class="gov-card-header">
                 <strong class="gov-card-header-title text-success"><RadzenIcon Icon="receipt" Class="me-1" /> PHIẾU QUYẾT TOÁN CHUYẾN CÔNG TÁC: @chuyenDangQuyetToan.DispatchCode</strong>
                 <button class="btn btn-sm btn-outline-secondary" @onclick="DongFormQuyetToan">Đóng</button>
@@ -59,7 +60,7 @@ else
 
                         <div class="col-md-4 mt-2"><strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model)</div>
                         <div class="col-md-4 mt-2"><strong>Lái xe:</strong> @lx?.FullName (SĐT: @lx?.Phone)</div>
-                        <div class="col-md-4 mt-2"><strong>Lộ trình:</strong> @don?.Departure $\rightarrow$ @don?.Destination</div>
+                        <div class="col-md-4 mt-2"><strong>Lộ trình:</strong> @don?.Departure → @don?.Destination</div>
 
                         <div class="col-md-6 mt-2">
                             <strong>Khởi hành:</strong> @chuyenDangQuyetToan.ActualDeparture?.ToString("dd/MM/yyyy HH:mm")
@@ -79,7 +80,7 @@ else
                     <div class="col-md-3">
                         <label class="form-label"><strong>Số Km kết thúc (đồng hồ xe) <span class="text-danger">*</span>:</strong></label>
                         <input type="number" class="form-control" @bind="soKmKetThuc" min="@chuyenDangQuyetToan.StartKm" step="1" />
-                        <small class="text-muted">Phải $\ge$ @chuyenDangQuyetToan.StartKm.ToString("N0") km</small>
+                        <small class="text-muted">Phải ≥ @chuyenDangQuyetToan.StartKm.ToString("N0") km</small>
                     </div>
 
                     <div class="col-md-3">
@@ -215,7 +216,7 @@ else
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Trip" Title="Km đầu - Km cuối">
                             <Template Context="item">
-                                <div>@item.StartKm.ToString("N0") $\rightarrow$ @item.EndKm.ToString("N0")</div>
+                                <div>@item.StartKm.ToString("N0") → @item.EndKm.ToString("N0")</div>
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Trip" Title="Tổng quãng đường">
@@ -278,7 +279,7 @@ else
         danhSachDaQuyetToan = tripService.GetSettledTrips();
     }
 
-    private void MoFormQuyetToan(Trip item)
+    private async Task MoFormQuyetToan(Trip item)
     {
         chuyenDangQuyetToan = item;
         // Mặc định gợi ý số Km kết thúc = Km ban đầu + 30km (dễ demo)
@@ -286,6 +287,7 @@ else
         nhienLieuTieuThu = 8.5;
         ghiChuQuyetToan = "";
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "form-quyet-toan");
     }
 
     private void DongFormQuyetToan()

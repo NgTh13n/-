@@ -11,6 +11,7 @@
 @inject DialogService dialog
 @inject AuthService authService
 @inject MockDataService mockDataService
+@inject IJSRuntime js
 
 <PageTitle>Theo dõi & Bàn giao xe công tác</PageTitle>
 
@@ -42,6 +43,7 @@ else
         </div>
     }
 
+    <div id="khu-vuc-thao-tac">
     @* 1. BIÊN BẢN BÀN GIAO PHƯƠNG TIỆN (HANDOVER) *@
     @if (chuyenDangBanGiao != null)
     {
@@ -141,7 +143,7 @@ else
                     <div class="col-md-3">
                         <label class="form-label fw-bold">Chỉ số Km kết thúc (Odometer về) <span class="text-danger">*</span>:</label>
                         <input type="number" class="form-control" @bind="htEndKm" min="@chuyenDangHoanTra.StartKm" step="1" />
-                        <small class="text-muted">Phải $\ge$ @chuyenDangHoanTra.StartKm.ToString("N0") km</small>
+                        <small class="text-muted">Phải ≥ @chuyenDangHoanTra.StartKm.ToString("N0") km</small>
                     </div>
 
                     <div class="col-md-3">
@@ -266,7 +268,7 @@ else
                     <div class="col-md-6"><strong>Phương tiện:</strong> @chuyenDangXem.VehiclePlateSnapshot (@xe?.Brand @xe?.Model)</div>
                     <div class="col-md-6"><strong>Người điều khiển:</strong> @chuyenDangXem.DriverNameSnapshot (@EnumHelper.TenDriverMode(chuyenDangXem.DriverMode))</div>
 
-                    <div class="col-md-6"><strong>Lộ trình:</strong> @don?.Departure $\rightarrow$ @don?.Destination</div>
+                    <div class="col-md-6"><strong>Lộ trình:</strong> @don?.Departure → @don?.Destination</div>
                     <div class="col-md-6"><strong>Mục đích:</strong> @don?.Purpose</div>
 
                     <div class="col-md-6">
@@ -326,6 +328,7 @@ else
             </div>
         </div>
     }
+    </div>
 
     @* DANH SÁCH CÁC CHUYẾN ĐI (TABS PHÂN LOẠI) *@
     <RadzenTabs @bind-SelectedIndex="tabHienTai" Class="shadow-sm">
@@ -492,7 +495,7 @@ else
                         <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="180px" />
                         <RadzenDataGridColumn Property="StartKm" Title="Hành trình Km" Width="170px">
                             <Template Context="item">
-                                <div>@item.StartKm.ToString("N0") $\rightarrow$ @(item.EndKm > 0 ? $"{item.EndKm:N0}" : "---")</div>
+                                <div>@item.StartKm.ToString("N0") → @(item.EndKm > 0 ? $"{item.EndKm:N0}" : "---")</div>
                                 @if (item.EndKm > item.StartKm)
                                 {
                                     <div class="text-success small fw-bold">(@((item.EndKm - item.StartKm).ToString("N0")) km)</div>
@@ -577,13 +580,14 @@ else
         danhSachTatCa = tripService.GetAllTrips();
     }
 
-    private void XemChiTiet(Trip item)
+    private async Task XemChiTiet(Trip item)
     {
         chuyenDangXem = item;
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-thao-tac");
     }
 
     // --- XỬ LÝ BÀN GIAO ---
-    private void MoFormBanGiao(Trip item)
+    private async Task MoFormBanGiao(Trip item)
     {
         var xe = tripService.GetVehicle(item.VehicleId);
         chuyenDangBanGiao = item;
@@ -595,6 +599,7 @@ else
         bgConditionBefore = "Xe sạch sẽ, đầy đủ giấy tờ, không trầy xước, đèn còi ưu tiên hoạt động tốt";
         bgAccessories = "Sổ đăng kiểm, bảo hiểm, kích xe, lốp dự phòng";
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-thao-tac");
     }
 
     private void DongBanGiao()
@@ -634,7 +639,7 @@ else
     }
 
     // --- XỬ LÝ HOÀN TRẢ ---
-    private void MoFormHoanTra(Trip item)
+    private async Task MoFormHoanTra(Trip item)
     {
         chuyenDangHoanTra = item;
         chuyenDangBanGiao = null;
@@ -648,6 +653,7 @@ else
         htIncidentNote = "";
         htGeneralNote = "Đã hoàn trả đầy đủ chìa khóa và giấy tờ lưu hành";
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-thao-tac");
     }
 
     private void DongHoanTra()
@@ -709,12 +715,13 @@ else
     }
 
     // --- SỰ CỐ ---
-    private void MoFormBaoSuCo(Trip item)
+    private async Task MoFormBaoSuCo(Trip item)
     {
         chuyenDangBaoSuCo = item;
         chuyenDangBanGiao = null;
         chuyenDangHoanTra = null;
         noiDungSuCo = "";
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-thao-tac");
     }
 
     private void XacNhanBaoSuCo()

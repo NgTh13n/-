@@ -54,7 +54,9 @@ public class AuthService
 
     // --- Kiểm tra quyền ---
     public bool CanManageVehicles => CurrentUser?.Role is UserRole.FleetManager or UserRole.Administrator;
-    public bool CanApproveBookings => CurrentUser?.Role is UserRole.Leader or UserRole.Administrator;
+    // Phân quyền chuẩn CAND: Chỉ duy nhất Lãnh đạo đơn vị mới có thẩm quyền ký phê duyệt điều động phương tiện
+    public bool CanApproveBookings => CurrentUser?.Role == UserRole.Leader;
+    public bool CanViewApprovals => CurrentUser?.Role is UserRole.Leader or UserRole.Administrator;
     public bool CanDispatch => CurrentUser?.Role is UserRole.FleetManager or UserRole.Administrator;
 
     // --- Hàm tiện ích ---

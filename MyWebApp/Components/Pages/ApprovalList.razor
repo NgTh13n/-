@@ -11,14 +11,15 @@
 @inject DialogService dialog
 @inject AuthService authService
 @inject MockDataService mockDataService
+@inject IJSRuntime js
 
 <PageTitle>Phê duyệt yêu cầu phương tiện</PageTitle>
 
-@if (!authService.CanApproveBookings)
+@if (!authService.CanViewApprovals)
 {
     <div class="alert alert-warning shadow-sm">
         <RadzenIcon Icon="lock" Class="me-2" />
-        Trang này dành riêng cho Lãnh đạo đơn vị và Quản trị viên để xem xét, phê duyệt yêu cầu sử dụng phương tiện.
+        Trang này dành riêng cho Lãnh đạo đơn vị (và Quản trị viên theo dõi tiến độ kỹ thuật).
     </div>
 }
 else
@@ -28,8 +29,16 @@ else
             <h1 class="page-header-title">
                 <RadzenIcon Icon="verified" Style="color: var(--brand-navy);" />
                 Phê duyệt yêu cầu sử dụng phương tiện
+                @if (authService.CurrentUser?.Role == UserRole.Administrator)
+                {
+                    <span class="badge bg-secondary ms-2 align-middle" style="font-size: 0.72rem; font-weight: 500;">Chế độ Giám sát kỹ thuật</span>
+                }
             </h1>
-            <p class="page-header-desc">Hàng chờ thẩm định, ra quyết định phê duyệt, yêu cầu bổ sung hoặc từ chối kế hoạch công tác</p>
+            <p class="page-header-desc">
+                @(authService.CurrentUser?.Role == UserRole.Administrator 
+                    ? "Quản trị viên theo dõi tiến độ phê duyệt hồ sơ. Quyền ra quyết định thuộc về Lãnh đạo đơn vị." 
+                    : "Hàng chờ thẩm định, ra quyết định phê duyệt, yêu cầu bổ sung hoặc từ chối kế hoạch công tác")
+            </p>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-secondary-action" @onclick="@(() => hienThiLichSu = !hienThiLichSu)">
@@ -48,6 +57,7 @@ else
         </div>
     }
 
+    <div id="khu-vuc-phe-duyet">
     @* HỘP THOẠI XỬ LÝ: PHÊ DUYỆT (KÈM Ý KIẾN CHỈ ĐẠO) *@
     @if (yeuCauPheDuyet != null)
     {
@@ -217,6 +227,7 @@ else
             </div>
         </div>
     }
+    </div>
 
     @* DANH SÁCH YÊU CẦU: HÀNG CHỜ DUYỆT HOẶC LỊCH SỬ *@
     <div class="gov-card">
@@ -284,7 +295,10 @@ else
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Title="Thao tác quyết định" Sortable="false" Filterable="false" Width="230px">
+                        <RadzenDataGridColumn Title="@(authService.CanApproveBookings ? "Thao tác quyết định" : "Thao tác")" 
+                                              Sortable="false" 
+                                              Filterable="false" 
+                                              Width="@(authService.CanApproveBookings ? "230px" : "90px")">
                             <Template Context="item">
                                 <div class="d-flex gap-1">
                                     <RadzenButton Icon="visibility" 
@@ -293,26 +307,29 @@ else
                                                   Title="Xem chi tiết" 
                                                   Click="@(() => XemChiTiet(item))" />
 
-                                    <RadzenButton Icon="check_circle" 
-                                                  Text="Duyệt" 
-                                                  ButtonStyle="ButtonStyle.Success" 
-                                                  Size="ButtonSize.Small" 
-                                                  Title="Phê duyệt yêu cầu" 
-                                                  Click="@(() => MoHopThoaiPheDuyet(item))" />
+                                    @if (authService.CanApproveBookings)
+                                    {
+                                        <RadzenButton Icon="check_circle" 
+                                                      Text="Duyệt" 
+                                                      ButtonStyle="ButtonStyle.Success" 
+                                                      Size="ButtonSize.Small" 
+                                                      Title="Phê duyệt yêu cầu" 
+                                                      Click="@(() => MoHopThoaiPheDuyet(item))" />
 
-                                    <RadzenButton Icon="edit_note" 
-                                                  Text="Bổ sung" 
-                                                  ButtonStyle="ButtonStyle.Warning" 
-                                                  Size="ButtonSize.Small" 
-                                                  Title="Yêu cầu bổ sung thông tin" 
-                                                  Click="@(() => MoHopThoaiBoSung(item))" />
+                                        <RadzenButton Icon="edit_note" 
+                                                      Text="Bổ sung" 
+                                                      ButtonStyle="ButtonStyle.Warning" 
+                                                      Size="ButtonSize.Small" 
+                                                      Title="Yêu cầu bổ sung thông tin" 
+                                                      Click="@(() => MoHopThoaiBoSung(item))" />
 
-                                    <RadzenButton Icon="cancel" 
-                                                  Text="Từ chối" 
-                                                  ButtonStyle="ButtonStyle.Danger" 
-                                                  Size="ButtonSize.Small" 
-                                                  Title="Từ chối yêu cầu" 
-                                                  Click="@(() => MoHopThoaiTuChoi(item))" />
+                                        <RadzenButton Icon="cancel" 
+                                                      Text="Từ chối" 
+                                                      ButtonStyle="ButtonStyle.Danger" 
+                                                      Size="ButtonSize.Small" 
+                                                      Title="Từ chối yêu cầu" 
+                                                      Click="@(() => MoHopThoaiTuChoi(item))" />
+                                    }
                                 </div>
                             </Template>
                         </RadzenDataGridColumn>
@@ -415,9 +432,10 @@ else
         danhSachLichSu = bookingService.GetApprovalHistory();
     }
 
-    private void XemChiTiet(Booking item)
+    private async Task XemChiTiet(Booking item)
     {
         yeuCauDangXem = item;
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-phe-duyet");
     }
 
     private void DongChiTiet()
@@ -425,13 +443,15 @@ else
         yeuCauDangXem = null;
     }
 
-    private void MoHopThoaiPheDuyet(Booking item)
+    private async Task MoHopThoaiPheDuyet(Booking item)
     {
+        if (!authService.CanApproveBookings) return;
         yeuCauPheDuyet = item;
         yeuCauBoSung = null;
         yeuCauTuChoi = null;
         yKienPheDuyet = "Đồng ý phê duyệt, giao Đội xe bố trí phương tiện và lái xe đảm bảo an toàn.";
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-phe-duyet");
     }
 
     private void XacNhanPheDuyet()
@@ -460,13 +480,15 @@ else
         }
     }
 
-    private void MoHopThoaiBoSung(Booking item)
+    private async Task MoHopThoaiBoSung(Booking item)
     {
+        if (!authService.CanApproveBookings) return;
         yeuCauBoSung = item;
         yeuCauPheDuyet = null;
         yeuCauTuChoi = null;
         noiDungBoSung = "";
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-phe-duyet");
     }
 
     private void XacNhanYeuCauBoSung()
@@ -504,13 +526,15 @@ else
         }
     }
 
-    private void MoHopThoaiTuChoi(Booking item)
+    private async Task MoHopThoaiTuChoi(Booking item)
     {
+        if (!authService.CanApproveBookings) return;
         yeuCauTuChoi = item;
         yeuCauPheDuyet = null;
         yeuCauBoSung = null;
         lyDoTuChoi = "";
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-phe-duyet");
     }
 
     private void XacNhanTuChoi()

@@ -11,6 +11,7 @@
 @inject DialogService dialog
 @inject AuthService authService
 @inject MockDataService mockDataService
+@inject IJSRuntime js
 
 <PageTitle>Đăng ký phương tiện</PageTitle>
 
@@ -55,7 +56,7 @@ else
     @* HỘP THOẠI CHI TIẾT YÊU CẦU & AUDIT TRAIL *@
     @if (yeuCauDangXem != null)
     {
-        <div class="gov-card gov-card-accent-primary mb-4">
+        <div id="chi-tiet-yeu-cau" class="gov-card gov-card-accent-primary mb-4">
             <div class="gov-card-header">
                 <div class="gov-card-header-title">
                     <RadzenIcon Icon="description" />
@@ -169,7 +170,7 @@ else
     }
 
     @* FORM LẬP / CHỈNH SỬA PHIẾU ĐĂNG KÝ *@
-    <div class="gov-card mb-4">
+    <div id="form-dang-ky" class="gov-card mb-4">
         <div class="gov-card-header">
             <h2 class="gov-card-header-title">
                 <RadzenIcon Icon="@(dangSua ? "edit" : "post_add")" Style="color: var(--brand-navy);" />
@@ -504,16 +505,18 @@ else
         danhSachYeuCau = bookingService.GetAll();
     }
 
-    private void ThemMoi()
+    private async Task ThemMoi()
     {
         LamMoiForm();
         yeuCauDangXem = null;
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "form-dang-ky");
     }
 
-    private void XemChiTiet(Booking item)
+    private async Task XemChiTiet(Booking item)
     {
         yeuCauDangXem = item;
+        await js.InvokeVoidAsync("cuonLenForm", "chi-tiet-yeu-cau");
     }
 
     private void DongChiTiet()
@@ -521,7 +524,7 @@ else
         yeuCauDangXem = null;
     }
 
-    private void ChonSua(Booking item)
+    private async Task ChonSua(Booking item)
     {
         yeuCau = new Booking
         {
@@ -554,6 +557,7 @@ else
 
         dangSua = true;
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "form-dang-ky");
     }
 
     private void XuLyLuu()

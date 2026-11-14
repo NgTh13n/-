@@ -8,6 +8,7 @@
 @inject VehicleService vehicleService
 @inject DialogService dialog
 @inject AuthService authService
+@inject IJSRuntime js
 
 <PageTitle>Quản lý phương tiện</PageTitle>
 
@@ -46,7 +47,7 @@ else
 
     @if (selectedVehicle != null)
     {
-        <div class="gov-card gov-card-accent-primary mb-4">
+        <div id="chi-tiet-phuong-tien" class="gov-card gov-card-accent-primary mb-4">
             <div class="gov-card-header">
                 <strong class="gov-card-header-title"><RadzenIcon Icon="directions_car" Class="me-1" /> Chi tiết phương tiện: @selectedVehicle.LicensePlate</strong>
                 <button class="btn btn-sm btn-outline-secondary" @onclick="CloseDetails">Đóng</button>
@@ -68,7 +69,7 @@ else
         </div>
     }
 
-    <div class="gov-card mb-4">
+    <div id="form-phuong-tien" class="gov-card mb-4">
         <div class="gov-card-header">
             <h2 class="gov-card-header-title">
                 <RadzenIcon Icon="@(isEditing ? "edit" : "add")" Style="color: var(--brand-navy);" />
@@ -326,9 +327,10 @@ else
         }
     }
 
-    private void ViewDetails(Vehicle hv)
+    private async Task ViewDetails(Vehicle hv)
     {
         selectedVehicle = hv;
+        await js.InvokeVoidAsync("cuonLenForm", "chi-tiet-phuong-tien");
     }
 
     private void CloseDetails()
@@ -343,17 +345,19 @@ else
         statusFilter = -1;
     }
 
-    private void Add()
+    private async Task Add()
     {
         ResetForm();
         message = "";
+        await js.InvokeVoidAsync("cuonLenForm", "form-phuong-tien");
     }
 
-    private void Edit(Vehicle hv)
+    private async Task Edit(Vehicle hv)
     {
         vehicle = hv;
         isEditing = true;
         message = "";
+        await js.InvokeVoidAsync("cuonLenForm", "form-phuong-tien");
     }
 
     private void Save()

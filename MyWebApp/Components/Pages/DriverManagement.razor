@@ -8,6 +8,7 @@
 @inject DriverService driverService
 @inject DialogService dialog
 @inject AuthService authService
+@inject IJSRuntime js
 
 <PageTitle>Quản lý lái xe</PageTitle>
 
@@ -46,7 +47,7 @@ else
 
     @if (laiXeDangXem != null)
     {
-        <div class="gov-card gov-card-accent-primary mb-4">
+        <div id="chi-tiet-lai-xe" class="gov-card gov-card-accent-primary mb-4">
             <div class="gov-card-header">
                 <strong class="gov-card-header-title"><RadzenIcon Icon="badge" Class="me-1" /> Chi tiết lái xe: @laiXeDangXem.FullName</strong>
                 <button class="btn btn-sm btn-outline-secondary" @onclick="DongChiTiet">Đóng</button>
@@ -61,7 +62,7 @@ else
         </div>
     }
 
-    <div class="gov-card mb-4">
+    <div id="form-lai-xe" class="gov-card mb-4">
         <div class="gov-card-header">
             <h2 class="gov-card-header-title">
                 <RadzenIcon Icon="@(dangSua ? "edit" : "person_add")" Style="color: var(--brand-navy);" />
@@ -249,9 +250,10 @@ else
         }
     }
 
-    private void XemChiTiet(Driver item)
+    private async Task XemChiTiet(Driver item)
     {
         laiXeDangXem = item;
+        await js.InvokeVoidAsync("cuonLenForm", "chi-tiet-lai-xe");
     }
 
     private void DongChiTiet()
@@ -265,17 +267,19 @@ else
         locTinhTrang = -1;
     }
 
-    private void Them()
+    private async Task Them()
     {
         LamMoiForm();
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "form-lai-xe");
     }
 
-    private void Sua(Driver item)
+    private async Task Sua(Driver item)
     {
         laiXe = item;
         dangSua = true;
         thongBao = "";
+        await js.InvokeVoidAsync("cuonLenForm", "form-lai-xe");
     }
 
     private void Luu()

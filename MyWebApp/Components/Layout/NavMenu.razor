@@ -15,6 +15,10 @@
     {
         <RadzenPanelMenuItem Text="Phê duyệt yêu cầu" Icon="fact_check" Path="/approvals" />
     }
+    else if (authService.CanViewApprovals)
+    {
+        <RadzenPanelMenuItem Text="Giám sát phê duyệt" Icon="fact_check" Path="/approvals" />
+    }
 
     @if (authService.CanDispatch)
     {
