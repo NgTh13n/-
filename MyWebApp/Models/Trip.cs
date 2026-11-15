@@ -124,6 +124,10 @@ public class Trip
     // Đã hoàn tất quyết toán chuyến đi hay chưa
     public bool IsSettled { get; set; }
 
+    public DateTime? SettledAt { get; set; }
+
+    public string SettledBy { get; set; } = "";
+
     // Ghi chú chung
     public string Note { get; set; } = "";
 

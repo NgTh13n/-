@@ -306,7 +306,7 @@ else
                                         <td class="text-center">@(sttDv++)</td>
                                         <td><strong>@dv</strong></td>
                                         <td class="text-center"><span class="badge bg-primary">@bookingsCuaDv.Count</span></td>
-                                        <td class="text-center"><span class="badge bg-success">@tripsCuaDv.Count(t => t.Status == TripStatus.Returned)</span></td>
+                                        <td class="text-center"><span class="badge bg-success">@tripsCuaDv.Count(t => t.Status == TripStatus.Completed || t.Status == TripStatus.Returned || t.IsSettled)</span></td>
                                         <td class="text-end fw-bold text-success">@kmDv.ToString("N0") km</td>
                                         <td class="text-end fw-bold text-warning">@nhienLieuDv.ToString("N1") L</td>
                                     </tr>

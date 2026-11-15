@@ -41,6 +41,11 @@ public class DispatchService
     // Lấy hồ sơ cán bộ theo RequesterId
     public Officer? GetOfficer(int requesterId)
     {
+        // Ưu tiên tra cứu trực tiếp theo OfficerId
+        if (duLieu.Officers.FirstOrDefault(o => o.Id == requesterId) is { } cb)
+            return cb;
+
+        // Fallback tra cứu nếu requesterId lưu theo UserId
         var u = duLieu.Users.FirstOrDefault(x => x.Id == requesterId);
         int targetId = u?.OfficerId ?? requesterId;
         return duLieu.Officers.FirstOrDefault(o => o.Id == targetId);
@@ -528,6 +533,8 @@ public class DispatchService
             IncidentNote = t.IncidentNote,
             FuelUsed = t.FuelUsed,
             IsSettled = t.IsSettled,
+            SettledAt = t.SettledAt,
+            SettledBy = t.SettledBy,
             Note = t.Note
         };
     }

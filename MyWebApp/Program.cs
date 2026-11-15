@@ -9,7 +9,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<AuthService>();
 
 // Dữ liệu của đơn vị dùng chung cho các phiên và mất đi khi ứng dụng dừng.

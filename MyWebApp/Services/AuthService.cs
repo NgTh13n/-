@@ -21,6 +21,7 @@ public class AuthService
     }
 
     public bool DaDangNhap => CurrentUser != null;
+    public bool IsAuthenticated => DaDangNhap;
 
     // Kiểm tra đăng nhập, trả về thông báo lỗi nếu sai.
     public string DangNhap(string tenDangNhap, string matKhau)

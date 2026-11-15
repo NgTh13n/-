@@ -77,7 +77,7 @@ public static class VehicleData
                 ChassisNumber = "CAND-CH-003",
                 EngineNumber = "CAND-EN-003",
                 ReceiveDate = new DateTime(2021, 6, 10),
-                OperationalStatus = VehicleOperationalStatus.Ready,
+                OperationalStatus = VehicleOperationalStatus.InUse,
                 RegistrationExpiryDate = homNay.AddMonths(5),
                 NextMaintenanceDate = homNay.AddMonths(2),
                 Note = "Xe đang thực hiện chuyến công tác phối hợp điều tra liên tỉnh."

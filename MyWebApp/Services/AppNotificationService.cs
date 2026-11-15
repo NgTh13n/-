@@ -70,7 +70,7 @@ public class AppNotificationService
                         Message = $"Lãnh đạo đã duyệt. Bố trí xe đi {b.Destination} cho đ/c {LayTenCanBo(b.RequesterId)}",
                         Icon = "directions_car",
                         IconColor = "#2563eb",
-                        TargetUrl = "/approvals",
+                        TargetUrl = "/dispatch",
                         CreatedAt = b.CreatedAt
                     });
                 }
@@ -255,8 +255,17 @@ public class AppNotificationService
 
     private string LayTenCanBo(int requesterId)
     {
-        var u = duLieu.Users.FirstOrDefault(x => x.Id == requesterId);
-        int targetId = u?.OfficerId ?? requesterId;
-        return duLieu.Officers.FirstOrDefault(o => o.Id == targetId)?.FullName ?? "Cán bộ";
+        // Ưu tiên tra cứu trực tiếp theo OfficerId
+        if (duLieu.Officers.FirstOrDefault(o => o.Id == requesterId) is { } cb)
+            return cb.FullName;
+
+        // Fallback tra cứu nếu requesterId lưu theo UserId
+        if (duLieu.Users.FirstOrDefault(x => x.Id == requesterId) is { } u)
+        {
+            int targetId = u.OfficerId ?? u.Id;
+            return duLieu.Officers.FirstOrDefault(o => o.Id == targetId)?.FullName ?? u.FullName;
+        }
+
+        return "Cán bộ";
     }
 }

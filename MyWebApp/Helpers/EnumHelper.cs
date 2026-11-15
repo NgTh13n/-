@@ -24,6 +24,7 @@ public static class EnumHelper
             VehicleOperationalStatus.Ready => "Sẵn sàng",
             VehicleOperationalStatus.Maintenance => "Đang bảo dưỡng",
             VehicleOperationalStatus.Inactive => "Ngừng hoạt động",
+            VehicleOperationalStatus.InUse => "Đang được điều động",
             _ => "Không xác định"
         };
     }

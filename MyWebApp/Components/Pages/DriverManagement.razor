@@ -57,7 +57,20 @@ else
                 <div class="col-md-3 mb-2"><strong>Họ và tên:</strong> @laiXeDangXem.FullName</div>
                 <div class="col-md-3 mb-2"><strong>Số điện thoại:</strong> @(string.IsNullOrEmpty(laiXeDangXem.Phone) ? "Chưa có" : laiXeDangXem.Phone)</div>
                 <div class="col-md-3 mb-2"><strong>Hạng giấy phép:</strong> @laiXeDangXem.LicenseType</div>
+                <div class="col-md-3 mb-2"><strong>Số GPLX:</strong> @(string.IsNullOrEmpty(laiXeDangXem.LicenseNumberDemo) ? "Chưa cập nhật" : laiXeDangXem.LicenseNumberDemo)</div>
+                <div class="col-md-3 mb-2">
+                    <strong>Hạn GPLX:</strong>
+                    @if (laiXeDangXem.LicenseExpiryDate < DateTime.Today)
+                    {
+                        <span class="badge bg-danger">@laiXeDangXem.LicenseExpiryDate.ToString("dd/MM/yyyy") (Hết hạn)</span>
+                    }
+                    else
+                    {
+                        <span class="text-success fw-medium">@laiXeDangXem.LicenseExpiryDate.ToString("dd/MM/yyyy")</span>
+                    }
+                </div>
                 <div class="col-md-3 mb-2"><strong>Tình trạng:</strong> @EnumHelper.TenDriverStatus(laiXeDangXem.Status)</div>
+                <div class="col-md-3 mb-2"><strong>Ghi chú:</strong> @(string.IsNullOrEmpty(laiXeDangXem.Notes) ? "Không có" : laiXeDangXem.Notes)</div>
             </div>
         </div>
     }
@@ -77,7 +90,7 @@ else
 
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label class="form-label">Họ và tên lái xe</label>
+                        <label class="form-label">Họ và tên lái xe <span class="text-danger">*</span></label>
                         <InputText class="form-control" @bind-Value="laiXe.FullName" placeholder="Nhập họ và tên..." />
                         <ValidationMessage For="() => laiXe.FullName" />
                     </div>
@@ -87,8 +100,13 @@ else
                         <InputText class="form-control" @bind-Value="laiXe.Phone" placeholder="Nhập số điện thoại liên hệ..." />
                     </div>
 
-                    <div class="col-md-2 mb-3">
-                        <label class="form-label">Hạng GPLX</label>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Số giấy phép lái xe</label>
+                        <InputText class="form-control" @bind-Value="laiXe.LicenseNumberDemo" placeholder="Ví dụ: GPLX-29B2-08129" />
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Hạng GPLX <span class="text-danger">*</span></label>
                         <InputSelect class="form-select" @bind-Value="laiXe.LicenseType">
                             <option value="B1">B1</option>
                             <option value="B2">B2</option>
@@ -99,13 +117,23 @@ else
                         <ValidationMessage For="() => laiXe.LicenseType" />
                     </div>
 
-                    <div class="col-md-2 mb-3">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Ngày hết hạn GPLX <span class="text-danger">*</span></label>
+                        <InputDate class="form-control" @bind-Value="laiXe.LicenseExpiryDate" />
+                    </div>
+
+                    <div class="col-md-3 mb-3">
                         <label class="form-label">Tình trạng</label>
                         <InputSelect class="form-select" @bind-Value="laiXe.Status">
                             <option value="@DriverStatus.Active">Đang làm việc</option>
                             <option value="@DriverStatus.OnLeave">Đang nghỉ phép</option>
                             <option value="@DriverStatus.Inactive">Không còn làm việc</option>
                         </InputSelect>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Ghi chú nghiệp vụ</label>
+                        <InputText class="form-control" @bind-Value="laiXe.Notes" placeholder="Ghi chú thêm..." />
                     </div>
                 </div>
 
@@ -153,8 +181,20 @@ else
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Driver" Property="FullName" Title="Họ và tên" />
                     <RadzenDataGridColumn TItem="Driver" Property="Phone" Title="Số điện thoại" />
-                    <RadzenDataGridColumn TItem="Driver" Property="LicenseType" Title="Hạng GPLX" />
-                    <RadzenDataGridColumn TItem="Driver" Title="Tình trạng">
+                    <RadzenDataGridColumn TItem="Driver" Property="LicenseType" Title="Hạng GPLX" Width="100px" />
+                    <RadzenDataGridColumn TItem="Driver" Title="Hạn GPLX" Width="140px">
+                        <Template Context="item">
+                            @if (item.LicenseExpiryDate < DateTime.Today)
+                            {
+                                <span class="badge bg-danger">@item.LicenseExpiryDate.ToString("dd/MM/yyyy") (Hết hạn)</span>
+                            }
+                            else
+                            {
+                                <span>@item.LicenseExpiryDate.ToString("dd/MM/yyyy")</span>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Driver" Title="Tình trạng" Width="130px">
                         <Template Context="item">
                             <span class="badge @LayMauTinhTrang(item.Status)">
                                 @EnumHelper.TenDriverStatus(item.Status)
@@ -350,7 +390,8 @@ else
         laiXe = new Driver
         {
             LicenseType = "B2",
-            Status = DriverStatus.Active
+            Status = DriverStatus.Active,
+            LicenseExpiryDate = DateTime.Today.AddYears(3)
         };
 
         dangSua = false;

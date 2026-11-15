@@ -253,25 +253,25 @@ else
                     <Columns>
                         <RadzenDataGridColumn Property="BookingCode" Title="Mã yêu cầu" Width="130px">
                             <Template Context="item">
-                                <span class="fw-bold text-primary">@item.BookingCode</span>
+                                <span class="fw-bold text-primary text-nowrap">@item.BookingCode</span>
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="RequesterId" Title="Người đề nghị" Width="160px">
+                        <RadzenDataGridColumn Property="RequesterId" Title="Người đề nghị" Width="170px">
                             <Template Context="item">
                                 <div><strong>@bookingService.GetRequesterName(item.RequesterId)</strong></div>
                                 <div class="text-muted small">@item.DepartmentSnapshot</div>
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="Purpose" Title="Mục đích công tác" Width="220px">
+                        <RadzenDataGridColumn Property="Purpose" Title="Mục đích công tác" Width="240px">
                             <Template Context="item">
                                 <div class="fw-semibold">@item.Purpose</div>
                                 <div class="text-muted small">Tới: @item.Destination</div>
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="PreferredDriverMode" Title="Phương án lái" Width="140px">
+                        <RadzenDataGridColumn Property="PreferredDriverMode" Title="Phương án lái" Width="140px" TextAlign="TextAlign.Center">
                             <Template Context="item">
                                 @if (item.PreferredDriverMode == DriverMode.SelfDrive)
                                 {
@@ -288,7 +288,7 @@ else
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="DepartureTime" Title="Thời gian" Width="160px">
+                        <RadzenDataGridColumn Property="DepartureTime" Title="Thời gian" Width="150px">
                             <Template Context="item">
                                 <div>@item.DepartureTime.ToString("dd/MM HH:mm")</div>
                                 <div class="text-muted small">Đến @item.ReturnTime.ToString("dd/MM HH:mm")</div>
@@ -298,9 +298,10 @@ else
                         <RadzenDataGridColumn Title="@(authService.CanApproveBookings ? "Thao tác quyết định" : "Thao tác")" 
                                               Sortable="false" 
                                               Filterable="false" 
-                                              Width="@(authService.CanApproveBookings ? "230px" : "90px")">
+                                              TextAlign="TextAlign.Center"
+                                              Width="@(authService.CanApproveBookings ? "340px" : "90px")">
                             <Template Context="item">
-                                <div class="d-flex gap-1">
+                                <div class="approval-action-group">
                                     <RadzenButton Icon="visibility" 
                                                   ButtonStyle="ButtonStyle.Light" 
                                                   Size="ButtonSize.Small" 
@@ -345,15 +346,15 @@ else
                                 AllowSorting="true" 
                                 EmptyText="Chưa có lịch sử yêu cầu được xử lý.">
                     <Columns>
-                        <RadzenDataGridColumn Property="BookingCode" Title="Mã yêu cầu" Width="130px" />
+                        <RadzenDataGridColumn Property="BookingCode" Title="Mã yêu cầu" Width="140px" />
 
-                        <RadzenDataGridColumn Property="RequesterId" Title="Người đề nghị" Width="160px">
+                        <RadzenDataGridColumn Property="RequesterId" Title="Người đề nghị" Width="180px">
                             <Template Context="item">
                                 @bookingService.GetRequesterName(item.RequesterId)
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="Purpose" Title="Mục đích" Width="220px">
+                        <RadzenDataGridColumn Property="Purpose" Title="Mục đích" Width="260px">
                             <Template Context="item">
                                 <div>@item.Purpose</div>
                                 <div class="text-muted small">@item.Destination</div>
@@ -380,7 +381,7 @@ else
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Title="Thao tác" Sortable="false" Filterable="false" Width="80px">
+                        <RadzenDataGridColumn Title="Thao tác" Sortable="false" Filterable="false" TextAlign="TextAlign.Center" Width="90px">
                             <Template Context="item">
                                 <RadzenButton Icon="visibility" 
                                               ButtonStyle="ButtonStyle.Light" 

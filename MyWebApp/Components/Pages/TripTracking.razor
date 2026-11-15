@@ -342,19 +342,19 @@ else
                                 AllowSorting="true" 
                                 EmptyText="Không có chuyến nào đang chờ bàn giao xe.">
                     <Columns>
-                        <RadzenDataGridColumn Property="DispatchCode" Title="Mã lệnh" Width="130px">
+                        <RadzenDataGridColumn Property="DispatchCode" Title="Mã lệnh" Width="155px">
                             <Template Context="item">
-                                <span class="fw-bold text-primary">@item.DispatchCode</span>
+                                <span class="fw-bold text-primary text-nowrap">@item.DispatchCode</span>
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="VehiclePlateSnapshot" Title="Phương tiện" Width="150px">
+                        <RadzenDataGridColumn Property="VehiclePlateSnapshot" Title="Phương tiện" Width="140px">
                             <Template Context="item">
                                 <span class="badge bg-dark">@item.VehiclePlateSnapshot</span>
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="180px">
+                        <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="220px">
                             <Template Context="item">
                                 <div><strong>@item.DriverNameSnapshot</strong></div>
                                 <div class="text-muted small">@EnumHelper.TenDriverMode(item.DriverMode)</div>
@@ -397,9 +397,9 @@ else
                                 AllowSorting="true" 
                                 EmptyText="Hiện không có phương tiện nào đang lưu thông trên đường.">
                     <Columns>
-                        <RadzenDataGridColumn Property="DispatchCode" Title="Mã lệnh" Width="130px">
+                        <RadzenDataGridColumn Property="DispatchCode" Title="Mã lệnh" Width="155px">
                             <Template Context="item">
-                                <span class="fw-bold text-primary">@item.DispatchCode</span>
+                                <span class="fw-bold text-primary text-nowrap">@item.DispatchCode</span>
                                 @if (item.IsOverdue)
                                 {
                                     <div class="badge bg-danger small">QUÁ HẠN TRẢ</div>
@@ -413,7 +413,7 @@ else
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="180px">
+                        <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="220px">
                             <Template Context="item">
                                 <div><strong>@item.DriverNameSnapshot</strong></div>
                                 <div class="text-muted small">@EnumHelper.TenDriverMode(item.DriverMode)</div>
@@ -490,9 +490,9 @@ else
                                 AllowSorting="true" 
                                 EmptyText="Chưa có chuyến công tác nào trong lịch sử.">
                     <Columns>
-                        <RadzenDataGridColumn Property="DispatchCode" Title="Mã lệnh" Width="130px" />
+                        <RadzenDataGridColumn Property="DispatchCode" Title="Mã lệnh" Width="155px" />
                         <RadzenDataGridColumn Property="VehiclePlateSnapshot" Title="Phương tiện" Width="140px" />
-                        <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="180px" />
+                        <RadzenDataGridColumn Property="DriverNameSnapshot" Title="Người điều khiển" Width="220px" />
                         <RadzenDataGridColumn Property="StartKm" Title="Hành trình Km" Width="170px">
                             <Template Context="item">
                                 <div>@item.StartKm.ToString("N0") → @(item.EndKm > 0 ? $"{item.EndKm:N0}" : "---")</div>

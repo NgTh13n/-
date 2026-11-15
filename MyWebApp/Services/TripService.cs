@@ -223,13 +223,38 @@ public class TripService
             don.Status = BookingStatus.Completed;
         }
 
-        // Cập nhật xe: lưu chỉ số Odometer mới và đưa về trạng thái Sẵn sàng
+        // Cập nhật xe: lưu chỉ số Odometer mới và cập nhật trạng thái kỹ thuật
         Vehicle? xe = duLieu.Vehicles.FirstOrDefault(v => v.Id == chuyen.VehicleId);
         if (xe != null)
         {
             xe.CurrentKm = endKm;
-            xe.OperationalStatus = VehicleOperationalStatus.Ready;
-            xe.Status = VehicleStatus.SanSang;
+            if (hasIncident)
+            {
+                xe.OperationalStatus = VehicleOperationalStatus.Maintenance;
+                xe.Status = VehicleStatus.DangBaoDuong;
+                xe.Note = string.IsNullOrWhiteSpace(xe.Note)
+                    ? $"Cần bảo dưỡng sau sự cố: {incidentNote}"
+                    : $"{xe.Note} | Cần bảo dưỡng: {incidentNote}";
+
+                int nextMaintId = duLieu.MaintenanceRecords.Count > 0 ? duLieu.MaintenanceRecords.Max(m => m.Id) + 1 : 1;
+                duLieu.MaintenanceRecords.Add(new MaintenanceRecord
+                {
+                    Id = nextMaintId,
+                    VehicleId = xe.Id,
+                    MaintenanceType = MaintenanceType.Repair,
+                    Description = $"Sửa chữa, khắc phục sau sự cố chuyến đi {chuyen.DispatchCode}: {incidentNote}",
+                    PlannedAt = DateTime.Now,
+                    Status = MaintenanceStatus.InProgress,
+                    OdometerKm = endKm,
+                    GarageName = "Xưởng bảo dưỡng kỹ thuật CAND",
+                    Notes = $"Phát sinh từ chuyến đi {chuyen.DispatchCode}"
+                });
+            }
+            else
+            {
+                xe.OperationalStatus = VehicleOperationalStatus.Ready;
+                xe.Status = VehicleStatus.SanSang;
+            }
         }
 
         // Ghi Audit Trail
@@ -373,6 +398,65 @@ public class TripService
 
     public bool SettleTrip(int tripId, double endKm, double fuelUsed, string? ghiChu, out string thongBaoLoi)
     {
+        Trip? chuyen = duLieu.Trips.FirstOrDefault(t => t.Id == tripId);
+        if (chuyen != null && chuyen.Status == TripStatus.Returned && !chuyen.IsSettled)
+        {
+            if (endKm < chuyen.StartKm)
+            {
+                thongBaoLoi = $"Số Km kết thúc ({endKm:N0} km) không được nhỏ hơn số Km ban đầu ({chuyen.StartKm:N0} km).";
+                return false;
+            }
+
+            if (fuelUsed < 0)
+            {
+                thongBaoLoi = "Nhiên liệu tiêu thụ không được âm.";
+                return false;
+            }
+
+            User? nguoiDung = authService.CurrentUser;
+            chuyen.EndKm = endKm;
+            chuyen.FuelUsed = fuelUsed;
+            chuyen.IsSettled = true;
+            chuyen.Status = TripStatus.Completed;
+            chuyen.SettledAt = DateTime.Now;
+            chuyen.SettledBy = nguoiDung?.FullName ?? "Quản lý đội xe";
+            if (!string.IsNullOrWhiteSpace(ghiChu))
+            {
+                chuyen.Note = string.IsNullOrWhiteSpace(chuyen.Note) ? ghiChu : $"{chuyen.Note} | Quyết toán: {ghiChu}";
+            }
+
+            Vehicle? xe = duLieu.Vehicles.FirstOrDefault(v => v.Id == chuyen.VehicleId);
+            if (xe != null)
+            {
+                xe.CurrentKm = endKm;
+                if (!chuyen.HasIncident)
+                {
+                    xe.OperationalStatus = VehicleOperationalStatus.Ready;
+                    xe.Status = VehicleStatus.SanSang;
+                }
+            }
+
+            Booking? don = duLieu.Bookings.FirstOrDefault(b => b.Id == chuyen.BookingId);
+            if (don != null)
+            {
+                don.Status = BookingStatus.Completed;
+            }
+
+            duLieu.AddStatusHistory(
+                "Trip",
+                chuyen.Id,
+                "Returned",
+                "Completed",
+                nguoiDung?.OfficerId ?? nguoiDung?.Id ?? 0,
+                nguoiDung?.FullName ?? "Hệ thống",
+                $"Quyết toán chuyến đi {chuyen.DispatchCode}. Km cuối: {endKm:N0} km, Nhiên liệu tiêu thụ: {fuelUsed:N1}L.");
+
+            GhiNhatKy(nguoiDung?.Id ?? 0, "Quyết toán chuyến đi", $"Hoàn tất quyết toán chuyến đi {chuyen.DispatchCode} cho xe {xe?.LicensePlate}.");
+
+            thongBaoLoi = "";
+            return true;
+        }
+
         return ReturnVehicle(tripId, endKm, "80%", fuelUsed, "Bình thường", false, "", ghiChu ?? "", out thongBaoLoi);
     }
 
@@ -426,6 +510,8 @@ public class TripService
             IncidentNote = t.IncidentNote,
             FuelUsed = t.FuelUsed,
             IsSettled = t.IsSettled,
+            SettledAt = t.SettledAt,
+            SettledBy = t.SettledBy,
             Note = t.Note
         };
     }

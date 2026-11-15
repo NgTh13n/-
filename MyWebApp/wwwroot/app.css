@@ -23,6 +23,9 @@
     --brand-gold: #d97706;
     --brand-gold-subtle: #fffbeb;
 
+    /* Độ rộng thanh điều hướng bên trái (Sidebar) chuẩn 250px */
+    --rz-sidebar-width: 250px;
+
     /* Màu chữ phân cấp */
     --text-primary: #0f172a;
     --text-secondary: #475569;
@@ -52,6 +55,7 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
 .main-layout {
     min-height: 100vh;
     background-color: var(--bg-canvas);
+    --rz-sidebar-width: 250px;
 }
 
 .rz-header.main-header,
@@ -59,8 +63,8 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
     background-color: var(--brand-navy) !important;
     color: var(--text-inverse) !important;
     padding: 0 1.25rem !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-    border-bottom: 2px solid var(--brand-red) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    border-bottom: 3px solid #f59e0b !important; /* Vàng ánh kim CAND thay cho màu đỏ */
 }
 
 .header-content {
@@ -75,6 +79,30 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
     display: flex;
     align-items: center;
     gap: 0.875rem;
+}
+
+.rz-sidebar-toggle {
+    color: #ffffff !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 6px 8px !important;
+    margin-right: 0.25rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background-color 0.2s ease, transform 0.15s ease, color 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.rz-sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #f59e0b !important;
+    transform: scale(1.06);
+}
+
+.rz-sidebar-toggle:active {
+    transform: scale(0.95);
 }
 
 .header-logo {
@@ -101,44 +129,119 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
     font-weight: 500;
 }
 
-/* Sidebar & Navigation */
+/* Sidebar & Navigation: Độ rộng chuẩn 250px, hỗ trợ thu gọn có animation thụt vào */
 .rz-sidebar.main-sidebar,
 .main-sidebar {
-    background-color: #0f1f2a !important;
+    width: var(--rz-sidebar-width, 250px) !important;
+    background-color: #0b1720 !important;
     border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow-x: hidden !important;
+}
+
+/* Cố định nội dung menu để khi sidebar thụt vào không bị bóp méo chữ */
+.main-sidebar nav,
+.main-sidebar .main-menu {
+    width: 250px !important;
+    min-width: 250px !important;
+}
+
+/* Khi ấn nút 3 gạch để thu gọn: Thanh bên trái trượt thụt êm ái vào trong lề trái */
+.rz-sidebar.rz-sidebar-collapsed,
+.main-sidebar.rz-sidebar-collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    transform: translateX(-100%) !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    border-right: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
 }
 
 .main-menu {
-    padding: 0.5rem 0.25rem;
+    padding: 0.5rem 0.35rem !important;
     background: transparent !important;
 }
 
 .main-menu .rz-navigation-item-link {
-    color: #cbd5e1 !important;
-    border-radius: 6px;
-    margin: 2px 8px;
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: all 0.15s ease-in-out;
+    color: #94a3b8 !important;
+    border-radius: 8px !important;
+    margin: 3px 8px !important;
+    padding: 9px 12px !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    position: relative !important;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    white-space: nowrap !important;
+    border-left: 3.5px solid transparent !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
+.main-menu .rz-navigation-item-icon {
+    font-size: 1.15rem !important;
+    margin-right: 8px !important;
+    color: #64748b !important;
+    transition: all 0.22s ease !important;
+}
+
+/* Hover: Dịch chuyển nhẹ nhàng sang phải, sáng icon */
 .main-menu .rz-navigation-item-link:hover {
-    background-color: rgba(255, 255, 255, 0.08) !important;
+    background-color: rgba(255, 255, 255, 0.06) !important;
     color: #ffffff !important;
+    transform: translateX(3px) !important;
 }
 
+.main-menu .rz-navigation-item-link:hover .rz-navigation-item-icon {
+    color: #ffd166 !important;
+    transform: scale(1.08) !important;
+}
+
+/* Active State: Hiệu ứng ánh kim vàng hổ phách dịu mắt, sang trọng (Glassmorphism Gold) */
 .main-menu .rz-navigation-item-link.rz-state-active {
-    background-color: rgba(255, 255, 255, 0.12) !important;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.04) 100%) !important;
     color: #ffffff !important;
-    font-weight: 600;
-    border-left: 3px solid var(--brand-red) !important;
+    font-weight: 600 !important;
+    border-left: 3.5px solid #f59e0b !important;
+    box-shadow: inset 1px 0 8px rgba(245, 158, 11, 0.15) !important;
+}
+
+.main-menu .rz-navigation-item-link.rz-state-active .rz-navigation-item-icon {
+    color: #fbbf24 !important;
+    transform: scale(1.1) !important;
+}
+
+/* Hiệu ứng chuyển trang mượt mà (Fade-in & Slide-up nhẹ) */
+@keyframes pageFadeIn {
+    from {
+        opacity: 0.7;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Chuyển động bố cục mượt mà khi thu gọn / mở rộng sidebar */
+.rz-layout .rz-body {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .page-content {
-    padding: 1.5rem;
+    padding: 1.25rem 2rem;
     max-width: 1440px;
     margin: 0 auto;
+    transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: pageFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ==========================================================================
@@ -668,7 +771,7 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid var(--brand-red, #b71c1c);
+    border-bottom: 2px solid #f59e0b;
 }
 
 .btn-mark-all-read {
@@ -809,4 +912,110 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
     color: #0d6efd;
     text-decoration: underline;
     margin-right: 1rem;
+}
+
+/* ==========================================================================
+   DATAGRID CELL OPTIMIZATION (HIỂN THỊ ĐẦY ĐỦ THÔNG TIN, TRÁNH CẮT XÉN ...)
+   ========================================================================== */
+.rz-data-grid-data td .rz-cell-data {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.4 !important;
+    word-break: break-word !important;
+}
+
+.rz-data-grid-data td .text-primary.fw-bold,
+.rz-data-grid-data td .text-secondary.fw-bold {
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   BUTTON NOWRAP & APPROVAL ACTION BUTTONS (CHỐNG GÃY CHỮ & CẮT CỤT TỪ CHỐI)
+   ========================================================================== */
+.rz-button, 
+.btn, 
+.rz-button-text,
+.approval-action-group,
+.approval-action-group * {
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+}
+
+/* Thao tác quyết định trong bảng phê duyệt */
+.approval-action-group {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+}
+
+.approval-action-group .rz-button {
+    font-size: 0.8125rem !important;
+    padding: 0 0.65rem !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+    line-height: normal !important;
+    transition: all 0.15s ease !important;
+}
+
+.approval-action-group .rz-button .rz-button-icon-left {
+    font-size: 1rem !important;
+    margin-right: 0.3rem !important;
+    margin-left: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+.approval-action-group .rz-button-text {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.approval-action-group .rz-button.rz-button-icon-only,
+.approval-action-group .rz-button:not(:has(.rz-button-text:not(:empty))) {
+    width: 32px !important;
+    min-width: 32px !important;
+    padding: 0 !important;
+}
+
+.rz-data-grid-data td:has(.approval-action-group),
+.rz-data-grid-data td.rz-text-align-center {
+    text-align: center !important;
+    vertical-align: middle !important;
+    overflow: visible !important;
+}
+
+/* Căn giữa tiêu đề cột Thao tác quyết định trong bảng phê duyệt */
+.rz-data-grid thead th:last-child,
+.rz-data-grid thead th.rz-text-align-center {
+    text-align: center !important;
+}
+
+.rz-data-grid thead th:last-child .rz-column-title,
+.rz-data-grid thead th.rz-text-align-center .rz-column-title {
+    text-align: center !important;
+    width: 100% !important;
+    display: inline-block !important;
 }

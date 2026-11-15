@@ -67,8 +67,11 @@ public class DriverService
             return false;
         }
 
-        // Kiểm tra xem lái xe có đang được phân công chuyến đi chưa hoàn thành không
-        if (duLieu.Trips.Any(c => c.DriverId == id && !(c.Status == TripStatus.Returned && c.IsSettled)))
+        // Kiểm tra xem lái xe có đang được phân công chuyến đi chưa hoàn tất hoặc chưa quyết toán không
+        if (duLieu.Trips.Any(c => c.DriverId == id && 
+            c.Status != TripStatus.Completed && 
+            c.Status != TripStatus.Cancelled && 
+            !(c.Status == TripStatus.Returned && c.IsSettled)))
         {
             loi = "Không thể xóa lái xe đang tham gia chuyến đi chưa hoàn thành.";
             return false;

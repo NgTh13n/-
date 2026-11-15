@@ -64,8 +64,11 @@ public class VehicleService
             return false;
         }
 
-        // Chặn xóa xe đang có chuyến đi chưa hoàn thành.
-        if (duLieu.Trips.Any(c => c.VehicleId == id && !(c.Status == TripStatus.Returned && c.IsSettled)))
+        // Chặn xóa xe đang có chuyến đi chưa hoàn tất hoặc chưa quyết toán.
+        if (duLieu.Trips.Any(c => c.VehicleId == id && 
+            c.Status != TripStatus.Completed && 
+            c.Status != TripStatus.Cancelled && 
+            !(c.Status == TripStatus.Returned && c.IsSettled)))
         {
             loi = "Không thể xóa phương tiện đang có chuyến đi chưa hoàn thành.";
             return false;
@@ -126,7 +129,9 @@ public class VehicleService
             OperationalStatus = vehicle.OperationalStatus,
             RegistrationExpiryDate = vehicle.RegistrationExpiryDate,
             NextMaintenanceDate = vehicle.NextMaintenanceDate,
-            Note = vehicle.Note
+            Note = vehicle.Note,
+            CreatedAt = vehicle.CreatedAt,
+            UpdatedAt = vehicle.UpdatedAt
         };
     }
 }

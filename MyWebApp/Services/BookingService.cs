@@ -21,7 +21,10 @@ public class BookingService
     {
         var u = authService.CurrentUser;
         if (u == null) return new();
-        var q = u.Role == UserRole.Officer ? duLieu.Bookings.Where(b => b.RequesterId == u.Id) : duLieu.Bookings;
+        int officerId = u.OfficerId ?? u.Id;
+        var q = u.Role == UserRole.Officer 
+            ? duLieu.Bookings.Where(b => b.RequesterId == officerId || b.RequesterId == u.Id) 
+            : duLieu.Bookings;
         return q.Select(SaoChep).ToList();
     }
 
@@ -34,8 +37,9 @@ public class BookingService
     {
         var u = authService.CurrentUser;
         if (u == null) return new();
+        int officerId = u.OfficerId ?? u.Id;
         return duLieu.Bookings
-            .Where(b => b.Status == BookingStatus.NeedAdjustment && (u.Role != UserRole.Officer || b.RequesterId == u.Id))
+            .Where(b => b.Status == BookingStatus.NeedAdjustment && (u.Role != UserRole.Officer || b.RequesterId == officerId || b.RequesterId == u.Id))
             .Select(SaoChep).ToList();
     }
 
@@ -64,7 +68,7 @@ public class BookingService
 
         booking.Id = idMoi;
         booking.BookingCode = $"YC-{DateTime.Today.Year}-{idMoi:D3}";
-        booking.RequesterId = nguoiDung.Id;
+        booking.RequesterId = nguoiDung.OfficerId ?? nguoiDung.Id;
         booking.DepartmentId = nguoiDung.DepartmentId;
         booking.DepartmentSnapshot = phongDoi?.Name ?? "Đơn vị CAND";
         booking.Status = guiDuyetNgay ? BookingStatus.PendingApproval : BookingStatus.Draft;
@@ -418,11 +422,12 @@ public class BookingService
     // Lấy tên người tạo yêu cầu
     public string GetRequesterName(int requesterId)
     {
+        // Ưu tiên tìm theo OfficerId vì RequesterId đại diện cho cán bộ
+        if (duLieu.Officers.FirstOrDefault(o => o.Id == requesterId) is { } cb)
+            return cb.FullName;
+
         if (duLieu.Users.FirstOrDefault(u => u.Id == requesterId) is { } user)
             return user.FullName;
-
-        if (duLieu.Officers.FirstOrDefault(o => o.Id == requesterId) is { } cb)
-            return $"{cb.RankOrTitle} {cb.FullName}";
 
         return "Không xác định";
     }

@@ -237,7 +237,7 @@ else
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Nội dung / Nhiệm vụ công tác cụ thể</label>
-                        <InputText class="form-control" @bind-Value="yeuCau.TaskDescription" placeholder="Mô tả tóm tắt nhiệm vụ, số quyết định công tác hoặc thành phần phối hợp..." />
+                        <InputText class="form-control" @bind-Value="yeuCau.TaskDescription" placeholder="Tóm tắt nhiệm vụ, số QĐ hoặc thành phần phối hợp..." />
                     </div>
 
                     <div class="col-md-6">
@@ -322,13 +322,13 @@ else
                             AllowSorting="true" 
                             EmptyText="Không có yêu cầu đăng ký phương tiện nào phù hợp.">
                 <Columns>
-                    <RadzenDataGridColumn Property="BookingCode" Title="Mã yêu cầu" Width="130px">
+                    <RadzenDataGridColumn Property="BookingCode" Title="Mã yêu cầu" Width="140px">
                         <Template Context="item">
-                            <span class="fw-bold text-primary">@item.BookingCode</span>
+                            <span class="fw-bold text-primary text-nowrap">@item.BookingCode</span>
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn Property="Purpose" Title="Mục đích / Công việc" Width="220px">
+                    <RadzenDataGridColumn Property="Purpose" Title="Mục đích / Công việc" Width="280px">
                         <Template Context="item">
                             <div class="fw-semibold">@item.Purpose</div>
                             <div class="text-muted small">

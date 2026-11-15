@@ -561,6 +561,30 @@ public static class MockDataSeeder
                 Status = BookingStatus.Cancelled,
                 CancellationReason = "Đối tượng tố giác rút đơn, hai bên tự hòa giải thành công nên hủy lịch xe.",
                 CreatedAt = homNay.AddDays(-2).AddHours(9)
+            },
+
+            // 10. Chuyến đã hoàn trả về bãi, chờ quyết toán (Gắn với Trip 4)
+            new Booking
+            {
+                Id = 10,
+                BookingCode = $"YC-{homNay.Year}-010",
+                RequesterId = 2, // Hoàng Quốc Việt
+                DepartmentId = 2,
+                DepartmentSnapshot = "Đội Cảnh sát ĐTTP về TTXH",
+                WorkType = "Làm việc theo lịch",
+                Purpose = "Phối hợp với Trại tạm giam số 1 lấy lời khai bị can",
+                TaskDescription = "Làm việc với Ban giám thị và tiếp cận đối tượng tại buồng hỏi cung số 3.",
+                Departure = "Trụ sở Công an",
+                Destination = "Trại tạm giam số 1 (Xuân Phương, Nam Từ Liêm)",
+                DepartureTime = homNay.AddHours(-6),
+                ReturnTime = homNay.AddHours(-1),
+                PassengerCount = 2,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.AssignedDriver,
+                Status = BookingStatus.PendingSettlement,
+                ApprovalOfficerId = 5,
+                ApprovalAt = homNay.AddDays(-1).AddHours(16),
+                CreatedAt = homNay.AddDays(-1).AddHours(10)
             }
         };
     }
@@ -661,6 +685,39 @@ public static class MockDataSeeder
                 FuelUsed = 12.5, // 12.5 lít dầu
                 IsSettled = true,
                 Note = "Đã hoàn tất quyết toán chuyến đi áp giải can phạm. Xe bàn giao lại cho Đội xe trực chiến."
+            },
+
+            // 4. Chuyến đã trở về bãi, đang chờ quyết toán kinh phí & xăng xe (YC 10)
+            new Trip
+            {
+                Id = 4,
+                DispatchCode = $"LĐĐ-{homNay.Year}-004",
+                BookingId = 10,
+                VehicleId = 2, // Hyundai Santa Fe 80A-023.45
+                DriverMode = DriverMode.AssignedDriver,
+                DriverId = 1,  // Vũ Đức Long
+                SelfDrivingOfficerId = null,
+                DriverNameSnapshot = "Vũ Đức Long",
+                RequesterNameSnapshot = "Hoàng Quốc Việt",
+                VehiclePlateSnapshot = "80A-023.45",
+                ScheduledStartAt = homNay.AddHours(-6),
+                ScheduledEndAt = homNay.AddHours(-1),
+                DispatcherId = 6,
+                DispatchedAt = homNay.AddDays(-1).AddHours(17),
+                Status = TripStatus.Returned, // Đã về và chờ quyết toán
+                HandoverAt = homNay.AddHours(-6),
+                StartKm = 31200,
+                FuelStartLevel = "100%",
+                ConditionBefore = "Xe sạch sẽ, vận hành tốt.",
+                ReturnedAt = homNay.AddHours(-1),
+                EndKm = 31245,
+                FuelEndLevel = "85%",
+                ConditionAfter = "Xe nguyên vẹn, đã bàn giao chìa khóa tại bãi đỗ xe.",
+                HasIncident = false,
+                IncidentNote = "",
+                FuelUsed = 6.2,
+                IsSettled = false, // CHỜ QUYẾT TOÁN
+                Note = "Chuyến đi trại tạm giam số 1 đã trở về an toàn. Chờ nghiệm thu thanh quyết toán nhiên liệu."
             }
         };
     }

@@ -85,6 +85,7 @@ public class Vehicle
             {
                 VehicleOperationalStatus.Maintenance => VehicleStatus.DangBaoDuong,
                 VehicleOperationalStatus.Inactive => VehicleStatus.NgungHoatDong,
+                VehicleOperationalStatus.InUse => VehicleStatus.DangDuocDieuDong,
                 _ => VehicleStatus.SanSang
             };
         }
@@ -94,6 +95,7 @@ public class Vehicle
             {
                 VehicleStatus.DangBaoDuong => VehicleOperationalStatus.Maintenance,
                 VehicleStatus.NgungHoatDong => VehicleOperationalStatus.Inactive,
+                VehicleStatus.DangDuocDieuDong => VehicleOperationalStatus.InUse,
                 _ => VehicleOperationalStatus.Ready
             };
         }
