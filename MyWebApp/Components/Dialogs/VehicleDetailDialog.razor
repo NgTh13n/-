@@ -1,0 +1,45 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+
+@inject DialogService dialog
+
+<div class="vehicle-detail-dialog">
+    <div class="row g-3">
+        <div class="col-md-3"><strong>Mã phương tiện:</strong> <span class="badge bg-secondary">@Vehicle.VehicleCode</span></div>
+        <div class="col-md-3"><strong>Biển số:</strong> <span class="badge bg-primary fs-6">@Vehicle.LicensePlate</span></div>
+        <div class="col-md-3"><strong>Loại:</strong> @EnumHelper.TenVehicleType(Vehicle.VehicleType)</div>
+        <div class="col-md-3"><strong>Số chỗ ngồi:</strong> @Vehicle.Seats chỗ</div>
+
+        <div class="col-md-3"><strong>Nhãn hiệu:</strong> @Vehicle.Brand</div>
+        <div class="col-md-3"><strong>Model:</strong> @Vehicle.Model</div>
+        <div class="col-md-3"><strong>Năm sản xuất:</strong> @Vehicle.ManufactureYear</div>
+        <div class="col-md-3"><strong>Màu sơn:</strong> @Vehicle.Color</div>
+
+        <div class="col-md-3"><strong>Odometer hiện tại:</strong> <strong class="text-primary">@Vehicle.CurrentKm.ToString("N0") km</strong></div>
+        <div class="col-md-3"><strong>Ngày tiếp nhận:</strong> @Vehicle.ReceiveDate.ToString("dd/MM/yyyy")</div>
+        <div class="col-md-6">
+            <strong>Trạng thái vận hành:</strong> 
+            <span class="badge @(Vehicle.Status == VehicleStatus.SanSang ? "bg-success" : Vehicle.Status == VehicleStatus.DangDuocDieuDong ? "bg-primary" : "bg-warning text-dark")">
+                @EnumHelper.TenVehicleStatus(Vehicle.Status)
+            </span>
+        </div>
+
+        <div class="col-md-6"><strong>Số khung:</strong> <code>@Vehicle.ChassisNumber</code></div>
+        <div class="col-md-6"><strong>Số máy:</strong> <code>@Vehicle.EngineNumber</code></div>
+
+        <div class="col-12">
+            <strong>Ghi chú / Mục đích sử dụng:</strong>
+            <div class="p-2 bg-light rounded mt-1 border">@(string.IsNullOrEmpty(Vehicle.Note) ? "Không có ghi chú thêm." : Vehicle.Note)</div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4 pt-2 border-top">
+        <RadzenButton Text="Đóng" Icon="close" ButtonStyle="ButtonStyle.Secondary" Click="() => dialog.Close()" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Vehicle Vehicle { get; set; } = new();
+}

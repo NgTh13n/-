@@ -1,0 +1,71 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Services
+@using MyWebApp.Data
+
+@inject VehicleService vehicleService
+@inject DialogService dialog
+
+@{
+    var xe = vehicleService.GetAll().FirstOrDefault(v => v.Id == Record.VehicleId);
+}
+
+<div class="maintenance-detail-dialog">
+    <div class="row g-3">
+        <div class="col-md-4"><strong>Mã hồ sơ:</strong> <span class="badge bg-primary">#@Record.Id</span></div>
+        <div class="col-md-4">
+            <strong>Trạng thái:</strong> 
+            <span class="badge-status @Record.Status.BadgeClass()">
+                @Record.Status.Ten()
+            </span>
+        </div>
+        <div class="col-md-4"><strong>Loại hình:</strong> @EnumHelper.TenMaintenanceType(Record.MaintenanceType)</div>
+
+        <div class="col-md-6">
+            <div class="p-3 border rounded bg-light">
+                <strong class="text-primary"><RadzenIcon Icon="directions_car" Class="me-1" /> Thông tin phương tiện:</strong>
+                <div class="mt-2">Biển số: <strong>@(xe?.LicensePlate ?? "Chưa rõ")</strong> (@xe?.Brand @xe?.Model)</div>
+                <div>Odometer tại thời điểm: <strong>@(Record.OdometerKm > 0 ? $"{Record.OdometerKm:N0} km" : "---")</strong></div>
+                <div>Chi phí: <strong>@(Record.Cost.HasValue ? $"{Record.Cost.Value:N0} đ" : "---")</strong></div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="p-3 border rounded bg-light">
+                <strong class="text-success"><RadzenIcon Icon="event" Class="me-1" /> Tiến độ thời gian:</strong>
+                <div class="mt-2">Ngày bắt đầu: <strong>@Record.PlannedAt.ToString("dd/MM/yyyy")</strong></div>
+                <div>Ngày nghiệm thu: <strong>@(Record.CompletedAt.HasValue ? Record.CompletedAt.Value.ToString("dd/MM/yyyy") : "Đang thực hiện")</strong></div>
+                <div>Xưởng / Gara: <strong>@(string.IsNullOrEmpty(Record.GarageName) ? "Chưa chỉ định" : Record.GarageName)</strong></div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="p-3 border rounded">
+                <strong><RadzenIcon Icon="description" Class="me-1" /> Nội dung chi tiết bảo dưỡng / sửa chữa:</strong>
+                <p class="mb-0 mt-1 text-muted">@Record.Description</p>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Record.Notes))
+        {
+            <div class="col-12">
+                <div class="p-3 border rounded bg-light">
+                    <strong class="text-success"><RadzenIcon Icon="verified" Class="me-1" /> Kết luận kỹ thuật & Ghi chú nghiệm thu:</strong>
+                    <p class="mb-0 mt-1">@Record.Notes</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-3">
+        <RadzenButton Text="Đóng" 
+                      Icon="close" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="@(() => dialog.Close(false))" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public MaintenanceRecord Record { get; set; } = default!;
+}

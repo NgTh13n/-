@@ -4,6 +4,7 @@
 
 @using MyWebApp.Models.Enums
 @using MyWebApp.Helpers
+@using MyWebApp.Components.Dialogs
 
 @inject VehicleService vehicleService
 @inject DialogService dialog
@@ -45,142 +46,18 @@ else
         </div>
     }
 
-    @if (selectedVehicle != null)
-    {
-        <div id="chi-tiet-phuong-tien" class="gov-card gov-card-accent-primary mb-4">
-            <div class="gov-card-header">
-                <strong class="gov-card-header-title"><RadzenIcon Icon="directions_car" Class="me-1" /> Chi tiết phương tiện: @selectedVehicle.LicensePlate</strong>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="CloseDetails">Đóng</button>
-            </div>
-            <div class="gov-card-body row">
-                <div class="col-md-3 mb-2"><strong>Mã:</strong> @selectedVehicle.VehicleCode</div>
-                <div class="col-md-3 mb-2"><strong>Loại:</strong> @EnumHelper.TenVehicleType(selectedVehicle.VehicleType)</div>
-                <div class="col-md-3 mb-2"><strong>Nhãn hiệu / Model:</strong> @selectedVehicle.Brand @selectedVehicle.Model</div>
-                <div class="col-md-3 mb-2"><strong>Số chỗ ngồi:</strong> @selectedVehicle.Seats</div>
-                <div class="col-md-3 mb-2"><strong>Năm sản xuất:</strong> @selectedVehicle.ManufactureYear</div>
-                <div class="col-md-3 mb-2"><strong>Số km hiện tại:</strong> @selectedVehicle.CurrentKm.ToString("N0") km</div>
-                <div class="col-md-3 mb-2"><strong>Màu:</strong> @selectedVehicle.Color</div>
-                <div class="col-md-3 mb-2"><strong>Số khung:</strong> @selectedVehicle.ChassisNumber</div>
-                <div class="col-md-3 mb-2"><strong>Số máy:</strong> @selectedVehicle.EngineNumber</div>
-                <div class="col-md-3 mb-2"><strong>Ngày tiếp nhận:</strong> @selectedVehicle.ReceiveDate.ToString("dd/MM/yyyy")</div>
-                <div class="col-md-3 mb-2"><strong>Tình trạng:</strong> @EnumHelper.TenVehicleStatus(selectedVehicle.Status)</div>
-                <div class="col-md-9 mb-2"><strong>Ghi chú:</strong> @selectedVehicle.Note</div>
-            </div>
-        </div>
-    }
-
-    <div id="form-phuong-tien" class="gov-card mb-4">
-        <div class="gov-card-header">
-            <h2 class="gov-card-header-title">
-                <RadzenIcon Icon="@(isEditing ? "edit" : "add")" Style="color: var(--brand-navy);" />
-                @(isEditing ? "Sửa phương tiện" : "Thêm phương tiện mới")
-            </h2>
-        </div>
-        <div class="gov-card-body">
-
-            <EditForm Model="vehicle" OnValidSubmit="Save">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="text-danger" />
-
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Mã phương tiện</label>
-                        <InputText class="form-control" @bind-Value="vehicle.VehicleCode" />
-                        <ValidationMessage For="() => vehicle.VehicleCode" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Biển số</label>
-                        <InputText class="form-control" @bind-Value="vehicle.LicensePlate" />
-                        <ValidationMessage For="() => vehicle.LicensePlate" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Loại phương tiện</label>
-                        <InputSelect class="form-select" @bind-Value="vehicle.VehicleType">
-                            <option value="@VehicleType.OTo">Ô tô</option>
-                            <option value="@VehicleType.XeMay">Xe máy</option>
-                            <option value="@VehicleType.XeTai">Xe tải</option>
-                            <option value="@VehicleType.XeChuyenDung">Xe chuyên dụng</option>
-                        </InputSelect>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Tình trạng</label>
-                        <InputSelect class="form-select" @bind-Value="vehicle.Status">
-                            <option value="@VehicleStatus.SanSang">Sẵn sàng</option>
-                            <option value="@VehicleStatus.DangDuocDieuDong">Đang được điều động</option>
-                            <option value="@VehicleStatus.DangBaoDuong">Đang bảo dưỡng</option>
-                            <option value="@VehicleStatus.NgungHoatDong">Ngừng hoạt động</option>
-                        </InputSelect>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Nhãn hiệu</label>
-                        <InputText class="form-control" @bind-Value="vehicle.Brand" />
-                        <ValidationMessage For="() => vehicle.Brand" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Model</label>
-                        <InputText class="form-control" @bind-Value="vehicle.Model" />
-                        <ValidationMessage For="() => vehicle.Model" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Năm sản xuất</label>
-                        <InputNumber class="form-control" @bind-Value="vehicle.ManufactureYear" />
-                        <ValidationMessage For="() => vehicle.ManufactureYear" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Số chỗ ngồi</label>
-                        <InputNumber class="form-control" @bind-Value="vehicle.Seats" />
-                        <ValidationMessage For="() => vehicle.Seats" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Số km hiện tại</label>
-                        <InputNumber class="form-control" @bind-Value="vehicle.CurrentKm" />
-                        <ValidationMessage For="() => vehicle.CurrentKm" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Màu sắc</label>
-                        <InputText class="form-control" @bind-Value="vehicle.Color" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Ngày tiếp nhận</label>
-                        <InputDate class="form-control" @bind-Value="vehicle.ReceiveDate" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Số khung</label>
-                        <InputText class="form-control" @bind-Value="vehicle.ChassisNumber" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Số máy</label>
-                        <InputText class="form-control" @bind-Value="vehicle.EngineNumber" />
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Ghi chú</label>
-                        <InputText class="form-control" @bind-Value="vehicle.Note" />
-                    </div>
-                </div>
-
-                <RadzenButton Text="@(isEditing ? "Lưu thay đổi" : "Thêm phương tiện")"
-                              Icon="save"
-                              ButtonType="ButtonType.Submit"
-                              ButtonStyle="ButtonStyle.Primary" />
-                <RadzenButton Text="Làm mới"
-                              Icon="refresh"
-                              Click="ResetForm"
-                              ButtonStyle="ButtonStyle.Light" />
-            </EditForm>
-        </div>
-    </div>
-
     <div class="card">
         <div class="card-body">
             <h2 class="h5">Danh sách phương tiện</h2>
 
             <div class="row mb-3">
                 <div class="col-md-4 mb-2">
-                    <RadzenLabel Text="Tìm theo mã hoặc biển số" />
-                    <RadzenTextBox @bind-Value="searchText" Style="width:100%" />
+                    <RadzenLabel Text="Tìm kiếm theo biển số, nhãn hiệu, model" />
+                    <RadzenTextBox @bind-Value="searchText" Style="width:100%" placeholder="Nhập từ khóa tìm kiếm..." />
                 </div>
+
                 <div class="col-md-4 mb-2">
-                    <label class="form-label">Loại phương tiện</label>
+                    <label class="form-label">Loại xe</label>
                     <select class="form-select" @bind="typeFilter">
                         <option value="-1">Tất cả loại xe</option>
                         <option value="@((int)VehicleType.OTo)">Ô tô</option>
@@ -189,42 +66,79 @@ else
                         <option value="@((int)VehicleType.XeChuyenDung)">Xe chuyên dụng</option>
                     </select>
                 </div>
+
                 <div class="col-md-4 mb-2">
-                    <label class="form-label">Tình trạng</label>
+                    <label class="form-label">Trạng thái</label>
                     <select class="form-select" @bind="statusFilter">
-                        <option value="-1">Tất cả tình trạng</option>
+                        <option value="-1">Tất cả trạng thái</option>
                         <option value="@((int)VehicleStatus.SanSang)">Sẵn sàng</option>
                         <option value="@((int)VehicleStatus.DangDuocDieuDong)">Đang được điều động</option>
                         <option value="@((int)VehicleStatus.DangBaoDuong)">Đang bảo dưỡng</option>
                         <option value="@((int)VehicleStatus.NgungHoatDong)">Ngừng hoạt động</option>
                     </select>
                 </div>
+
+                <div class="col-12 mt-2">
+                    <button class="btn btn-secondary" @onclick="ResetFilters">
+                        <RadzenIcon Icon="refresh" Class="me-1" />
+                        Đặt lại bộ lọc
+                    </button>
+                </div>
             </div>
 
-            <RadzenButton Text="Đặt lại bộ lọc" Icon="refresh" Click="ResetFilters" ButtonStyle="ButtonStyle.Light" />
-
-            <RadzenDataGrid Data="@FilteredVehicles" TItem="Vehicle" AllowPaging="true" PageSize="10" AllowSorting="true">
+            <RadzenDataGrid Data="@FilteredVehicles"
+                            TItem="Vehicle"
+                            AllowPaging="true"
+                            PageSize="8"
+                            AllowSorting="true"
+                            EmptyText="Không có phương tiện nào phù hợp.">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Vehicle" Property="VehicleCode" Title="Mã phương tiện" />
-                    <RadzenDataGridColumn TItem="Vehicle" Property="LicensePlate" Title="Biển số" />
-                    <RadzenDataGridColumn TItem="Vehicle" Title="Loại xe">
-                        <Template Context="hv">@EnumHelper.TenVehicleType(hv.VehicleType)</Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Vehicle" Title="Nhãn hiệu / Model">
-                        <Template Context="hv">@hv.Brand @hv.Model</Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Vehicle" Property="ManufactureYear" Title="Năm SX" />
-                    <RadzenDataGridColumn TItem="Vehicle" Property="Seats" Title="Số chỗ" />
-                    <RadzenDataGridColumn TItem="Vehicle" Title="Tình trạng">
-                        <Template Context="hv">
-                            <span class="badge @GetStatusClass(hv.Status)">@EnumHelper.TenVehicleStatus(hv.Status)</span>
+                    <RadzenDataGridColumn Property="VehicleCode" Title="Mã xe" Width="100px" />
+                    <RadzenDataGridColumn Property="LicensePlate" Title="Biển số" Width="130px" />
+                    <RadzenDataGridColumn Property="Brand" Title="Nhãn hiệu / Model" Width="200px">
+                        <Template Context="item">
+                            @item.Brand @item.Model (@item.ManufactureYear)
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Vehicle" Title="Thao tác" Sortable="false" Filterable="false">
-                        <Template Context="hv">
-                            <RadzenButton Icon="visibility" Click="@(args => ViewDetails(hv))" ButtonStyle="ButtonStyle.Light" />
-                            <RadzenButton Icon="edit" Click="@(args => Edit(hv))" ButtonStyle="ButtonStyle.Info" />
-                            <RadzenButton Icon="delete" Click="@(args => Delete(hv))" ButtonStyle="ButtonStyle.Danger" />
+                    <RadzenDataGridColumn Property="VehicleType" Title="Loại xe" Width="110px">
+                        <Template Context="item">
+                            @EnumHelper.TenVehicleType(item.VehicleType)
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Seats" Title="Số chỗ" Width="80px" />
+                    <RadzenDataGridColumn Property="CurrentKm" Title="Số Km" Width="110px">
+                        <Template Context="item">
+                            @item.CurrentKm.ToString("N0") km
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Status" Title="Trạng thái" Width="160px">
+                        <Template Context="item">
+                            <span class="badge @LayMauTrangThai(item.Status)">
+                                @EnumHelper.TenVehicleStatus(item.Status)
+                            </span>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Thao tác" Width="160px" Sortable="false">
+                        <Template Context="item">
+                            <div class="d-flex gap-1">
+                                <RadzenButton Icon="visibility"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              Title="Xem chi tiết"
+                                              Click="@(() => ViewDetails(item))" />
+
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              Size="ButtonSize.Small"
+                                              Title="Sửa thông tin"
+                                              Click="@(() => Edit(item))" />
+
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Size="ButtonSize.Small"
+                                              Title="Xóa phương tiện"
+                                              Click="@(() => Delete(item))" />
+                            </div>
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -234,23 +148,44 @@ else
 }
 
 @code {
-    // Danh sách phương tiện đang hiển thị trên bảng
-    List<Vehicle> vehicles = new List<Vehicle>();
+    private List<Vehicle> vehicles = new();
 
-    // Đối tượng phương tiện đang thêm hoặc sửa
-    Vehicle vehicle = new Vehicle();
+    private string searchText = "";
+    private int typeFilter = -1;
+    private int statusFilter = -1;
 
-    // Phương tiện đang mở phần xem chi tiết
-    Vehicle? selectedVehicle = null;
+    private string message = "";
+    private bool isError = false;
 
-    // Điều kiện tìm kiếm (chuỗi) và lọc (dùng int -1 = không lọc)
-    string searchText = "";
-    int typeFilter = -1;
-    int statusFilter = -1;
+    private List<Vehicle> FilteredVehicles
+    {
+        get
+        {
+            var ketQua = vehicles.AsEnumerable();
 
-    string message = "";
-    bool isError = false;
-    bool isEditing = false;
+            if (string.IsNullOrWhiteSpace(searchText) == false)
+            {
+                string tuKhoa = searchText.Trim().ToLower();
+                ketQua = ketQua.Where(x =>
+                    x.LicensePlate.ToLower().Contains(tuKhoa) ||
+                    x.Brand.ToLower().Contains(tuKhoa) ||
+                    x.Model.ToLower().Contains(tuKhoa) ||
+                    x.VehicleCode.ToLower().Contains(tuKhoa));
+            }
+
+            if (typeFilter != -1)
+            {
+                ketQua = ketQua.Where(x => (int)x.VehicleType == typeFilter);
+            }
+
+            if (statusFilter != -1)
+            {
+                ketQua = ketQua.Where(x => (int)x.Status == statusFilter);
+            }
+
+            return ketQua.ToList();
+        }
+    }
 
     protected override void OnInitialized()
     {
@@ -260,82 +195,21 @@ else
 
     private void UpdatePage()
     {
+        LoadData();
         _ = InvokeAsync(StateHasChanged);
     }
 
-    // Nạp lại danh sách từ service
     private void LoadData()
     {
         vehicles = vehicleService.GetAll();
     }
 
-    private List<Vehicle> FilteredVehicles
-    {
-        get
-        {
-            List<Vehicle> ketQua = vehicles;
-
-            if (searchText != "")
-            {
-                List<Vehicle> tamThoi = new List<Vehicle>();
-
-                foreach (Vehicle xe in ketQua)
-                {
-                    if (xe.VehicleCode.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                        xe.LicensePlate.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-                    {
-                        tamThoi.Add(xe);
-                    }
-                }
-
-                ketQua = tamThoi;
-            }
-
-            if (typeFilter != -1)
-            {
-                VehicleType loaiCanLoc = (VehicleType)typeFilter;
-                List<Vehicle> tamThoi = new List<Vehicle>();
-
-                foreach (Vehicle xe in ketQua)
-                {
-                    if (xe.VehicleType == loaiCanLoc)
-                    {
-                        tamThoi.Add(xe);
-                    }
-                }
-
-                ketQua = tamThoi;
-            }
-
-            if (statusFilter != -1)
-            {
-                VehicleStatus trangThaiCanLoc = (VehicleStatus)statusFilter;
-                List<Vehicle> tamThoi = new List<Vehicle>();
-
-                foreach (Vehicle xe in ketQua)
-                {
-                    if (xe.Status == trangThaiCanLoc)
-                    {
-                        tamThoi.Add(xe);
-                    }
-                }
-
-                ketQua = tamThoi;
-            }
-
-            return ketQua;
-        }
-    }
-
     private async Task ViewDetails(Vehicle hv)
     {
-        selectedVehicle = hv;
-        await js.InvokeVoidAsync("cuonLenForm", "chi-tiet-phuong-tien");
-    }
-
-    private void CloseDetails()
-    {
-        selectedVehicle = null;
+        await dialog.OpenAsync<VehicleDetailDialog>(
+            $"Hồ sơ phương tiện: {hv.LicensePlate} ({hv.Brand} {hv.Model})",
+            new Dictionary<string, object?> { { "Vehicle", hv } },
+            new DialogOptions { Width = "840px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
     }
 
     private void ResetFilters()
@@ -345,46 +219,71 @@ else
         statusFilter = -1;
     }
 
+    // --- POPUP THÊM PHƯƠNG TIỆN MỚI ---
     private async Task Add()
     {
-        ResetForm();
-        message = "";
-        await js.InvokeVoidAsync("cuonLenForm", "form-phuong-tien");
+        var newVehicle = new Vehicle
+        {
+            VehicleType = VehicleType.OTo,
+            Status = VehicleStatus.SanSang,
+            OperationalStatus = VehicleOperationalStatus.Ready,
+            ReceiveDate = DateTime.Today,
+            Seats = 5,
+            ManufactureYear = DateTime.Today.Year,
+            RegistrationExpiryDate = DateTime.Today.AddMonths(18),
+            NextMaintenanceDate = DateTime.Today.AddMonths(6)
+        };
+
+        var res = await dialog.OpenAsync<VehicleEditDialog>(
+            "Thêm phương tiện công tác mới",
+            new Dictionary<string, object?> { { "Vehicle", newVehicle }, { "IsEditing", false } },
+            new DialogOptions { Width = "900px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
+
+        if (res == true)
+        {
+            LoadData();
+            message = "Đã thêm phương tiện mới thành công.";
+            isError = false;
+        }
     }
 
+    // --- POPUP CẬP NHẬT PHƯƠNG TIỆN ---
     private async Task Edit(Vehicle hv)
     {
-        vehicle = hv;
-        isEditing = true;
-        message = "";
-        await js.InvokeVoidAsync("cuonLenForm", "form-phuong-tien");
-    }
-
-    private void Save()
-    {
-        string loi;
-        bool ketQua;
-
-        if (isEditing)
+        var clone = new Vehicle
         {
-            ketQua = vehicleService.Update(vehicle, out loi);
-        }
-        else
-        {
-            ketQua = vehicleService.Add(vehicle, out loi);
-        }
+            Id = hv.Id,
+            VehicleCode = hv.VehicleCode,
+            LicensePlate = hv.LicensePlate,
+            VehicleType = hv.VehicleType,
+            Brand = hv.Brand,
+            Model = hv.Model,
+            Seats = hv.Seats,
+            ManufactureYear = hv.ManufactureYear,
+            CurrentKm = hv.CurrentKm,
+            Color = hv.Color,
+            ChassisNumber = hv.ChassisNumber,
+            EngineNumber = hv.EngineNumber,
+            ReceiveDate = hv.ReceiveDate,
+            OperationalStatus = hv.OperationalStatus,
+            RegistrationExpiryDate = hv.RegistrationExpiryDate,
+            NextMaintenanceDate = hv.NextMaintenanceDate,
+            Note = hv.Note,
+            CreatedAt = hv.CreatedAt,
+            UpdatedAt = hv.UpdatedAt
+        };
 
-        if (ketQua == false)
-        {
-            message = loi;
-            isError = true;
-            return;
-        }
+        var res = await dialog.OpenAsync<VehicleEditDialog>(
+            $"Cập nhật phương tiện: {hv.LicensePlate} ({hv.Brand} {hv.Model})",
+            new Dictionary<string, object?> { { "Vehicle", clone }, { "IsEditing", true } },
+            new DialogOptions { Width = "900px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
 
-        LoadData();
-        message = isEditing ? "Đã cập nhật phương tiện." : "Đã thêm phương tiện.";
-        isError = false;
-        ResetForm();
+        if (res == true)
+        {
+            LoadData();
+            message = $"Đã cập nhật phương tiện {hv.LicensePlate} thành công.";
+            isError = false;
+        }
     }
 
     private async Task Delete(Vehicle hv)
@@ -399,9 +298,9 @@ else
         }
 
         string loi;
-        bool daXoa = vehicleService.Delete(hv.Id, out loi);
+        bool ketQua = vehicleService.Delete(hv.Id, out loi);
 
-        if (daXoa == false)
+        if (ketQua == false)
         {
             message = loi;
             isError = true;
@@ -409,30 +308,11 @@ else
         }
 
         LoadData();
-
-        message = "Đã xóa phương tiện.";
+        message = "Đã xóa phương tiện thành công.";
         isError = false;
-
-        if (isEditing && vehicle.Id == hv.Id)
-        {
-            ResetForm();
-        }
     }
 
-    private void ResetForm()
-    {
-        vehicle = new Vehicle
-        {
-            ManufactureYear = DateTime.Today.Year,
-            ReceiveDate = DateTime.Today,
-            VehicleType = VehicleType.OTo,
-            Status = VehicleStatus.SanSang
-        };
-
-        isEditing = false;
-    }
-
-    private string GetStatusClass(VehicleStatus status)
+    private string LayMauTrangThai(VehicleStatus status)
     {
         if (status == VehicleStatus.SanSang)
         {

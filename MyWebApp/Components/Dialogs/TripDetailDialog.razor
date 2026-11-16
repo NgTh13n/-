@@ -1,0 +1,101 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Data
+@using MyWebApp.Services
+
+@inject TripService tripService
+@inject MockDataService mockDataService
+@inject DialogService dialog
+
+@{
+    var xe = tripService.GetVehicle(Trip.VehicleId);
+    var don = tripService.GetBooking(Trip.BookingId);
+}
+
+<div class="trip-detail-dialog">
+    <div class="row g-3">
+        <div class="col-md-3"><strong>Mã lệnh điều động:</strong> <span class="badge bg-primary">@Trip.DispatchCode</span></div>
+        <div class="col-md-3"><strong>Yêu cầu gốc:</strong> @don?.BookingCode</div>
+        <div class="col-md-3"><strong>Cán bộ đề nghị:</strong> @Trip.RequesterNameSnapshot</div>
+        <div class="col-md-3">
+            <strong>Trạng thái:</strong> 
+            <span class="badge-status @Trip.Status.BadgeClass()">
+                @Trip.Status.Ten()
+            </span>
+            @if (Trip.IsOverdue)
+            {
+                <span class="badge-status badge-status-danger ms-1">QUÁ HẠN</span>
+            }
+        </div>
+
+        <div class="col-md-6"><strong>Phương tiện:</strong> @Trip.VehiclePlateSnapshot (@xe?.Brand @xe?.Model)</div>
+        <div class="col-md-6"><strong>Người điều khiển:</strong> @Trip.DriverNameSnapshot (@EnumHelper.TenDriverMode(Trip.DriverMode))</div>
+
+        <div class="col-md-6"><strong>Lộ trình:</strong> @don?.Departure → @don?.Destination</div>
+        <div class="col-md-6"><strong>Mục đích:</strong> @don?.Purpose</div>
+
+        <div class="col-md-6">
+            <div class="p-3 border rounded bg-light">
+                <strong class="text-primary"><RadzenIcon Icon="login" Class="me-1" /> Bàn giao xuất phát:</strong>
+                <div class="mt-1">Thời gian: @(Trip.HandoverAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa bàn giao")</div>
+                <div>Odometer đi: <strong>@Trip.StartKm.ToString("N0") km</strong> | Xăng: @Trip.FuelStartLevel</div>
+                <div class="text-muted small mt-1">Tình trạng: @Trip.ConditionBefore</div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="p-3 border rounded bg-light">
+                <strong class="text-success"><RadzenIcon Icon="logout" Class="me-1" /> Nghiệm thu hoàn trả:</strong>
+                <div class="mt-1">Thời gian về: @(Trip.ReturnedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa hoàn trả")</div>
+                <div>Odometer về: <strong>@(Trip.EndKm > 0 ? $"{Trip.EndKm:N0} km" : "---")</strong> | Quãng đường: <strong>@Trip.DistanceKm.ToString("N0") km</strong></div>
+                <div>Xăng tiêu thụ: @Trip.FuelUsed.ToString("N1") lít | Mức về: @Trip.FuelEndLevel</div>
+                <div class="text-muted small mt-1">Tình trạng: @Trip.ConditionAfter</div>
+            </div>
+        </div>
+
+        @if (Trip.HasIncident)
+        {
+            <div class="col-12">
+                <div class="alert alert-danger py-2 mb-0">
+                    <strong><RadzenIcon Icon="warning" Class="me-1" /> Sự cố phát sinh:</strong> @Trip.IncidentNote
+                </div>
+            </div>
+        }
+
+        @* Audit Trail *@
+        <div class="col-12 pt-2 border-top">
+            <h6 class="text-secondary mb-2"><RadzenIcon Icon="history" Class="me-1" /> Tiến trình xử lý (Audit Trail):</h6>
+            @{
+                var histories = mockDataService.StatusHistories
+                    .Where(h => h.EntityType == "Trip" && h.EntityId == Trip.Id)
+                    .OrderBy(h => h.ChangedAt)
+                    .ToList();
+            }
+            @if (histories.Count > 0)
+            {
+                <ul class="list-group list-group-flush small">
+                    @foreach (var h in histories)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-1">
+                            <div>
+                                <span class="text-muted me-2">@h.ChangedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                <strong>@h.ChangedByFullName:</strong> @h.Comment
+                            </div>
+                            <span class="badge bg-light text-dark border">@h.ToStatus</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4 pt-2 border-top">
+        <RadzenButton Text="Đóng" Icon="close" ButtonStyle="ButtonStyle.Secondary" Click="() => dialog.Close()" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Trip Trip { get; set; } = new();
+}

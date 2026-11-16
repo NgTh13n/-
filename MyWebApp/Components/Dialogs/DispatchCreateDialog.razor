@@ -1,0 +1,264 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Services
+@using MyWebApp.Data
+
+@inject DispatchService dispatchService
+@inject DialogService dialog
+
+@{
+    var canBoDeNghi = dispatchService.GetOfficer(Booking.RequesterId);
+}
+
+<div class="dispatch-create-dialog">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger py-2 mb-3 small">
+            <RadzenIcon Icon="error" Class="me-1" />
+            @errorMessage
+        </div>
+    }
+
+    <div class="alert alert-light border py-2 mb-3">
+        <div class="row g-2 small">
+            <div class="col-md-4">
+                <strong>Cán bộ đề nghị:</strong> @(canBoDeNghi != null ? $"{canBoDeNghi.RankOrTitle} {canBoDeNghi.FullName}" : "Cán bộ")
+                @if (canBoDeNghi != null)
+                {
+                    <span class="badge @(canBoDeNghi.CanSelfDrive ? "bg-success" : "bg-secondary") ms-1">
+                        @(canBoDeNghi.CanSelfDrive ? "Đủ ĐK tự lái" : "Chưa đủ ĐK tự lái")
+                    </span>
+                }
+            </div>
+            <div class="col-md-4"><strong>Điểm đến:</strong> @Booking.Destination</div>
+            <div class="col-md-4"><strong>Mục đích:</strong> @Booking.Purpose</div>
+            <div class="col-md-4"><strong>Khởi hành:</strong> @Booking.DepartureTime.ToString("dd/MM/yyyy HH:mm")</div>
+            <div class="col-md-4"><strong>Dự kiến về:</strong> @Booking.ReturnTime.ToString("dd/MM/yyyy HH:mm")</div>
+            <div class="col-md-4">
+                <strong>Đề xuất:</strong> 
+                <span class="badge bg-secondary">@Booking.RequestedVehicleType (@Booking.PassengerCount người)</span>
+                <span class="badge bg-info text-dark ms-1">@EnumHelper.TenDriverMode(Booking.PreferredDriverMode)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        @* 1. Chọn phương tiện *@
+        <div class="col-md-6">
+            <label class="form-label fw-bold">1. Chọn phương tiện điều động <span class="text-danger">*</span>:</label>
+            <select class="form-select" @bind="xeDuocChonId" @bind:after="KiemTraPhuongTienDaChon">
+                <option value="0">-- Chọn phương tiện công tác phù hợp --</option>
+                @foreach (Vehicle xe in danhSachXeKhaDung)
+                {
+                    bool biTrung = XeBiTrungLich(xe.Id);
+                    <option value="@xe.Id" class="@(biTrung ? "text-danger" : "text-success fw-bold")">
+                        @(biTrung ? "⛔ [BẬN LỊCH]" : "✅ [SẴN SÀNG]") @xe.VehicleCode - @xe.LicensePlate (@xe.Brand @xe.Model | @EnumHelper.TenVehicleType(xe.VehicleType) - @xe.Seats chỗ)
+                    </option>
+                }
+            </select>
+
+            @if (!string.IsNullOrEmpty(canhBaoXe))
+            {
+                <div class="alert alert-warning py-1 px-2 mt-2 small">
+                    <RadzenIcon Icon="warning" Class="me-1" />
+                    <strong>Cảnh báo xung đột:</strong> @canhBaoXe
+                </div>
+            }
+        </div>
+
+        @* 2. Phương án lái xe & Người lái *@
+        <div class="col-md-6">
+            <label class="form-label fw-bold">2. Phương án điều khiển xe <span class="text-danger">*</span>:</label>
+            <div class="d-flex gap-3 mb-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="driverModeRadioDialog" id="modeAssignedDialog" 
+                           checked="@(phuongAnLai == DriverMode.AssignedDriver)" 
+                           @onchange="@(() => ChonPhuongAnLai(DriverMode.AssignedDriver))" />
+                    <label class="form-check-label fw-semibold" for="modeAssignedDialog">
+                        Lái xe đơn vị
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="driverModeRadioDialog" id="modeSelfDialog" 
+                           checked="@(phuongAnLai == DriverMode.SelfDrive)" 
+                           @onchange="@(() => ChonPhuongAnLai(DriverMode.SelfDrive))" />
+                    <label class="form-check-label fw-semibold" for="modeSelfDialog">
+                        Cán bộ trực tiếp tự lái
+                    </label>
+                </div>
+            </div>
+
+            @if (phuongAnLai == DriverMode.AssignedDriver)
+            {
+                <select class="form-select" @bind="laiXeDuocChonId" @bind:after="KiemTraLaiXeDaChon">
+                    <option value="0">-- Chọn lái xe chuyên trách --</option>
+                    @foreach (Driver lx in danhSachLaiXeKhaDung)
+                    {
+                        bool biTrung = LaiXeBiTrungLich(lx.Id);
+                        bool hetHan = lx.LicenseExpiryDate < Booking.DepartureTime;
+                        <option value="@lx.Id" class="@(hetHan ? "text-danger fw-bold" : biTrung ? "text-danger" : "text-success fw-bold")">
+                            @(hetHan ? "⛔ [GPLX HẾT HẠN]" : biTrung ? "⛔ [BẬN LỊCH]" : "✅ [SẴN SÀNG]") @lx.FullName (Hạng @lx.LicenseCategory - Hạn: @lx.LicenseExpiryDate.ToString("dd/MM/yyyy"))
+                        </option>
+                    }
+                </select>
+
+                @if (!string.IsNullOrEmpty(canhBaoLaiXe))
+                {
+                    <div class="alert alert-danger py-1 px-2 mt-2 small">
+                        <RadzenIcon Icon="gpp_bad" Class="me-1" />
+                        <strong>Cảnh báo an toàn:</strong> @canhBaoLaiXe
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="p-2 bg-light rounded border">
+                    @if (canBoDeNghi != null && canBoDeNghi.CanSelfDrive)
+                    {
+                        <div class="text-success fw-bold small">
+                            <RadzenIcon Icon="check_circle" Class="me-1" />
+                            Cán bộ: @canBoDeNghi.RankOrTitle @canBoDeNghi.FullName (Đủ điều kiện tự lái xe công vụ)
+                        </div>
+                        <small class="text-muted d-block mt-1">Đồng chí @canBoDeNghi.FullName sẽ trực tiếp chịu trách nhiệm nhận bàn giao và điều khiển xe.</small>
+                    }
+                    else
+                    {
+                        <div class="text-danger fw-bold small">
+                            <RadzenIcon Icon="error" Class="me-1" />
+                            CẢNH BÁO: Cán bộ @(canBoDeNghi?.FullName ?? "đề nghị") CHƯA ĐỦ ĐIỀU KIỆN tự lái xe công vụ!
+                        </div>
+                        <small class="text-danger d-block mt-1">Không thể lập lệnh tự lái. Vui lòng chuyển sang phương án "Lái xe đơn vị".</small>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+        <RadzenButton Text="Xác nhận Lập lệnh điều động" 
+                      Icon="send" 
+                      ButtonStyle="ButtonStyle.Success" 
+                      Click="XacNhan" />
+
+        <RadzenButton Text="Hủy bỏ" 
+                      Icon="close" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="@(() => dialog.Close(false))" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public Booking Booking { get; set; } = default!;
+
+    List<Vehicle> danhSachXeKhaDung = new();
+    List<Driver> danhSachLaiXeKhaDung = new();
+
+    int xeDuocChonId = 0;
+    int laiXeDuocChonId = 0;
+    DriverMode phuongAnLai = DriverMode.AssignedDriver;
+
+    string canhBaoXe = "";
+    string canhBaoLaiXe = "";
+    string errorMessage = "";
+
+    protected override void OnInitialized()
+    {
+        if (Booking != null)
+        {
+            danhSachXeKhaDung = dispatchService.GetEligibleVehicles(Booking);
+            danhSachLaiXeKhaDung = dispatchService.GetEligibleDrivers();
+            phuongAnLai = Booking.PreferredDriverMode;
+
+            var xeGoiY = danhSachXeKhaDung.FirstOrDefault(x => !XeBiTrungLich(x.Id));
+            if (xeGoiY != null)
+            {
+                xeDuocChonId = xeGoiY.Id;
+            }
+
+            if (phuongAnLai == DriverMode.AssignedDriver)
+            {
+                var lxGoiY = danhSachLaiXeKhaDung.FirstOrDefault(l => !LaiXeBiTrungLich(l.Id) && l.LicenseExpiryDate >= Booking.DepartureTime);
+                if (lxGoiY != null)
+                {
+                    laiXeDuocChonId = lxGoiY.Id;
+                }
+            }
+        }
+    }
+
+    private bool XeBiTrungLich(int xeId)
+    {
+        return !dispatchService.KiemTraTrungLichXe(xeId, Booking.DepartureTime, Booking.ReturnTime, null, out string _);
+    }
+
+    private bool LaiXeBiTrungLich(int lxId)
+    {
+        return !dispatchService.KiemTraTrungLichLaiXe(lxId, Booking.DepartureTime, Booking.ReturnTime, null, out string _);
+    }
+
+    private void ChonPhuongAnLai(DriverMode mode)
+    {
+        phuongAnLai = mode;
+        if (mode == DriverMode.SelfDrive)
+        {
+            laiXeDuocChonId = 0;
+            canhBaoLaiXe = "";
+        }
+        else
+        {
+            KiemTraLaiXeDaChon();
+        }
+    }
+
+    private void KiemTraPhuongTienDaChon()
+    {
+        canhBaoXe = "";
+        if (xeDuocChonId > 0)
+        {
+            dispatchService.KiemTraTrungLichXe(xeDuocChonId, Booking.DepartureTime, Booking.ReturnTime, null, out canhBaoXe);
+        }
+    }
+
+    private void KiemTraLaiXeDaChon()
+    {
+        canhBaoLaiXe = "";
+        if (laiXeDuocChonId > 0)
+        {
+            dispatchService.KiemTraTrungLichLaiXe(laiXeDuocChonId, Booking.DepartureTime, Booking.ReturnTime, null, out canhBaoLaiXe);
+        }
+    }
+
+    private void XacNhan()
+    {
+        errorMessage = "";
+
+        if (xeDuocChonId == 0)
+        {
+            errorMessage = "Vui lòng chọn phương tiện công tác điều động.";
+            return;
+        }
+
+        if (phuongAnLai == DriverMode.AssignedDriver && laiXeDuocChonId == 0)
+        {
+            errorMessage = "Vui lòng chọn lái xe đơn vị đảm nhiệm chuyến công tác.";
+            return;
+        }
+
+        string loi;
+        bool thanhCong = dispatchService.CreateDispatchOrder(
+            Booking.Id, 
+            xeDuocChonId, 
+            phuongAnLai, 
+            laiXeDuocChonId, 
+            out loi);
+
+        if (!thanhCong)
+        {
+            errorMessage = loi;
+            return;
+        }
+
+        dialog.Close(true);
+    }
+}

@@ -1,0 +1,96 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Services
+@using MyWebApp.Data
+
+@inject MaintenanceService maintenanceService
+@inject VehicleService vehicleService
+@inject DialogService dialog
+
+@{
+    var xe = vehicleService.GetAll().FirstOrDefault(v => v.Id == Record.VehicleId);
+}
+
+<div class="maintenance-acceptance-dialog">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger py-2 mb-3 small">
+            <RadzenIcon Icon="error" Class="me-1" />
+            @errorMessage
+        </div>
+    }
+
+    <div class="p-3 bg-light rounded border mb-3">
+        <div class="row g-2 small">
+            <div class="col-md-6">
+                <strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model)
+            </div>
+            <div class="col-md-6">
+                <strong>Loại hình:</strong> @EnumHelper.TenMaintenanceType(Record.MaintenanceType)
+            </div>
+            <div class="col-12 mt-1">
+                <strong>Nội dung bảo dưỡng:</strong> @Record.Description
+            </div>
+            <div class="col-md-6 mt-1">
+                <strong>Xưởng thực hiện:</strong> @Record.GarageName
+            </div>
+            <div class="col-md-6 mt-1">
+                <strong>Ngày bắt đầu:</strong> @Record.PlannedAt.ToString("dd/MM/yyyy")
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <label class="form-label fw-bold small">Ngày hoàn thành nghiệm thu <span class="text-danger">*</span>:</label>
+            <RadzenDatePicker @bind-Value="ngayNghiemThu" DateFormat="dd/MM/yyyy" Class="w-100" />
+        </div>
+        <div class="col-md-8">
+            <label class="form-label fw-bold small">Kết luận kỹ thuật & Ghi chú nghiệm thu <span class="text-danger">*</span>:</label>
+            <input type="text" class="form-control" @bind="ghiChuNghiemThu" placeholder="Đạt tiêu chuẩn an toàn kỹ thuật CAND, nghiệm thu xuất xưởng đưa về sẵn sàng." />
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+        <RadzenButton Text="Xác nhận Nghiệm thu & Đưa xe về Sẵn sàng" 
+                      Icon="check_circle" 
+                      ButtonStyle="ButtonStyle.Success" 
+                      Click="XacNhan" />
+
+        <RadzenButton Text="Bỏ qua" 
+                      Icon="close" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="@(() => dialog.Close(false))" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public MaintenanceRecord Record { get; set; } = default!;
+
+    DateTime ngayNghiemThu = DateTime.Today;
+    string ghiChuNghiemThu = "Đạt tiêu chuẩn an toàn kỹ thuật CAND, nghiệm thu xuất xưởng đưa về sẵn sàng.";
+    string errorMessage = "";
+
+    private void XacNhan()
+    {
+        errorMessage = "";
+
+        if (string.IsNullOrWhiteSpace(ghiChuNghiemThu))
+        {
+            errorMessage = "Vui lòng nhập kết luận kỹ thuật hoặc ghi chú nghiệm thu.";
+            return;
+        }
+
+        string loi;
+        bool thanhCong = maintenanceService.CompleteMaintenance(Record.Id, ngayNghiemThu, ghiChuNghiemThu, out loi);
+
+        if (!thanhCong)
+        {
+            errorMessage = loi;
+            return;
+        }
+
+        dialog.Close(true);
+    }
+}

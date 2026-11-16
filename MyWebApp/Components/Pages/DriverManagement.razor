@@ -4,6 +4,7 @@
 
 @using MyWebApp.Models.Enums
 @using MyWebApp.Helpers
+@using MyWebApp.Components.Dialogs
 
 @inject DriverService driverService
 @inject DialogService dialog
@@ -45,110 +46,6 @@ else
         </div>
     }
 
-    @if (laiXeDangXem != null)
-    {
-        <div id="chi-tiet-lai-xe" class="gov-card gov-card-accent-primary mb-4">
-            <div class="gov-card-header">
-                <strong class="gov-card-header-title"><RadzenIcon Icon="badge" Class="me-1" /> Chi tiết lái xe: @laiXeDangXem.FullName</strong>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="DongChiTiet">Đóng</button>
-            </div>
-            <div class="gov-card-body row">
-                <div class="col-md-3 mb-2"><strong>Mã lái xe:</strong> LX-@laiXeDangXem.Id.ToString("D3")</div>
-                <div class="col-md-3 mb-2"><strong>Họ và tên:</strong> @laiXeDangXem.FullName</div>
-                <div class="col-md-3 mb-2"><strong>Số điện thoại:</strong> @(string.IsNullOrEmpty(laiXeDangXem.Phone) ? "Chưa có" : laiXeDangXem.Phone)</div>
-                <div class="col-md-3 mb-2"><strong>Hạng giấy phép:</strong> @laiXeDangXem.LicenseType</div>
-                <div class="col-md-3 mb-2"><strong>Số GPLX:</strong> @(string.IsNullOrEmpty(laiXeDangXem.LicenseNumberDemo) ? "Chưa cập nhật" : laiXeDangXem.LicenseNumberDemo)</div>
-                <div class="col-md-3 mb-2">
-                    <strong>Hạn GPLX:</strong>
-                    @if (laiXeDangXem.LicenseExpiryDate < DateTime.Today)
-                    {
-                        <span class="badge bg-danger">@laiXeDangXem.LicenseExpiryDate.ToString("dd/MM/yyyy") (Hết hạn)</span>
-                    }
-                    else
-                    {
-                        <span class="text-success fw-medium">@laiXeDangXem.LicenseExpiryDate.ToString("dd/MM/yyyy")</span>
-                    }
-                </div>
-                <div class="col-md-3 mb-2"><strong>Tình trạng:</strong> @EnumHelper.TenDriverStatus(laiXeDangXem.Status)</div>
-                <div class="col-md-3 mb-2"><strong>Ghi chú:</strong> @(string.IsNullOrEmpty(laiXeDangXem.Notes) ? "Không có" : laiXeDangXem.Notes)</div>
-            </div>
-        </div>
-    }
-
-    <div id="form-lai-xe" class="gov-card mb-4">
-        <div class="gov-card-header">
-            <h2 class="gov-card-header-title">
-                <RadzenIcon Icon="@(dangSua ? "edit" : "person_add")" Style="color: var(--brand-navy);" />
-                @(dangSua ? "Cập nhật thông tin lái xe" : "Thêm lái xe mới")
-            </h2>
-        </div>
-        <div class="gov-card-body">
-
-            <EditForm Model="laiXe" OnValidSubmit="Luu">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="text-danger" />
-
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Họ và tên lái xe <span class="text-danger">*</span></label>
-                        <InputText class="form-control" @bind-Value="laiXe.FullName" placeholder="Nhập họ và tên..." />
-                        <ValidationMessage For="() => laiXe.FullName" />
-                    </div>
-
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Số điện thoại</label>
-                        <InputText class="form-control" @bind-Value="laiXe.Phone" placeholder="Nhập số điện thoại liên hệ..." />
-                    </div>
-
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Số giấy phép lái xe</label>
-                        <InputText class="form-control" @bind-Value="laiXe.LicenseNumberDemo" placeholder="Ví dụ: GPLX-29B2-08129" />
-                    </div>
-
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Hạng GPLX <span class="text-danger">*</span></label>
-                        <InputSelect class="form-select" @bind-Value="laiXe.LicenseType">
-                            <option value="B1">B1</option>
-                            <option value="B2">B2</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                            <option value="E">E</option>
-                        </InputSelect>
-                        <ValidationMessage For="() => laiXe.LicenseType" />
-                    </div>
-
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Ngày hết hạn GPLX <span class="text-danger">*</span></label>
-                        <InputDate class="form-control" @bind-Value="laiXe.LicenseExpiryDate" />
-                    </div>
-
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Tình trạng</label>
-                        <InputSelect class="form-select" @bind-Value="laiXe.Status">
-                            <option value="@DriverStatus.Active">Đang làm việc</option>
-                            <option value="@DriverStatus.OnLeave">Đang nghỉ phép</option>
-                            <option value="@DriverStatus.Inactive">Không còn làm việc</option>
-                        </InputSelect>
-                    </div>
-
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Ghi chú nghiệp vụ</label>
-                        <InputText class="form-control" @bind-Value="laiXe.Notes" placeholder="Ghi chú thêm..." />
-                    </div>
-                </div>
-
-                <RadzenButton Text="@(dangSua ? "Lưu thay đổi" : "Thêm lái xe")"
-                              Icon="save"
-                              ButtonType="ButtonType.Submit"
-                              ButtonStyle="ButtonStyle.Primary" />
-                <RadzenButton Text="Làm mới"
-                              Icon="refresh"
-                              Click="LamMoiForm"
-                              ButtonStyle="ButtonStyle.Light" />
-            </EditForm>
-        </div>
-    </div>
-
     <div class="card">
         <div class="card-body">
             <h2 class="h5">Danh sách lái xe</h2>
@@ -168,44 +65,66 @@ else
                         <option value="@((int)DriverStatus.Inactive)">Không còn làm việc</option>
                     </select>
                 </div>
+
+                <div class="col-12 mt-2">
+                    <button class="btn btn-secondary" @onclick="DatLaiBoLoc">
+                        <RadzenIcon Icon="refresh" Class="me-1" />
+                        Đặt lại bộ lọc
+                    </button>
+                </div>
             </div>
 
-            <RadzenButton Text="Đặt lại bộ lọc" Icon="refresh" Click="DatLaiBoLoc" ButtonStyle="ButtonStyle.Light" class="mb-3" />
-
-            <RadzenDataGrid Data="@DanhSachDaLoc" TItem="Driver" AllowPaging="true" PageSize="10" AllowSorting="true">
+            <RadzenDataGrid Data="@DanhSachHienThi"
+                            TItem="Driver"
+                            AllowPaging="true"
+                            PageSize="8"
+                            AllowSorting="true"
+                            EmptyText="Không có cán bộ lái xe nào phù hợp.">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Driver" Title="Mã lái xe">
+                    <RadzenDataGridColumn Property="OfficerId" Title="Mã lái xe" Width="120px" />
+                    <RadzenDataGridColumn Property="FullName" Title="Họ và tên" Width="200px" />
+                    <RadzenDataGridColumn Property="Phone" Title="Số điện thoại" Width="140px" />
+                    <RadzenDataGridColumn Property="LicenseType" Title="Hạng GPLX" Width="100px" />
+                    <RadzenDataGridColumn Property="LicenseExpiryDate" Title="Hạn GPLX" Width="150px">
                         <Template Context="item">
-                            LX-@item.Id.ToString("D3")
+                            @{
+                                bool sapHetHan = item.LicenseExpiryDate <= DateTime.Today.AddDays(30);
+                                bool daHetHan = item.LicenseExpiryDate < DateTime.Today;
+                            }
+                            <span class="@(daHetHan ? "badge bg-danger" : (sapHetHan ? "badge bg-warning text-dark" : ""))">
+                                @item.LicenseExpiryDate.ToString("dd/MM/yyyy")
+                                @(daHetHan ? " (Hết hạn)" : (sapHetHan ? " (Sắp hết hạn)" : ""))
+                            </span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Driver" Property="FullName" Title="Họ và tên" />
-                    <RadzenDataGridColumn TItem="Driver" Property="Phone" Title="Số điện thoại" />
-                    <RadzenDataGridColumn TItem="Driver" Property="LicenseType" Title="Hạng GPLX" Width="100px" />
-                    <RadzenDataGridColumn TItem="Driver" Title="Hạn GPLX" Width="140px">
-                        <Template Context="item">
-                            @if (item.LicenseExpiryDate < DateTime.Today)
-                            {
-                                <span class="badge bg-danger">@item.LicenseExpiryDate.ToString("dd/MM/yyyy") (Hết hạn)</span>
-                            }
-                            else
-                            {
-                                <span>@item.LicenseExpiryDate.ToString("dd/MM/yyyy")</span>
-                            }
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Driver" Title="Tình trạng" Width="130px">
+                    <RadzenDataGridColumn Property="Status" Title="Tình trạng" Width="140px">
                         <Template Context="item">
                             <span class="badge @LayMauTinhTrang(item.Status)">
                                 @EnumHelper.TenDriverStatus(item.Status)
                             </span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Driver" Title="Thao tác" Sortable="false" Filterable="false">
+                    <RadzenDataGridColumn Title="Thao tác" Width="160px" Sortable="false">
                         <Template Context="item">
-                            <RadzenButton Icon="visibility" Click="@(args => XemChiTiet(item))" ButtonStyle="ButtonStyle.Light" />
-                            <RadzenButton Icon="edit" Click="@(args => Sua(item))" ButtonStyle="ButtonStyle.Info" />
-                            <RadzenButton Icon="delete" Click="@(args => Xoa(item))" ButtonStyle="ButtonStyle.Danger" />
+                            <div class="d-flex gap-1">
+                                <RadzenButton Icon="visibility"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              Title="Xem chi tiết"
+                                              Click="@(() => XemChiTiet(item))" />
+
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              Size="ButtonSize.Small"
+                                              Title="Sửa thông tin"
+                                              Click="@(() => Sua(item))" />
+
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Size="ButtonSize.Small"
+                                              Title="Xóa lái xe"
+                                              Click="@(() => Xoa(item))" />
+                            </div>
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -215,22 +134,36 @@ else
 }
 
 @code {
-    // Danh sách lái xe
-    List<Driver> danhSachLaiXe = new List<Driver>();
+    private List<Driver> danhSachLaiXe = new();
 
-    // Đối tượng lái xe đang thêm hoặc sửa
-    Driver laiXe = new Driver { LicenseType = "B2", Status = DriverStatus.Active };
+    private string tuKhoaTimKiem = "";
+    private int locTinhTrang = -1;
 
-    // Lái xe đang mở xem chi tiết
-    Driver? laiXeDangXem = null;
+    private string thongBao = "";
+    private bool coLoi = false;
 
-    // Điều kiện tìm kiếm và lọc
-    string tuKhoaTimKiem = "";
-    int locTinhTrang = -1;
+    private List<Driver> DanhSachHienThi
+    {
+        get
+        {
+            var ketQua = danhSachLaiXe.AsEnumerable();
 
-    string thongBao = "";
-    bool coLoi = false;
-    bool dangSua = false;
+            if (string.IsNullOrWhiteSpace(tuKhoaTimKiem) == false)
+            {
+                string tuKhoa = tuKhoaTimKiem.Trim().ToLower();
+                ketQua = ketQua.Where(x =>
+                    x.FullName.ToLower().Contains(tuKhoa) ||
+                    x.Phone.ToLower().Contains(tuKhoa));
+            }
+
+            if (locTinhTrang != -1)
+            {
+                ketQua = ketQua.Where(x => (int)x.Status == locTinhTrang);
+            }
+
+            return ketQua.ToList();
+        }
+    }
 
     protected override void OnInitialized()
     {
@@ -240,6 +173,7 @@ else
 
     private void CapNhatTrang()
     {
+        NapDuLieu();
         _ = InvokeAsync(StateHasChanged);
     }
 
@@ -248,57 +182,12 @@ else
         danhSachLaiXe = driverService.GetAll();
     }
 
-    private List<Driver> DanhSachDaLoc
-    {
-        get
-        {
-            List<Driver> ketQua = danhSachLaiXe;
-
-            if (!string.IsNullOrEmpty(tuKhoaTimKiem))
-            {
-                List<Driver> danhSachTam = new List<Driver>();
-
-                foreach (Driver item in ketQua)
-                {
-                    if (item.FullName.Contains(tuKhoaTimKiem, StringComparison.OrdinalIgnoreCase) ||
-                        item.Phone.Contains(tuKhoaTimKiem, StringComparison.OrdinalIgnoreCase))
-                    {
-                        danhSachTam.Add(item);
-                    }
-                }
-
-                ketQua = danhSachTam;
-            }
-
-            if (locTinhTrang != -1)
-            {
-                DriverStatus trangThaiCanLoc = (DriverStatus)locTinhTrang;
-                List<Driver> danhSachTam = new List<Driver>();
-
-                foreach (Driver item in ketQua)
-                {
-                    if (item.Status == trangThaiCanLoc)
-                    {
-                        danhSachTam.Add(item);
-                    }
-                }
-
-                ketQua = danhSachTam;
-            }
-
-            return ketQua;
-        }
-    }
-
     private async Task XemChiTiet(Driver item)
     {
-        laiXeDangXem = item;
-        await js.InvokeVoidAsync("cuonLenForm", "chi-tiet-lai-xe");
-    }
-
-    private void DongChiTiet()
-    {
-        laiXeDangXem = null;
+        await dialog.OpenAsync<DriverDetailDialog>(
+            $"Hồ sơ lái xe: {item.FullName} ({item.OfficerId})",
+            new Dictionary<string, object?> { { "Driver", item } },
+            new DialogOptions { Width = "760px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
     }
 
     private void DatLaiBoLoc()
@@ -307,46 +196,57 @@ else
         locTinhTrang = -1;
     }
 
+    // --- POPUP THÊM LÁI XE MỚI ---
     private async Task Them()
     {
-        LamMoiForm();
-        thongBao = "";
-        await js.InvokeVoidAsync("cuonLenForm", "form-lai-xe");
+        var laiXeMoi = new Driver
+        {
+            LicenseType = "B2",
+            Status = DriverStatus.Active,
+            LicenseExpiryDate = DateTime.Today.AddYears(3)
+        };
+
+        var res = await dialog.OpenAsync<DriverEditDialog>(
+            "Thêm cán bộ lái xe mới",
+            new Dictionary<string, object?> { { "Driver", laiXeMoi }, { "IsEditing", false } },
+            new DialogOptions { Width = "760px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
+
+        if (res == true)
+        {
+            NapDuLieu();
+            thongBao = "Đã thêm lái xe mới thành công.";
+            coLoi = false;
+        }
     }
 
+    // --- POPUP CẬP NHẬT LÁI XE ---
     private async Task Sua(Driver item)
     {
-        laiXe = item;
-        dangSua = true;
-        thongBao = "";
-        await js.InvokeVoidAsync("cuonLenForm", "form-lai-xe");
-    }
-
-    private void Luu()
-    {
-        string loi;
-        bool thanhCong;
-
-        if (dangSua)
+        var clone = new Driver
         {
-            thanhCong = driverService.Update(laiXe, out loi);
-        }
-        else
-        {
-            thanhCong = driverService.Add(laiXe, out loi);
-        }
+            Id = item.Id,
+            OfficerId = item.OfficerId,
+            FullName = item.FullName,
+            Phone = item.Phone,
+            LicenseType = item.LicenseType,
+            LicenseNumberDemo = item.LicenseNumberDemo,
+            LicenseExpiryDate = item.LicenseExpiryDate,
+            IsActive = item.IsActive,
+            Status = item.Status,
+            Notes = item.Notes
+        };
 
-        if (thanhCong == false)
-        {
-            thongBao = loi;
-            coLoi = true;
-            return;
-        }
+        var res = await dialog.OpenAsync<DriverEditDialog>(
+            $"Cập nhật thông tin lái xe: {item.FullName}",
+            new Dictionary<string, object?> { { "Driver", clone }, { "IsEditing", true } },
+            new DialogOptions { Width = "760px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
 
-        NapDuLieu();
-        thongBao = dangSua ? "Đã cập nhật thông tin lái xe thành công." : "Đã thêm lái xe mới thành công.";
-        coLoi = false;
-        LamMoiForm();
+        if (res == true)
+        {
+            NapDuLieu();
+            thongBao = $"Đã cập nhật thông tin lái xe {item.FullName} thành công.";
+            coLoi = false;
+        }
     }
 
     private async Task Xoa(Driver item)
@@ -373,28 +273,6 @@ else
         NapDuLieu();
         thongBao = "Đã xóa lái xe thành công.";
         coLoi = false;
-
-        if (dangSua && laiXe.Id == item.Id)
-        {
-            LamMoiForm();
-        }
-
-        if (laiXeDangXem?.Id == item.Id)
-        {
-            DongChiTiet();
-        }
-    }
-
-    private void LamMoiForm()
-    {
-        laiXe = new Driver
-        {
-            LicenseType = "B2",
-            Status = DriverStatus.Active,
-            LicenseExpiryDate = DateTime.Today.AddYears(3)
-        };
-
-        dangSua = false;
     }
 
     private string LayMauTinhTrang(DriverStatus status)

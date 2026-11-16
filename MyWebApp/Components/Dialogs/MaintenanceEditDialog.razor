@@ -1,0 +1,151 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Services
+@using MyWebApp.Data
+
+@inject MaintenanceService maintenanceService
+@inject VehicleService vehicleService
+@inject DialogService dialog
+
+<div class="maintenance-edit-dialog">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger py-2 mb-3 small">
+            <RadzenIcon Icon="error" Class="me-1" />
+            @errorMessage
+        </div>
+    }
+
+    <EditForm Model="phieuMoi" OnValidSubmit="XuLyLuuPhieu">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger mb-3" />
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Phương tiện công tác <span class="text-danger">*</span>:</label>
+                <select class="form-select" @bind="phieuMoi.VehicleId" @bind:after="CapNhatThongTinXe">
+                    <option value="0">-- Chọn phương tiện --</option>
+                    @foreach (Vehicle xe in danhSachXe)
+                    {
+                        <option value="@xe.Id">
+                            @xe.VehicleCode - @xe.LicensePlate (@xe.Brand @xe.Model | Odo: @xe.CurrentKm.ToString("N0") km)
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Loại hình bảo dưỡng <span class="text-danger">*</span>:</label>
+                <InputSelect class="form-select" @bind-Value="phieuMoi.MaintenanceType">
+                    <option value="@MaintenanceType.Periodic">Bảo dưỡng định kỳ theo số Km</option>
+                    <option value="@MaintenanceType.Repair">Sửa chữa đột xuất / Khắc phục hư hỏng</option>
+                    <option value="@MaintenanceType.Inspection">Kiểm định kỹ thuật / Đăng kiểm lưu hành</option>
+                </InputSelect>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Xưởng / Gara thực hiện:</label>
+                <InputText class="form-control" @bind-Value="phieuMoi.GarageName" placeholder="Xưởng Sửa chữa Kỹ thuật Ô tô CAND..." />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Ngày dự kiến / Ngày bắt đầu:</label>
+                <RadzenDatePicker @bind-Value="phieuMoi.PlannedAt" DateFormat="dd/MM/yyyy" Class="w-100" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Chỉ số Odometer hiện tại (Km):</label>
+                <InputNumber class="form-control" @bind-Value="phieuMoi.OdometerKm" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Chi phí dự toán (VNĐ):</label>
+                <InputNumber class="form-control" @bind-Value="phieuMoi.Cost" />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label fw-bold">Nội dung chi tiết bảo dưỡng / sửa chữa <span class="text-danger">*</span>:</label>
+                <InputTextArea class="form-control" rows="2" @bind-Value="phieuMoi.Description" placeholder="Mô tả cụ thể các hạng mục: thay dầu, lọc dầu, bảo dưỡng phanh, kiểm tra gầm lốp, sửa chữa hệ thống điện còi ưu tiên..."></InputTextArea>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="switchBaoDuongDialog" @bind="chuyenTrangThaiXeNgay" />
+                    <label class="form-check-label fw-bold text-danger" for="switchBaoDuongDialog">
+                        Đưa phương tiện vào trạng thái "Đang bảo dưỡng" (Maintenance) ngay lập tức (Khóa điều động)
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2 border-top pt-3">
+                <RadzenButton ButtonType="ButtonType.Submit" 
+                              Text="Lưu phiếu bảo dưỡng" 
+                              Icon="save" 
+                              ButtonStyle="ButtonStyle.Success" />
+                <RadzenButton Text="Hủy bỏ" 
+                              Icon="close" 
+                              ButtonStyle="ButtonStyle.Light" 
+                              Click="@(() => dialog.Close(false))" />
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    MaintenanceRecord phieuMoi = new()
+    {
+        PlannedAt = DateTime.Today,
+        GarageName = "Xưởng Sửa chữa Kỹ thuật CAND",
+        MaintenanceType = MaintenanceType.Periodic
+    };
+
+    List<Vehicle> danhSachXe = new();
+    bool chuyenTrangThaiXeNgay = true;
+    string errorMessage = "";
+
+    protected override void OnInitialized()
+    {
+        danhSachXe = vehicleService.GetAll();
+    }
+
+    private void CapNhatThongTinXe()
+    {
+        if (phieuMoi.VehicleId > 0)
+        {
+            var xe = danhSachXe.FirstOrDefault(v => v.Id == phieuMoi.VehicleId);
+            if (xe != null)
+            {
+                phieuMoi.OdometerKm = xe.CurrentKm;
+            }
+        }
+    }
+
+    private void XuLyLuuPhieu()
+    {
+        errorMessage = "";
+
+        if (phieuMoi.VehicleId <= 0)
+        {
+            errorMessage = "Vui lòng chọn phương tiện cần lập hồ sơ bảo dưỡng.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(phieuMoi.Description))
+        {
+            errorMessage = "Vui lòng nhập nội dung chi tiết bảo dưỡng / sửa chữa.";
+            return;
+        }
+
+        string loi;
+        bool thanhCong = maintenanceService.Add(phieuMoi, chuyenTrangThaiXeNgay, out loi);
+
+        if (!thanhCong)
+        {
+            errorMessage = loi;
+            return;
+        }
+
+        dialog.Close(true);
+    }
+}

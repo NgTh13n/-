@@ -34,9 +34,9 @@ else
                 <RadzenIcon Icon="file_download" Style="vertical-align: middle; margin-right: 4px;" />
                 Xuất file Excel / CSV
             </button>
-            <button class="btn btn-primary-action" @onclick="InBaoCao">
-                <RadzenIcon Icon="print" Style="vertical-align: middle; margin-right: 4px;" />
-                In Báo cáo (Chuẩn A4)
+            <button class="btn btn-primary-action" @onclick="XuatBaoCaoWord">
+                <RadzenIcon Icon="description" Style="vertical-align: middle; margin-right: 4px;" />
+                Xuất file Word Báo cáo (Chuẩn A4)
             </button>
         </div>
     </div>
@@ -316,94 +316,6 @@ else
                     </div>
                 </div>
             </RadzenTabsItem>
-
-            @* TAB 4: MẪU VĂN BẢN IN ẤN HÀNH CHÍNH CAND *@
-            <RadzenTabsItem Text="Mẫu Văn bản In Hành chính CAND (A4)">
-                <div class="p-4 bg-light">
-                    <div class="d-flex justify-content-end mb-3">
-                        <RadzenButton Text="In trang này" Icon="print" ButtonStyle="ButtonStyle.Primary" Click="InBaoCao" />
-                    </div>
-
-                    <div id="printArea" class="bg-white p-5 shadow-sm border mx-auto" style="max-width: 900px; font-family: 'Times New Roman', Times, serif; color: #000;">
-                        @* QUỐC HIỆU TIÊU NGỮ *@
-                        <div class="d-flex justify-content-between text-center mb-4">
-                            <div>
-                                <div class="fw-bold">BỘ CÔNG AN</div>
-                                <div class="fw-bold text-decoration-underline">HỌC VIỆN AN NINH NHÂN DÂN</div>
-                                <div class="small">Số: 86/BC-HVANND-HC</div>
-                            </div>
-                            <div>
-                                <div class="fw-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-                                <div class="fw-bold text-decoration-underline">Độc lập - Tự do - Hạnh phúc</div>
-                                <div class="small fst-italic">Hà Nội, ngày @DateTime.Today.Day tháng @DateTime.Today.Month năm @DateTime.Today.Year</div>
-                            </div>
-                        </div>
-
-                        <div class="text-center my-4">
-                            <h4 class="fw-bold text-uppercase mb-1">BÁO CÁO TỔNG HỢP</h4>
-                            <h5 class="fw-bold mb-1">TÌNH HÌNH QUẢN LÝ, ĐIỀU ĐỘNG VÀ SỬ DỤNG PHƯƠNG TIỆN CÔNG VỤ</h5>
-                            <div class="fst-italic small">(Phục vụ công tác thường xuyên và đột xuất của Học viện)</div>
-                        </div>
-
-                        <p><strong>I. TÌNH HÌNH QUÂN SỐ VÀ PHƯƠNG TIỆN BIÊN CHẾ:</strong></p>
-                        <ul>
-                            <li>Tổng số phương tiện quản lý: <strong>@mockDataService.Vehicles.Count xe</strong> (5 Ô tô con & SUV, 2 Xe bán tải nghiệp vụ, 1 Xe mô tô đặc chủng).</li>
-                            <li>Tổng số cán bộ lái xe biên chế: <strong>@mockDataService.Drivers.Count đồng chí</strong>.</li>
-                            <li>Tình trạng kỹ thuật: <strong>@mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.SanSang) xe</strong> sẵn sàng tác chiến, <strong>@mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.DangBaoDuong) xe</strong> đang bảo dưỡng xưởng định kỳ.</li>
-                        </ul>
-
-                        <p><strong>II. KẾT QUẢ ĐIỀU ĐỘNG CÔNG TÁC TRONG KỲ:</strong></p>
-                        <table class="table table-bordered text-center align-middle" style="border-color: #000;">
-                            <thead>
-                                <tr>
-                                    <th>Tổng số chuyến</th>
-                                    <th>Tổng km vận hành</th>
-                                    <th>Nhiên liệu tiêu thụ</th>
-                                    <th>Tỷ lệ cán bộ tự lái</th>
-                                    <th>Tỷ lệ an toàn</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="fw-bold">@mockDataService.Trips.Count</td>
-                                    <td class="fw-bold">@tongQuangDuong.ToString("N0") km</td>
-                                    <td class="fw-bold">@tongNhienLieu.ToString("N1") lít</td>
-                                    <td class="fw-bold">@((double)mockDataService.Trips.Count(t => t.DriverMode == DriverMode.SelfDrive) / Math.Max(1, mockDataService.Trips.Count) * 100):N0%</td>
-                                    <td class="fw-bold text-success">100%</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <p><strong>III. ĐÁNH GIÁ CHẤP HÀNH KỶ LUẬT VÀ AN NINH AN TOÀN:</strong></p>
-                        <p class="text-justify" style="text-align: justify;">
-                            100% các chuyến công tác đều có kế hoạch được Lãnh đạo đơn vị phê duyệt và thực hiện thủ tục bàn giao, nghiệm thu theo đúng quy trình.
-                            Hệ thống đã kiểm soát chặt chẽ điều kiện người lái (kiểm tra hạn GPLX, phân quyền cán bộ tự lái) và chặn hoàn toàn các trường hợp vi phạm an toàn kỹ thuật.
-                        </p>
-
-                        @* PHẦN CHỮ KÝ *@
-                        <div class="row text-center mt-5">
-                            <div class="col-4">
-                                <div class="fw-bold">NGƯỜI LẬP BIỂU</div>
-                                <div class="fst-italic small">(Ký, ghi rõ họ tên)</div>
-                                <div style="height: 70px;"></div>
-                                <div class="fw-bold">@authService.CurrentUser?.FullName</div>
-                            </div>
-                            <div class="col-4">
-                                <div class="fw-bold">ĐỘI TRƯỞNG ĐỘI XE</div>
-                                <div class="fst-italic small">(Ký, ghi rõ họ tên)</div>
-                                <div style="height: 70px;"></div>
-                                <div class="fw-bold">Trần Văn Bình</div>
-                            </div>
-                            <div class="col-4">
-                                <div class="fw-bold">GIÁM ĐỐC HỌC VIỆN</div>
-                                <div class="fst-italic small">(Ký, đóng dấu)</div>
-                                <div style="height: 70px;"></div>
-                                <div class="fw-bold">Thiếu tướng GS.TS Nguyễn Văn An</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
 }
@@ -449,9 +361,187 @@ else
         phuongAnLaiLoc = -1;
     }
 
-    private async Task InBaoCao()
+    private async Task XuatBaoCaoWord()
     {
-        await js.InvokeVoidAsync("window.print");
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>");
+            sb.AppendLine("<head>");
+            sb.AppendLine("<meta charset='utf-8'>");
+            sb.AppendLine("<title>Báo cáo CAND</title>");
+            sb.AppendLine("<!--[if gte mso 9]>");
+            sb.AppendLine("<xml>");
+            sb.AppendLine("<w:WordDocument>");
+            sb.AppendLine("<w:View>Print</w:View>");
+            sb.AppendLine("<w:Zoom>100</w:Zoom>");
+            sb.AppendLine("<w:DoNotOptimizeForBrowser/>");
+            sb.AppendLine("</w:WordDocument>");
+            sb.AppendLine("</xml>");
+            sb.AppendLine("<![endif]-->");
+            sb.AppendLine("<style>");
+            sb.AppendLine("@page Section1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 2.5cm; mso-header-margin: 36.0pt; mso-footer-margin: 36.0pt; mso-paper-source: 0; }");
+            sb.AppendLine("div.Section1 { page: Section1; }");
+            sb.AppendLine("body { font-family: 'Times New Roman', serif; font-size: 13pt; line-height: 1.35; color: #000000; }");
+            sb.AppendLine("table { border-collapse: collapse; width: 100%; }");
+            sb.AppendLine("th, td { border: 1px solid #000; padding: 6px; font-size: 12pt; }");
+            sb.AppendLine(".table-borderless, .table-borderless th, .table-borderless td { border: none !important; }");
+            sb.AppendLine(".text-center { text-align: center; }");
+            sb.AppendLine(".text-right { text-align: right; }");
+            sb.AppendLine(".text-justify { text-align: justify; }");
+            sb.AppendLine(".fw-bold { font-weight: bold; }");
+            sb.AppendLine(".fst-italic { font-style: italic; }");
+            sb.AppendLine(".text-uppercase { text-transform: uppercase; }");
+            sb.AppendLine("</style>");
+            sb.AppendLine("</head>");
+            sb.AppendLine("<body>");
+            sb.AppendLine("<div class='Section1'>");
+
+            // Quốc hiệu tiêu ngữ
+            sb.AppendLine("<table class='table-borderless' style='width: 100%; margin-bottom: 25px;'>");
+            sb.AppendLine("<tr>");
+            sb.AppendLine("<td style='width: 45%; text-align: center; vertical-align: top;'>");
+            sb.AppendLine("<div style='font-size: 12pt; font-weight: bold;'>BỘ CÔNG AN</div>");
+            sb.AppendLine("<div style='font-size: 12pt; font-weight: bold; text-decoration: underline;'>HỌC VIỆN AN NINH NHÂN DÂN</div>");
+            sb.AppendLine("<div style='font-size: 11pt; margin-top: 4px;'>Số: 86/BC-HVANND-HC</div>");
+            sb.AppendLine("</td>");
+            sb.AppendLine("<td style='width: 55%; text-align: center; vertical-align: top;'>");
+            sb.AppendLine("<div style='font-size: 12pt; font-weight: bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>");
+            sb.AppendLine("<div style='font-size: 12pt; font-weight: bold; text-decoration: underline;'>Độc lập - Tự do - Hạnh phúc</div>");
+            sb.AppendLine($"<div style='font-size: 11pt; font-style: italic; margin-top: 4px;'>Hà Nội, ngày {DateTime.Today.Day} tháng {DateTime.Today.Month} năm {DateTime.Today.Year}</div>");
+            sb.AppendLine("</td>");
+            sb.AppendLine("</tr>");
+            sb.AppendLine("</table>");
+
+            // Tiêu đề
+            sb.AppendLine("<div style='text-align: center; margin-bottom: 25px;'>");
+            sb.AppendLine("<h2 style='font-size: 15pt; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;'>BÁO CÁO TỔNG HỢP</h2>");
+            sb.AppendLine("<h3 style='font-size: 13pt; font-weight: bold; margin-bottom: 6px;'>TÌNH HÌNH QUẢN LÝ, ĐIỀU ĐỘNG VÀ SỬ DỤNG PHƯƠNG TIỆN CÔNG VỤ</h3>");
+            sb.AppendLine("<div style='font-size: 11pt; font-style: italic;'>(Phục vụ công tác thường xuyên và nghiệp vụ đột xuất của Học viện)</div>");
+            sb.AppendLine("</div>");
+
+            // Phần I
+            sb.AppendLine("<p><strong>I. TÌNH HÌNH QUÂN SỐ VÀ PHƯƠNG TIỆN BIÊN CHẾ:</strong></p>");
+            sb.AppendLine("<ul>");
+            sb.AppendLine($"<li>Tổng số phương tiện quản lý: <strong>{mockDataService.Vehicles.Count} xe</strong> (bao gồm ô tô con chuyên chở chỉ huy, xe bán tải nghiệp vụ, mô tô đặc chủng).</li>");
+            sb.AppendLine($"<li>Tổng số cán bộ lái xe biên chế: <strong>{mockDataService.Drivers.Count} đồng chí</strong>.</li>");
+            sb.AppendLine($"<li>Tình trạng kỹ thuật: <strong>{mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.SanSang)} xe</strong> sẵn sàng tác chiến, <strong>{mockDataService.Vehicles.Count(x => x.Status == VehicleStatus.DangBaoDuong)} xe</strong> đang bảo dưỡng xưởng định kỳ.</li>");
+            sb.AppendLine("</ul>");
+
+            // Phần II
+            sb.AppendLine("<p><strong>II. KẾT QUẢ ĐIỀU ĐỘNG CÔNG TÁC TRONG KỲ:</strong></p>");
+            sb.AppendLine("<table style='width: 100%; border: 1px solid #000; text-align: center; margin-bottom: 15px;'>");
+            sb.AppendLine("<thead>");
+            sb.AppendLine("<tr style='background-color: #f2f2f2;'>");
+            sb.AppendLine("<th>Tổng số chuyến</th>");
+            sb.AppendLine("<th>Tổng km vận hành</th>");
+            sb.AppendLine("<th>Nhiên liệu tiêu thụ</th>");
+            sb.AppendLine("<th>Tỷ lệ cán bộ tự lái</th>");
+            sb.AppendLine("<th>Tỷ lệ an toàn</th>");
+            sb.AppendLine("</tr>");
+            sb.AppendLine("</thead>");
+            sb.AppendLine("<tbody>");
+            sb.AppendLine("<tr>");
+            sb.AppendLine($"<td style='font-weight: bold;'>{mockDataService.Trips.Count}</td>");
+            sb.AppendLine($"<td style='font-weight: bold;'>{tongQuangDuong:N0} km</td>");
+            sb.AppendLine($"<td style='font-weight: bold;'>{tongNhienLieu:N1} lít</td>");
+            sb.AppendLine($"<td style='font-weight: bold;'>{(mockDataService.Trips.Count > 0 ? (double)mockDataService.Trips.Count(t => t.DriverMode == DriverMode.SelfDrive) / mockDataService.Trips.Count * 100 : 0):N0}%</td>");
+            sb.AppendLine("<td style='font-weight: bold; color: #15803d;'>100%</td>");
+            sb.AppendLine("</tr>");
+            sb.AppendLine("</tbody>");
+            sb.AppendLine("</table>");
+
+            // Bảng danh mục chi tiết
+            sb.AppendLine("<p><strong>* Danh mục chi tiết các chuyến điều động công tác trong kỳ:</strong></p>");
+            sb.AppendLine("<table style='width: 100%; border: 1px solid #000; font-size: 11pt; margin-bottom: 20px;'>");
+            sb.AppendLine("<thead>");
+            sb.AppendLine("<tr style='background-color: #f2f2f2; text-align: center;'>");
+            sb.AppendLine("<th style='width: 40px;'>STT</th>");
+            sb.AppendLine("<th style='width: 95px;'>Mã lệnh</th>");
+            sb.AppendLine("<th style='width: 90px;'>Phương tiện</th>");
+            sb.AppendLine("<th>Người điều khiển</th>");
+            sb.AppendLine("<th>Điểm đến / Mục đích</th>");
+            sb.AppendLine("<th style='width: 75px;'>Quãng đường</th>");
+            sb.AppendLine("<th style='width: 70px;'>Nhiên liệu</th>");
+            sb.AppendLine("<th style='width: 90px;'>Trạng thái</th>");
+            sb.AppendLine("</tr>");
+            sb.AppendLine("</thead>");
+            sb.AppendLine("<tbody>");
+            int sttTrip = 1;
+            foreach (var t in danhSachChuyenDaLoc)
+            {
+                var xe = mockDataService.Vehicles.FirstOrDefault(v => v.Id == t.VehicleId);
+                var don = mockDataService.Bookings.FirstOrDefault(b => b.Id == t.BookingId);
+                var lx = mockDataService.Drivers.FirstOrDefault(d => d.Id == t.DriverId);
+                string nguoiLai = t.DriverMode == DriverMode.SelfDrive
+                    ? (string.IsNullOrEmpty(t.DriverNameSnapshot) ? "Cán bộ tự lái" : t.DriverNameSnapshot)
+                    : (lx?.FullName ?? (string.IsNullOrEmpty(t.DriverNameSnapshot) ? "Lái xe ĐV" : t.DriverNameSnapshot));
+                double qd = Math.Max(0, t.EndKm - t.StartKm);
+
+                sb.AppendLine("<tr>");
+                sb.AppendLine($"<td style='text-align: center;'>{sttTrip++}</td>");
+                sb.AppendLine($"<td style='font-weight: bold; text-align: center;'>{t.DispatchCode}</td>");
+                sb.AppendLine($"<td style='text-align: center;'>{xe?.LicensePlate ?? t.VehiclePlateSnapshot}</td>");
+                sb.AppendLine($"<td>{nguoiLai}</td>");
+                sb.AppendLine($"<td>{don?.Destination} ({don?.Purpose})</td>");
+                sb.AppendLine($"<td style='text-align: right; font-weight: bold;'>{(qd > 0 ? $"{qd:N0} km" : "-")}</td>");
+                sb.AppendLine($"<td style='text-align: right;'>{(t.FuelUsed > 0 ? $"{t.FuelUsed:N1} L" : "-")}</td>");
+                sb.AppendLine($"<td style='text-align: center;'>{(t.IsSettled ? "Đã quyết toán" : EnumHelper.TenTripStatus(t.Status))}</td>");
+                sb.AppendLine("</tr>");
+            }
+            sb.AppendLine("</tbody>");
+            sb.AppendLine("</table>");
+
+            // Phần III
+            sb.AppendLine("<p><strong>III. ĐÁNH GIÁ CHẤP HÀNH KỶ LUẬT VÀ AN NINH AN TOÀN:</strong></p>");
+            sb.AppendLine("<p style='text-align: justify; text-indent: 1.27cm;'>");
+            sb.AppendLine("100% các chuyến công tác đều có kế hoạch được Lãnh đạo đơn vị phê duyệt và thực hiện thủ tục bàn giao, nghiệm thu theo đúng quy trình của Bộ Công an. ");
+            sb.AppendLine("Hệ thống đã kiểm soát chặt chẽ điều kiện người lái (kiểm tra hạn GPLX, phân quyền cán bộ tự lái) và ngăn chặn hoàn toàn các trường hợp vi phạm an toàn kỹ thuật.");
+            sb.AppendLine("</p>");
+
+            // Phần IV
+            sb.AppendLine("<p><strong>IV. KIẾN NGHỊ VÀ ĐỀ XUẤT:</strong></p>");
+            sb.AppendLine("<p style='text-align: justify; text-indent: 1.27cm;'>");
+            sb.AppendLine("Tiếp tục duy trì nghiêm chế độ bảo dưỡng định kỳ theo số km vận hành của phương tiện; tăng cường công tác kiểm tra kỹ thuật an toàn trước khi xuất bãi; tổ chức tập huấn nâng cao nghiệp vụ lái xe an toàn cho cán bộ, chiến sĩ trong tình huống tác chiến đặc thù.");
+            sb.AppendLine("</p>");
+
+            // Chữ ký
+            sb.AppendLine("<table class='table-borderless' style='width: 100%; margin-top: 40px; text-align: center;'>");
+            sb.AppendLine("<tr>");
+            sb.AppendLine("<td style='width: 33%; vertical-align: top;'>");
+            sb.AppendLine("<div style='font-weight: bold;'>NGƯỜI LẬP BIỂU</div>");
+            sb.AppendLine("<div style='font-style: italic; font-size: 11pt;'>(Ký, ghi rõ họ tên)</div>");
+            sb.AppendLine("<div style='height: 75px;'></div>");
+            sb.AppendLine($"<div style='font-weight: bold;'>{authService.CurrentUser?.FullName ?? "Cán bộ quản lý"}</div>");
+            sb.AppendLine("</td>");
+            sb.AppendLine("<td style='width: 33%; vertical-align: top;'>");
+            sb.AppendLine("<div style='font-weight: bold;'>ĐỘI TRƯỞNG ĐỘI XE</div>");
+            sb.AppendLine("<div style='font-style: italic; font-size: 11pt;'>(Ký, ghi rõ họ tên)</div>");
+            sb.AppendLine("<div style='height: 75px;'></div>");
+            sb.AppendLine("<div style='font-weight: bold;'>Trung tá Trần Văn Bình</div>");
+            sb.AppendLine("</td>");
+            sb.AppendLine("<td style='width: 34%; vertical-align: top;'>");
+            sb.AppendLine("<div style='font-weight: bold;'>GIÁM ĐỐC HỌC VIỆN</div>");
+            sb.AppendLine("<div style='font-style: italic; font-size: 11pt;'>(Ký, đóng dấu)</div>");
+            sb.AppendLine("<div style='height: 75px;'></div>");
+            sb.AppendLine("<div style='font-weight: bold;'>Thiếu tướng GS.TS Nguyễn Văn An</div>");
+            sb.AppendLine("</td>");
+            sb.AppendLine("</tr>");
+            sb.AppendLine("</table>");
+
+            sb.AppendLine("</div>");
+            sb.AppendLine("</body>");
+            sb.AppendLine("</html>");
+
+            string filename = $"BaoCao_HanhChinh_CAND_{DateTime.Now:yyyyMMdd_HHmm}.doc";
+            await js.InvokeVoidAsync("downloadWordFile", filename, sb.ToString());
+
+            notificationService.Notify(NotificationSeverity.Success, "Xuất file Word thành công", $"Đã tạo và tải về văn bản {filename} theo đúng thể thức hành chính CAND!", 4500);
+        }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "Lỗi xuất file Word", ex.Message, 4000);
+        }
     }
 
     private async Task XuatFileCsv()

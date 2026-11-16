@@ -29,6 +29,18 @@ public static class MockDataSeeder
                 Id = 3,
                 Name = "Đội Cảnh sát QLHC về TTXH",
                 Description = "Đội Cảnh sát quản lý hành chính về trật tự xã hội."
+            },
+            new Department
+            {
+                Id = 4,
+                Name = "Đội Cảnh sát Giao thông - Trật tự",
+                Description = "Đội Cảnh sát giao thông, trật tự cơ động tuần tra kiểm soát tuyến đường."
+            },
+            new Department
+            {
+                Id = 5,
+                Name = "Đội Cảnh sát ĐTTP về Ma túy",
+                Description = "Đội Cảnh sát điều tra tội phạm về ma túy và tệ nạn xã hội."
             }
         };
     }
@@ -204,6 +216,118 @@ public static class MockDataSeeder
                 CanSelfDrive = false, // Chưa sát hạch lái xe công vụ
                 Phone = "0901.234.512",
                 Notes = "Phụ trách công tác cấp CCCD và quản lý ngành nghề kinh doanh có điều kiện."
+            },
+
+            // Lãnh đạo cấp cao đơn vị
+            new Officer
+            {
+                Id = 13,
+                Code = "CB-013",
+                FullName = "Nguyễn Văn Quyết",
+                RankOrTitle = "Thượng tá - Trưởng Công an",
+                DepartmentId = 1,
+                Department = "Đội Tham mưu - Tổng hợp",
+                IsActive = true,
+                CanSelfDrive = false,
+                Phone = "0901.234.500",
+                Notes = "Trưởng Công an phụ trách chỉ đạo chung toàn diện công tác đơn vị."
+            },
+
+            // Đội 4: Cảnh sát Giao thông - Trật tự
+            new Officer
+            {
+                Id = 14,
+                Code = "CB-014",
+                FullName = "Hoàng Mạnh Dũng",
+                RankOrTitle = "Trung tá - Đội trưởng CSGT",
+                DepartmentId = 4,
+                Department = "Đội Cảnh sát Giao thông - Trật tự",
+                IsActive = true,
+                CanSelfDrive = true,
+                Phone = "0901.234.514",
+                Notes = "Chỉ huy tuần tra kiểm soát giao thông, có bằng lái B2 và A2."
+            },
+            new Officer
+            {
+                Id = 15,
+                Code = "CB-015",
+                FullName = "Vũ Minh Tuấn",
+                RankOrTitle = "Đại úy - Cán bộ CSGT",
+                DepartmentId = 4,
+                Department = "Đội Cảnh sát Giao thông - Trật tự",
+                IsActive = true,
+                CanSelfDrive = true,
+                Phone = "0901.234.515",
+                Notes = "Cán bộ tổ xử lý tai nạn và điều tra giải quyết va chạm giao thông."
+            },
+
+            // Đội 5: Cảnh sát ĐTTP về Ma túy
+            new Officer
+            {
+                Id = 16,
+                Code = "CB-016",
+                FullName = "Trần Văn Hưng",
+                RankOrTitle = "Thiếu tá - Đội trưởng CSĐTTP Ma túy",
+                DepartmentId = 5,
+                Department = "Đội Cảnh sát ĐTTP về Ma túy",
+                IsActive = true,
+                CanSelfDrive = true,
+                Phone = "0901.234.516",
+                Notes = "Chuyên trách chỉ đạo các chuyên án đấu tranh chống tội phạm ma túy đặc biệt nguy hiểm."
+            },
+            new Officer
+            {
+                Id = 17,
+                Code = "CB-017",
+                FullName = "Đinh Trọng Nghĩa",
+                RankOrTitle = "Thượng úy - Cán bộ Điều tra Ma túy",
+                DepartmentId = 5,
+                Department = "Đội Cảnh sát ĐTTP về Ma túy",
+                IsActive = true,
+                CanSelfDrive = true,
+                Phone = "0901.234.517",
+                Notes = "Trinh sát đặc nhiệm phòng chống ma túy, có kinh nghiệm lái xe địa hình tác chiến."
+            },
+
+            // Lực lượng lái xe chuyên trách bổ sung
+            new Officer
+            {
+                Id = 18,
+                Code = "CB-018",
+                FullName = "Nguyễn Hải Nam",
+                RankOrTitle = "Đại úy - Lái xe chuyên trách",
+                DepartmentId = 1,
+                Department = "Đội Tham mưu - Tổng hợp",
+                IsActive = true,
+                CanSelfDrive = true,
+                Phone = "0910.000.005",
+                Notes = "Lái xe cơ quan, GPLX hạng E, chuyên điều khiển xe khách lớn và xe chở quân chuyên dụng."
+            },
+            new Officer
+            {
+                Id = 19,
+                Code = "CB-019",
+                FullName = "Trần Đình Trọng",
+                RankOrTitle = "Thượng úy - Lái xe chuyên trách",
+                DepartmentId = 1,
+                Department = "Đội Tham mưu - Tổng hợp",
+                IsActive = true,
+                CanSelfDrive = true,
+                Phone = "0910.000.006",
+                Notes = "Lái xe cơ quan, GPLX hạng D, chuyên phục vụ xe chỉ huy và đón tiếp đoàn công tác."
+            },
+            new Officer
+            {
+                Id = 20,
+                Code = "CB-020",
+                FullName = "Hoàng Văn Bách",
+                RankOrTitle = "Trung úy - Lái xe chuyên trách",
+                DepartmentId = 1,
+                Department = "Đội Tham mưu - Tổng hợp",
+                IsActive = true,
+                CanSelfDrive = true,
+                Phone = "0910.000.007",
+                Notes = "Lái xe cơ động trẻ, nhiệt tình, có GPLX B2, sẵn sàng làm nhiệm vụ khẩn cấp 24/7."
             }
         };
     }
@@ -326,6 +450,45 @@ public static class MockDataSeeder
                 IsActive = true,
                 Status = DriverStatus.Active,
                 Notes = "CẢNH BÁO: Giấy phép lái xe đã hết hạn ngày " + homNay.AddDays(-2).ToString("dd/MM/yyyy") + ", cần làm thủ tục đổi bằng."
+            },
+            new Driver
+            {
+                Id = 5,
+                OfficerId = 18,
+                FullName = "Nguyễn Hải Nam",
+                Phone = "0910.000.005",
+                LicenseNumberDemo = "GPLX-29E-05182",
+                LicenseCategory = "E",
+                LicenseExpiryDate = homNay.AddYears(3),
+                IsActive = true,
+                Status = DriverStatus.Active,
+                Notes = "Lái xe khách lớn 16-45 chỗ và xe chở quân chuyên dụng."
+            },
+            new Driver
+            {
+                Id = 6,
+                OfficerId = 19,
+                FullName = "Trần Đình Trọng",
+                Phone = "0910.000.006",
+                LicenseNumberDemo = "GPLX-29D-06291",
+                LicenseCategory = "D",
+                LicenseExpiryDate = homNay.AddYears(2),
+                IsActive = true,
+                Status = DriverStatus.Active,
+                Notes = "Lái xe chỉ huy, có kinh nghiệm dẫn đoàn công tác."
+            },
+            new Driver
+            {
+                Id = 7,
+                OfficerId = 20,
+                FullName = "Hoàng Văn Bách",
+                Phone = "0910.000.007",
+                LicenseNumberDemo = "GPLX-29B2-07314",
+                LicenseCategory = "B2",
+                LicenseExpiryDate = homNay.AddYears(4),
+                IsActive = true,
+                Status = DriverStatus.Active,
+                Notes = "Lái xe cơ động trẻ, sẵn sàng làm nhiệm vụ 24/7."
             }
         };
     }
@@ -585,6 +748,288 @@ public static class MockDataSeeder
                 ApprovalOfficerId = 5,
                 ApprovalAt = homNay.AddDays(-1).AddHours(16),
                 CreatedAt = homNay.AddDays(-1).AddHours(10)
+            },
+
+            // 11. Chờ phê duyệt - YC 11 (Đội CSGT tuần tra)
+            new Booking
+            {
+                Id = 11,
+                BookingCode = $"YC-{homNay.Year}-011",
+                RequesterId = 14, // Hoàng Mạnh Dũng - Đội trưởng CSGT
+                DepartmentId = 4,
+                DepartmentSnapshot = "Đội Cảnh sát Giao thông - Trật tự",
+                WorkType = "Tuần tra kiểm soát",
+                Purpose = "Tuần tra kiểm soát phân luồng giao thông và chống ùn tắc dịp cao điểm",
+                TaskDescription = "Bố trí tổ công tác kiểm tra, phân luồng các nút giao thông trọng điểm và xử lý vi phạm giao thông.",
+                Departure = "Trụ sở Công an",
+                Destination = "Các nút giao thông ngã tư trọng điểm trên địa bàn quản lý",
+                DepartureTime = homNay.AddDays(1).AddHours(6).AddMinutes(30),
+                ReturnTime = homNay.AddDays(1).AddHours(11).AddMinutes(30),
+                PassengerCount = 4,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.AssignedDriver,
+                Status = BookingStatus.PendingApproval,
+                CreatedAt = homNay.AddHours(-3)
+            },
+
+            // 12. Chờ phê duyệt - YC 12 (Đội Ma túy phục kích)
+            new Booking
+            {
+                Id = 12,
+                BookingCode = $"YC-{homNay.Year}-012",
+                RequesterId = 16, // Trần Văn Hưng - Đội trưởng Ma túy
+                DepartmentId = 5,
+                DepartmentSnapshot = "Đội Cảnh sát ĐTTP về Ma túy",
+                WorkType = "Phối hợp phá án",
+                Purpose = "Trinh sát phục kích bắt giữ đối tượng vận chuyển trái phép chất ma túy",
+                TaskDescription = "Triển khai đón lõng phương tiện vận chuyển ma túy từ vùng biên giới theo Chuyên án 04-MT.",
+                Departure = "Trụ sở Công an",
+                Destination = "Khu vực Dốc Cun và tuyến Quốc lộ 6, tỉnh Hòa Bình",
+                DepartureTime = homNay.AddDays(1).AddHours(4),
+                ReturnTime = homNay.AddDays(1).AddHours(22),
+                PassengerCount = 5,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.SelfDrive, // Cán bộ tự lái trinh sát
+                Status = BookingStatus.PendingApproval,
+                CreatedAt = homNay.AddHours(-2)
+            },
+
+            // 13. Chờ phê duyệt - YC 13 (Cán bộ Nguyễn Minh An đề nghị)
+            new Booking
+            {
+                Id = 13,
+                BookingCode = $"YC-{homNay.Year}-013",
+                RequesterId = 1, // Nguyễn Minh An
+                DepartmentId = 2,
+                DepartmentSnapshot = "Đội Cảnh sát ĐTTP về TTXH",
+                WorkType = "Khám xét khẩn cấp",
+                Purpose = "Phối hợp khám xét chỗ ở khẩn cấp đối tượng cầm đầu đường dây lừa đảo công nghệ cao",
+                TaskDescription = "Thực hiện lệnh khám xét khẩn cấp theo quyết định của Thủ trưởng Cơ quan CSĐT.",
+                Departure = "Trụ sở Công an",
+                Destination = "Khu đô thị Văn Phú, phường Phú La, quận Hà Đông",
+                DepartureTime = homNay.AddDays(1).AddHours(13).AddMinutes(30),
+                ReturnTime = homNay.AddDays(1).AddHours(18),
+                PassengerCount = 4,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.SelfDrive,
+                Status = BookingStatus.PendingApproval,
+                CreatedAt = homNay.AddMinutes(-45)
+            },
+
+            // 14. Chờ phê duyệt - YC 14 (QLHC kiểm tra cơ sở)
+            new Booking
+            {
+                Id = 14,
+                BookingCode = $"YC-{homNay.Year}-014",
+                RequesterId = 12, // Đặng Thùy Dung
+                DepartmentId = 3,
+                DepartmentSnapshot = "Đội Cảnh sát QLHC về TTXH",
+                WorkType = "Kiểm tra cơ sở",
+                Purpose = "Kiểm tra công tác đăng ký tạm trú, lưu trú người nước ngoài tại các khu chung cư",
+                TaskDescription = "Rà soát khai báo tạm trú và việc chấp hành các quy định về an ninh trật tự cơ sở.",
+                Departure = "Trụ sở Công an",
+                Destination = "Các tòa chung cư cao tầng trên trục đường Lê Văn Lương",
+                DepartureTime = homNay.AddDays(2).AddHours(19),
+                ReturnTime = homNay.AddDays(2).AddHours(22).AddMinutes(30),
+                PassengerCount = 3,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.AssignedDriver,
+                Status = BookingStatus.PendingApproval,
+                CreatedAt = homNay.AddMinutes(-30)
+            },
+
+            // 15. Đã duyệt chờ xếp xe - YC 15 (Cán bộ Nguyễn Minh An)
+            new Booking
+            {
+                Id = 15,
+                BookingCode = $"YC-{homNay.Year}-015",
+                RequesterId = 1, // Nguyễn Minh An
+                DepartmentId = 2,
+                DepartmentSnapshot = "Đội Cảnh sát ĐTTP về TTXH",
+                WorkType = "Thực nghiệm điều tra",
+                Purpose = "Dẫn giải bị can đi thực nghiệm hiện trường vụ án trộm cắp tài sản liên quận",
+                TaskDescription = "Bảo vệ hiện trường và ghi nhận hành vi phạm tội phục vụ củng cố hồ sơ truy tố.",
+                Departure = "Trụ sở Công an",
+                Destination = "Các địa điểm trên địa bàn quận Nam Từ Liêm và Cầu Giấy",
+                DepartureTime = homNay.AddDays(1).AddHours(8).AddMinutes(30),
+                ReturnTime = homNay.AddDays(1).AddHours(12),
+                PassengerCount = 4,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.AssignedDriver,
+                Status = BookingStatus.Approved,
+                ApprovalOfficerId = 5,
+                ApprovalAt = homNay.AddHours(-2),
+                ApprovalComment = "Nhất trí phê duyệt. Giao Đội xe bố trí phương tiện đảm bảo an toàn dẫn giải can phạm.",
+                CreatedAt = homNay.AddHours(-5)
+            },
+
+            // 16. Đã hoàn thành - YC 16 (Cán bộ Nguyễn Minh An)
+            new Booking
+            {
+                Id = 16,
+                BookingCode = $"YC-{homNay.Year}-016",
+                RequesterId = 1, // Nguyễn Minh An
+                DepartmentId = 2,
+                DepartmentSnapshot = "Đội Cảnh sát ĐTTP về TTXH",
+                WorkType = "Xác minh nghiệp vụ",
+                Purpose = "Xác minh nguồn gốc số khung, số máy phương tiện tang vật tại Cục Đăng kiểm",
+                TaskDescription = "Đối chiếu dữ liệu đăng kiểm các xe mô tô nghi vấn làm giả hồ sơ lưu hành.",
+                Departure = "Trụ sở Công an",
+                Destination = "Cục Đăng kiểm Việt Nam (18 Phạm Hùng, Mỹ Đình)",
+                DepartureTime = homNay.AddDays(-2).AddHours(8),
+                ReturnTime = homNay.AddDays(-2).AddHours(11).AddMinutes(30),
+                PassengerCount = 2,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.SelfDrive,
+                Status = BookingStatus.Completed,
+                ApprovalOfficerId = 5,
+                ApprovalAt = homNay.AddDays(-3).AddHours(15),
+                CreatedAt = homNay.AddDays(-3).AddHours(10)
+            },
+
+            // 17. Đã hoàn thành - YC 17 (Cán bộ Nguyễn Minh An)
+            new Booking
+            {
+                Id = 17,
+                BookingCode = $"YC-{homNay.Year}-017",
+                RequesterId = 1, // Nguyễn Minh An
+                DepartmentId = 2,
+                DepartmentSnapshot = "Đội Cảnh sát ĐTTP về TTXH",
+                WorkType = "Phối hợp công tác",
+                Purpose = "Phối hợp với Công an tỉnh Bắc Ninh thu hồi vật chứng vụ án lạm dụng tín nhiệm",
+                TaskDescription = "Thu giữ xe ô tô tang vật do đối tượng đem cầm cố tại TP Từ Sơn.",
+                Departure = "Trụ sở Công an",
+                Destination = "Công an thị xã Từ Sơn, tỉnh Bắc Ninh",
+                DepartureTime = homNay.AddDays(-3).AddHours(7).AddMinutes(30),
+                ReturnTime = homNay.AddDays(-3).AddHours(17),
+                PassengerCount = 3,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.AssignedDriver,
+                Status = BookingStatus.Completed,
+                ApprovalOfficerId = 5,
+                ApprovalAt = homNay.AddDays(-4).AddHours(16),
+                CreatedAt = homNay.AddDays(-4).AddHours(9)
+            },
+
+            // 18. Yêu cầu bổ sung - YC 18 (Cán bộ Nguyễn Minh An)
+            new Booking
+            {
+                Id = 18,
+                BookingCode = $"YC-{homNay.Year}-018",
+                RequesterId = 1, // Nguyễn Minh An
+                DepartmentId = 2,
+                DepartmentSnapshot = "Đội Cảnh sát ĐTTP về TTXH",
+                WorkType = "Công tác đột xuất",
+                Purpose = "Đi công tác Hải Phòng thu thập tài liệu luồng tiền tài khoản ngân hàng",
+                TaskDescription = "Làm việc với các chi nhánh ngân hàng phục vụ vụ án rửa tiền xuyên quốc gia.",
+                Departure = "Trụ sở Công an",
+                Destination = "TP Hải Phòng",
+                DepartureTime = homNay.AddDays(2).AddHours(7),
+                ReturnTime = homNay.AddDays(2).AddHours(19),
+                PassengerCount = 3,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.AssignedDriver,
+                Status = BookingStatus.NeedAdjustment,
+                NeedAdjustmentReason = "Kế hoạch công tác liên tỉnh cần bổ sung Quyết định cử đoàn công tác của Lãnh đạo đơn vị.",
+                ApprovalOfficerId = 5,
+                ApprovalAt = homNay.AddHours(-1),
+                CreatedAt = homNay.AddHours(-4)
+            },
+
+            // 19. Đã điều phối - YC 19 (Gắn với Trip 5)
+            new Booking
+            {
+                Id = 19,
+                BookingCode = $"YC-{homNay.Year}-019",
+                RequesterId = 15, // Vũ Minh Tuấn - CSGT
+                DepartmentId = 4,
+                DepartmentSnapshot = "Đội Cảnh sát Giao thông - Trật tự",
+                WorkType = "Cơ động trật tự",
+                Purpose = "Chở tổ công tác liên ngành cưỡng chế xử lý lấn chiếm lòng lề đường",
+                TaskDescription = "Huy động 12 cán bộ, chiến sĩ và lực lượng tự quản tham gia chiến dịch lập lại trật tự đô thị.",
+                Departure = "Trụ sở Công an",
+                Destination = "Các tuyến phố Nguyễn Trãi, Khuất Duy Tiến, Vũ Trọng Phụng",
+                DepartureTime = homNay.AddDays(1).AddHours(8),
+                ReturnTime = homNay.AddDays(1).AddHours(17),
+                PassengerCount = 12,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.AssignedDriver,
+                Status = BookingStatus.Dispatched,
+                ApprovalOfficerId = 5,
+                ApprovalAt = homNay.AddDays(-1).AddHours(14),
+                CreatedAt = homNay.AddDays(-1).AddHours(11)
+            },
+
+            // 20. Đang sử dụng - YC 20 (Gắn với Trip 6)
+            new Booking
+            {
+                Id = 20,
+                BookingCode = $"YC-{homNay.Year}-020",
+                RequesterId = 17, // Đinh Trọng Nghĩa - Ma túy
+                DepartmentId = 5,
+                DepartmentSnapshot = "Đội Cảnh sát ĐTTP về Ma túy",
+                WorkType = "Mật phục trinh sát",
+                Purpose = "Mật phục theo dõi đối tượng cầm đầu cung cấp ma túy khu vực giáp ranh",
+                TaskDescription = "Giám sát di biến động đối tượng bằng xe bán tải ngụy trang đặc chủng.",
+                Departure = "Trụ sở Công an",
+                Destination = "Khu vực huyện Thạch Thất và Quốc Oai, Hà Nội",
+                DepartureTime = homNay.AddHours(5).AddMinutes(30),
+                ReturnTime = homNay.AddHours(21),
+                PassengerCount = 3,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.SelfDrive,
+                Status = BookingStatus.InUse,
+                ApprovalOfficerId = 5,
+                ApprovalAt = homNay.AddDays(-1).AddHours(17),
+                CreatedAt = homNay.AddDays(-1).AddHours(15)
+            },
+
+            // 21. Đã hoàn thành - YC 21 (Gắn với Trip 7)
+            new Booking
+            {
+                Id = 21,
+                BookingCode = $"YC-{homNay.Year}-021",
+                RequesterId = 4, // Võ Thành Trung - Hình sự
+                DepartmentId = 2,
+                DepartmentSnapshot = "Đội Cảnh sát ĐTTP về TTXH",
+                WorkType = "Áp giải can phạm",
+                Purpose = "Áp giải đối tượng truy nã đặc biệt nguy hiểm từ cửa khẩu Hữu Nghị về quy án",
+                TaskDescription = "Tiếp nhận đối tượng do phía bạn bàn giao và di lý an toàn tuyệt đối về Cơ quan CSĐT.",
+                Departure = "Trụ sở Công an",
+                Destination = "Cửa khẩu Quốc tế Hữu Nghị, tỉnh Lạng Sơn",
+                DepartureTime = homNay.AddDays(-2).AddHours(5),
+                ReturnTime = homNay.AddDays(-2).AddHours(20),
+                PassengerCount = 4,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.AssignedDriver,
+                Status = BookingStatus.Completed,
+                ApprovalOfficerId = 5,
+                ApprovalAt = homNay.AddDays(-3).AddHours(14),
+                CreatedAt = homNay.AddDays(-3).AddHours(9)
+            },
+
+            // 22. Chờ quyết toán - YC 22 (Gắn với Trip 8)
+            new Booking
+            {
+                Id = 22,
+                BookingCode = $"YC-{homNay.Year}-022",
+                RequesterId = 7, // Phạm Thu Hà - Tham mưu
+                DepartmentId = 1,
+                DepartmentSnapshot = "Đội Tham mưu - Tổng hợp",
+                WorkType = "Đón tiếp đoàn",
+                Purpose = "Đón tiếp và phục vụ Đoàn kiểm tra công tác hậu cần của Bộ Công an",
+                TaskDescription = "Phục vụ di chuyển trong nội thành và các cơ sở trực thuộc Công an quận.",
+                Departure = "Trụ sở Công an",
+                Destination = "Các đơn vị cơ sở và khách sạn lưu trú của đoàn",
+                DepartureTime = homNay.AddHours(-8),
+                ReturnTime = homNay.AddHours(-2),
+                PassengerCount = 4,
+                RequestedVehicleType = "Ô tô",
+                PreferredDriverMode = DriverMode.AssignedDriver,
+                Status = BookingStatus.PendingSettlement,
+                ApprovalOfficerId = 5,
+                ApprovalAt = homNay.AddDays(-1).AddHours(15),
+                CreatedAt = homNay.AddDays(-1).AddHours(11)
             }
         };
     }
@@ -718,6 +1163,125 @@ public static class MockDataSeeder
                 FuelUsed = 6.2,
                 IsSettled = false, // CHỜ QUYẾT TOÁN
                 Note = "Chuyến đi trại tạm giam số 1 đã trở về an toàn. Chờ nghiệm thu thanh quyết toán nhiên liệu."
+            },
+
+            // 5. Chuyến đã điều phối chờ xuất phát (YC 19) - Ford Transit 16 chỗ
+            new Trip
+            {
+                Id = 5,
+                DispatchCode = $"LĐĐ-{homNay.Year}-005",
+                BookingId = 19,
+                VehicleId = 12, // Ford Transit 80B-091.13
+                DriverMode = DriverMode.AssignedDriver,
+                DriverId = 5,  // Nguyễn Hải Nam
+                SelfDrivingOfficerId = null,
+                DriverNameSnapshot = "Nguyễn Hải Nam",
+                RequesterNameSnapshot = "Vũ Minh Tuấn",
+                VehiclePlateSnapshot = "80B-091.13",
+                ScheduledStartAt = homNay.AddDays(1).AddHours(8),
+                ScheduledEndAt = homNay.AddDays(1).AddHours(17),
+                DispatcherId = 6,
+                DispatchedAt = homNay.AddHours(-4),
+                Status = TripStatus.WaitingDeparture,
+                StartKm = 58200,
+                EndKm = 0,
+                FuelUsed = 0,
+                IsSettled = false,
+                Note = "Lệnh điều động tổ công tác liên ngành giải tỏa lòng lề đường. Yêu cầu kiểm tra kỹ hệ thống cửa tự động."
+            },
+
+            // 6. Chuyến đang sử dụng (YC 20) - Ranger Raptor cán bộ tự lái
+            new Trip
+            {
+                Id = 6,
+                DispatchCode = $"LĐĐ-{homNay.Year}-006",
+                BookingId = 20,
+                VehicleId = 11, // Ford Ranger Raptor 80B-082.35
+                DriverMode = DriverMode.SelfDrive,
+                DriverId = 0,
+                SelfDrivingOfficerId = 17, // Đinh Trọng Nghĩa
+                DriverNameSnapshot = "Đinh Trọng Nghĩa (Cán bộ tự lái)",
+                RequesterNameSnapshot = "Đinh Trọng Nghĩa",
+                VehiclePlateSnapshot = "80B-082.35",
+                ScheduledStartAt = homNay.AddHours(5).AddMinutes(30),
+                ScheduledEndAt = homNay.AddHours(21),
+                DispatcherId = 6,
+                DispatchedAt = homNay.AddDays(-1).AddHours(18),
+                Status = TripStatus.InTransit,
+                HandoverAt = homNay.AddHours(5).AddMinutes(40),
+                StartKm = 36500,
+                FuelStartLevel = "100%",
+                ConditionBefore = "Xe đặc chủng ngoại hình tốt, hệ thống dẫn động 2 cầu hoạt động hoàn hảo.",
+                EndKm = 0,
+                FuelUsed = 0,
+                IsSettled = false,
+                Note = "Tổ trinh sát ma túy tự lái xe làm nhiệm vụ mật phục tại khu vực Thạch Thất."
+            },
+
+            // 7. Chuyến đã hoàn thành (YC 21) - Ford Everest áp giải can phạm
+            new Trip
+            {
+                Id = 7,
+                DispatchCode = $"LĐĐ-{homNay.Year}-007",
+                BookingId = 21,
+                VehicleId = 10, // Ford Everest 80A-079.99
+                DriverMode = DriverMode.AssignedDriver,
+                DriverId = 6,  // Trần Đình Trọng
+                SelfDrivingOfficerId = null,
+                DriverNameSnapshot = "Trần Đình Trọng",
+                RequesterNameSnapshot = "Võ Thành Trung",
+                VehiclePlateSnapshot = "80A-079.99",
+                ScheduledStartAt = homNay.AddDays(-2).AddHours(5),
+                ScheduledEndAt = homNay.AddDays(-2).AddHours(20),
+                DispatcherId = 6,
+                DispatchedAt = homNay.AddDays(-3).AddHours(16),
+                Status = TripStatus.Returned,
+                HandoverAt = homNay.AddDays(-2).AddHours(4).AddMinutes(50),
+                StartKm = 20650,
+                FuelStartLevel = "100%",
+                ConditionBefore = "Xe chuẩn bị tốt, đầy đủ trang thiết bị định vị và còi ưu tiên.",
+                ReturnedAt = homNay.AddDays(-2).AddHours(20).AddMinutes(15),
+                EndKm = 21000,
+                FuelEndLevel = "75%",
+                ConditionAfter = "Xe nguyên vẹn, đã rửa xe sạch sẽ sau hành trình đường dài vùng cao.",
+                HasIncident = false,
+                IncidentNote = "",
+                FuelUsed = 28.0,
+                IsSettled = true,
+                Note = "Chuyến đi áp giải Lạng Sơn hoàn thành thắng lợi. Đã quyết toán xong kinh phí nhiên liệu."
+            },
+
+            // 8. Chuyến đã về, chờ quyết toán (YC 22) - Camry Hybrid đón tiếp đoàn
+            new Trip
+            {
+                Id = 8,
+                DispatchCode = $"LĐĐ-{homNay.Year}-008",
+                BookingId = 22,
+                VehicleId = 9, // Camry Hybrid 80A-068.86
+                DriverMode = DriverMode.AssignedDriver,
+                DriverId = 7,  // Hoàng Văn Bách
+                SelfDrivingOfficerId = null,
+                DriverNameSnapshot = "Hoàng Văn Bách",
+                RequesterNameSnapshot = "Phạm Thu Hà",
+                VehiclePlateSnapshot = "80A-068.86",
+                ScheduledStartAt = homNay.AddHours(-8),
+                ScheduledEndAt = homNay.AddHours(-2),
+                DispatcherId = 6,
+                DispatchedAt = homNay.AddDays(-1).AddHours(16),
+                Status = TripStatus.Returned,
+                HandoverAt = homNay.AddHours(-8),
+                StartKm = 14420,
+                FuelStartLevel = "100%",
+                ConditionBefore = "Xe sang trọng, bóng bẩy, đầy đủ điều hòa và nước uống đón tiếp đoàn.",
+                ReturnedAt = homNay.AddHours(-2),
+                EndKm = 14500,
+                FuelEndLevel = "90%",
+                ConditionAfter = "Xe sạch sẽ, nguyên trạng.",
+                HasIncident = false,
+                IncidentNote = "",
+                FuelUsed = 5.2,
+                IsSettled = false, // CHỜ QUYẾT TOÁN
+                Note = "Chuyến đón tiếp đoàn kiểm tra Bộ Công an đã hoàn thành tốt đẹp. Chờ quyết toán nhiên liệu."
             }
         };
     }
@@ -763,6 +1327,38 @@ public static class MockDataSeeder
                 GarageName = "Trung tâm Đăng kiểm xe cơ giới 29-03V Hà Nội",
                 Cost = 1450000,
                 Notes = "Đã dán tem đăng kiểm mới có hiệu lực đến " + homNay.AddMonths(8).ToString("dd/MM/yyyy") + ". Phương tiện đạt tiêu chuẩn vận hành an toàn."
+            },
+
+            // Bản ghi 3: Bảo dưỡng định kỳ cấp 40.000 km (Xe PT-006 Ford Ranger)
+            new MaintenanceRecord
+            {
+                Id = 3,
+                VehicleId = 6, // Ford Ranger 80B-067.89
+                MaintenanceType = MaintenanceType.Periodic,
+                Description = "Bảo dưỡng định kỳ cấp 40.000 km: Thay nhớt máy, lọc dầu, lọc nhiên liệu diesel, kiểm tra hệ thống treo và thước lái.",
+                PlannedAt = homNay.AddMonths(-1),
+                CompletedAt = homNay.AddMonths(-1).AddDays(1),
+                Status = MaintenanceStatus.Completed,
+                OdometerKm = 40000,
+                GarageName = "Xưởng Sửa chữa Kỹ thuật Ô tô CAND - Cục Hậu cần",
+                Cost = 2650000,
+                Notes = "Phương tiện vận hành tốt, đáp ứng các tiêu chuẩn kỹ thuật phục vụ công tác xa."
+            },
+
+            // Bản ghi 4: Sửa chữa khắc phục kỹ thuật (Xe PT-012 Ford Transit 16 chỗ)
+            new MaintenanceRecord
+            {
+                Id = 4,
+                VehicleId = 12, // Ford Transit 80B-091.13
+                MaintenanceType = MaintenanceType.Repair,
+                Description = "Thay 02 lốp trước và bảo dưỡng toàn bộ hệ thống điều hòa khoang hành khách phía sau.",
+                PlannedAt = homNay.AddDays(-5),
+                CompletedAt = homNay.AddDays(-4),
+                Status = MaintenanceStatus.Completed,
+                OdometerKm = 57500,
+                GarageName = "Xưởng Sửa chữa Kỹ thuật Ô tô CAND - Cục Hậu cần",
+                Cost = 4120000,
+                Notes = "Đã thay thế linh kiện chính hãng, điều hòa làm lạnh sâu, hệ thống lái ổn định."
             }
         };
     }
@@ -835,6 +1431,42 @@ public static class MockDataSeeder
                 ChangedByOfficerId = 6,
                 ChangedByFullName = "Lê Hoàng Nam",
                 Comment = "Nghiệm thu hoàn trả phương tiện 80A-012.34. Km về: 28.500 km. Chuyến đi an toàn, đã quyết toán."
+            },
+            new StatusHistory
+            {
+                Id = 6,
+                EntityType = "VehicleRequest",
+                EntityId = 15,
+                FromStatus = "PendingApproval",
+                ToStatus = "Approved",
+                ChangedAt = homNay.AddHours(-2),
+                ChangedByOfficerId = 5,
+                ChangedByFullName = "Trần Quốc Bình",
+                Comment = "Nhất trí phê duyệt. Giao Đội xe bố trí phương tiện đảm bảo an toàn dẫn giải can phạm."
+            },
+            new StatusHistory
+            {
+                Id = 7,
+                EntityType = "Trip",
+                EntityId = 6,
+                FromStatus = "WaitingDeparture",
+                ToStatus = "InTransit",
+                ChangedAt = homNay.AddHours(5).AddMinutes(40),
+                ChangedByOfficerId = 6,
+                ChangedByFullName = "Lê Hoàng Nam",
+                Comment = "Bàn giao xe bán tải đặc chủng 80B-082.35 cho đồng chí Đinh Trọng Nghĩa tự lái làm nhiệm vụ mật phục."
+            },
+            new StatusHistory
+            {
+                Id = 8,
+                EntityType = "Trip",
+                EntityId = 7,
+                FromStatus = "InTransit",
+                ToStatus = "Returned",
+                ChangedAt = homNay.AddDays(-2).AddHours(20).AddMinutes(15),
+                ChangedByOfficerId = 6,
+                ChangedByFullName = "Lê Hoàng Nam",
+                Comment = "Nghiệm thu hoàn trả xe 80A-079.99 sau chuyến đi áp giải đối tượng từ Lạng Sơn an toàn."
             }
         };
     }
@@ -879,6 +1511,38 @@ public static class MockDataSeeder
                 Action = "Quyết toán chuyến đi",
                 Description = "Hoàn tất quyết toán chuyến LĐĐ-2026-003 cho xe 80A-012.34 (lái xe Đỗ Văn Hùng).",
                 CreatedAt = homNay.AddDays(-1).AddHours(17)
+            },
+            new ActivityLog
+            {
+                Id = 5,
+                UserId = 1,
+                Action = "Đăng ký phương tiện",
+                Description = "Cán bộ Nguyễn Minh An tạo yêu cầu khám xét khẩn cấp đối tượng lừa đảo công nghệ cao.",
+                CreatedAt = homNay.AddMinutes(-45)
+            },
+            new ActivityLog
+            {
+                Id = 6,
+                UserId = 2,
+                Action = "Phê duyệt yêu cầu",
+                Description = "Lãnh đạo Trần Quốc Bình phê duyệt yêu cầu thực nghiệm điều tra YC-2026-015.",
+                CreatedAt = homNay.AddHours(-2)
+            },
+            new ActivityLog
+            {
+                Id = 7,
+                UserId = 3,
+                Action = "Điều động xe",
+                Description = "Cán bộ Lê Hoàng Nam phân công xe Ford Transit 80B-091.13 và lái xe Nguyễn Hải Nam cho Đội CSGT.",
+                CreatedAt = homNay.AddHours(-4)
+            },
+            new ActivityLog
+            {
+                Id = 8,
+                UserId = 3,
+                Action = "Bàn giao xe",
+                Description = "Bàn giao phương tiện đặc chủng 80B-082.35 cho Thượng úy Đinh Trọng Nghĩa đi làm nhiệm vụ.",
+                CreatedAt = homNay.AddHours(5).AddMinutes(40)
             }
         };
     }

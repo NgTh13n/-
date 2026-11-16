@@ -1,0 +1,72 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Data
+@using MyWebApp.Services
+
+@inject TripService tripService
+@inject DialogService dialog
+
+<div class="trip-incident-dialog">
+    @if (!string.IsNullOrEmpty(errorMsg))
+    {
+        <div class="alert alert-danger py-2 mb-3 shadow-sm">
+            <RadzenIcon Icon="error" Class="me-1 align-middle" /> @errorMsg
+        </div>
+    }
+
+    <div class="p-3 bg-light rounded mb-3 border">
+        <div class="row g-2 small">
+            <div class="col-md-6"><strong>Mã lệnh:</strong> <span class="badge bg-danger">@Trip.DispatchCode</span></div>
+            <div class="col-md-6"><strong>Phương tiện:</strong> @Trip.VehiclePlateSnapshot</div>
+            <div class="col-md-6"><strong>Người điều khiển:</strong> @Trip.DriverNameSnapshot</div>
+            <div class="col-md-6"><strong>Cán bộ đề nghị:</strong> @Trip.RequesterNameSnapshot</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label text-danger fw-bold">
+            <RadzenIcon Icon="emergency" Class="me-1 align-middle" />
+            Nội dung sự cố / Tọa độ, địa điểm cần chi viện <span class="text-danger">*</span>:
+        </label>
+        <textarea class="form-control" rows="4" @bind="noiDungSuCo" placeholder="Mô tả rõ sự cố kỹ thuật (nổ lốp, chết máy, tai nạn va chạm...) hoặc tình huống nghiệp vụ cần chi viện khẩn cấp..."></textarea>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+        <RadzenButton Text="Hủy bỏ" 
+                      Icon="close" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="() => dialog.Close(false)" />
+        <RadzenButton Text="Phát tín hiệu cứu trợ khẩn cấp" 
+                      Icon="warning" 
+                      ButtonStyle="ButtonStyle.Danger" 
+                      Click="XacNhan" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Trip Trip { get; set; } = new();
+
+    private string noiDungSuCo = "";
+    private string errorMsg = "";
+
+    private void XacNhan()
+    {
+        if (string.IsNullOrWhiteSpace(noiDungSuCo))
+        {
+            errorMsg = "Vui lòng nhập nội dung sự cố hoặc yêu cầu hỗ trợ.";
+            return;
+        }
+
+        string loi;
+        bool ok = tripService.ReportIncident(Trip.Id, noiDungSuCo, out loi);
+        if (!ok)
+        {
+            errorMsg = loi;
+            return;
+        }
+
+        dialog.Close(true);
+    }
+}

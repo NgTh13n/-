@@ -1,0 +1,144 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Services
+@using MyWebApp.Data
+
+@inject TripService tripService
+@inject DialogService dialog
+
+@{
+    var don = tripService.GetBooking(Trip.BookingId);
+    var xe = tripService.GetVehicle(Trip.VehicleId);
+    var lx = tripService.GetDriver(Trip.DriverId);
+    var canBo = don != null ? tripService.GetUser(don.RequesterId) : null;
+}
+
+<div class="trip-settlement-dialog">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger py-2 mb-3 small">
+            <RadzenIcon Icon="error" Class="me-1" />
+            @errorMessage
+        </div>
+    }
+
+    <div class="p-3 bg-light rounded border mb-3">
+        <div class="row g-2 small">
+            <div class="col-md-4"><strong>Lệnh điều động:</strong> <span class="badge bg-primary">@Trip.DispatchCode</span></div>
+            <div class="col-md-4"><strong>Yêu cầu:</strong> @don?.BookingCode</div>
+            <div class="col-md-4"><strong>Cán bộ đăng ký:</strong> @(canBo?.FullName ?? Trip.RequesterNameSnapshot)</div>
+
+            <div class="col-md-4"><strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model)</div>
+            <div class="col-md-4"><strong>Người lái:</strong> @Trip.DriverNameSnapshot</div>
+            <div class="col-md-4"><strong>Lộ trình:</strong> @don?.Departure → @don?.Destination</div>
+
+            <div class="col-md-6">
+                <strong>Khởi hành thực tế:</strong> @Trip.ActualDeparture?.ToString("dd/MM/yyyy HH:mm")
+            </div>
+            <div class="col-md-6">
+                <strong>Trở về thực tế:</strong> @Trip.ActualReturn?.ToString("dd/MM/yyyy HH:mm")
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <label class="form-label fw-bold small">Số Km ban đầu:</label>
+            <input type="text" class="form-control" value="@Trip.StartKm.ToString("N0") km" disabled />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold small">Số Km kết thúc <span class="text-danger">*</span>:</label>
+            <input type="number" class="form-control" @bind="soKmKetThuc" min="@Trip.StartKm" step="1" />
+            <small class="text-muted" style="font-size: 0.75rem;">Phải ≥ @Trip.StartKm.ToString("N0") km</small>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold small">Tổng quãng đường:</label>
+            <div class="form-control bg-light text-primary fw-bold">
+                @((soKmKetThuc >= Trip.StartKm ? (soKmKetThuc - Trip.StartKm) : 0).ToString("N0")) km
+            </div>
+            <small class="text-success" style="font-size: 0.75rem;">Tự động tính: Km về - Km đi</small>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold small">Nhiên liệu tiêu thụ (Lít) <span class="text-danger">*</span>:</label>
+            <input type="number" class="form-control" @bind="nhienLieuTieuThu" min="0" step="0.5" />
+            <small class="text-muted" style="font-size: 0.75rem;">Nhập số lít xăng/dầu</small>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label fw-bold small">Ghi chú phát sinh / Nội dung nghiệm thu:</label>
+            <textarea class="form-control" rows="2" @bind="ghiChuQuyetToan" placeholder="Ghi chú chi phí cầu đường, tình trạng xe sau khi về, bảo quản phương tiện..."></textarea>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+        <RadzenButton Text="Xác nhận quyết toán & Hoàn tất chuyến đi" 
+                      Icon="check_circle" 
+                      ButtonStyle="ButtonStyle.Success" 
+                      Click="XacNhan" />
+
+        <RadzenButton Text="Hủy bỏ" 
+                      Icon="close" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="@(() => dialog.Close(false))" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public Trip Trip { get; set; } = default!;
+
+    double soKmKetThuc;
+    double nhienLieuTieuThu = 8.5;
+    string ghiChuQuyetToan = "";
+    string errorMessage = "";
+
+    protected override void OnInitialized()
+    {
+        if (Trip != null)
+        {
+            // Mặc định gợi ý số Km kết thúc = Km ban đầu + 45km
+            soKmKetThuc = Trip.StartKm + 45;
+        }
+    }
+
+    private async Task XacNhan()
+    {
+        errorMessage = "";
+
+        if (soKmKetThuc < Trip.StartKm)
+        {
+            errorMessage = $"Số Km kết thúc ({soKmKetThuc:N0} km) phải lớn hơn hoặc bằng số Km ban đầu ({Trip.StartKm:N0} km).";
+            return;
+        }
+
+        if (nhienLieuTieuThu < 0)
+        {
+            errorMessage = "Nhiên liệu tiêu thụ không được âm.";
+            return;
+        }
+
+        var xacNhan = await dialog.Confirm(
+            $"Xác nhận hoàn tất quyết toán chuyến đi {Trip.DispatchCode}? Hệ thống sẽ cập nhật số Km mới cho xe và đưa xe về trạng thái Sẵn sàng.",
+            "Xác nhận quyết toán",
+            new ConfirmOptions { OkButtonText = "Đồng ý", CancelButtonText = "Hủy" });
+
+        if (xacNhan != true)
+        {
+            return;
+        }
+
+        string loi;
+        bool thanhCong = tripService.SettleTrip(Trip.Id, soKmKetThuc, nhienLieuTieuThu, ghiChuQuyetToan, out loi);
+
+        if (!thanhCong)
+        {
+            errorMessage = loi;
+            return;
+        }
+
+        dialog.Close(true);
+    }
+}

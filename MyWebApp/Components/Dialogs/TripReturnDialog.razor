@@ -1,0 +1,162 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Data
+@using MyWebApp.Services
+
+@inject TripService tripService
+@inject DialogService dialog
+
+@{
+    var xe = tripService.GetVehicle(Trip.VehicleId);
+    var don = tripService.GetBooking(Trip.BookingId);
+    double quangDuong = htEndKm >= Trip.StartKm ? (htEndKm - Trip.StartKm) : 0;
+}
+
+<div class="trip-return-dialog">
+    @if (!string.IsNullOrEmpty(errorMsg))
+    {
+        <div class="alert alert-danger py-2 mb-3 shadow-sm">
+            <RadzenIcon Icon="error" Class="me-1 align-middle" /> @errorMsg
+        </div>
+    }
+
+    <!-- Metadata Card -->
+    <div class="p-3 bg-light rounded mb-3 border">
+        <div class="row g-2 small">
+            <div class="col-md-4"><strong>Lệnh điều động:</strong> <span class="badge bg-primary">@Trip.DispatchCode</span></div>
+            <div class="col-md-4"><strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model)</div>
+            <div class="col-md-4"><strong>Người điều khiển:</strong> @Trip.DriverNameSnapshot</div>
+            <div class="col-md-4"><strong>Khởi hành lúc:</strong> @(Trip.HandoverAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa rõ")</div>
+            <div class="col-md-4"><strong>Km bàn giao ban đầu:</strong> @Trip.StartKm.ToString("N0") km</div>
+            <div class="col-md-4"><strong>Nhiên liệu lúc giao:</strong> @Trip.FuelStartLevel</div>
+        </div>
+    </div>
+
+    <!-- Inputs Form -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Chỉ số Km kết thúc <span class="text-danger">*</span>:</label>
+            <input type="number" class="form-control" @bind="htEndKm" @bind:event="oninput" min="@Trip.StartKm" step="1" />
+            <small class="text-muted">Phải ≥ @Trip.StartKm.ToString("N0") km</small>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Tổng quãng đường thực tế:</label>
+            <div class="form-control bg-light text-primary fw-bold">
+                @quangDuong.ToString("N0") km
+            </div>
+            <small class="text-success">Tự động: Km về - Km đi</small>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Nhiên liệu còn lại:</label>
+            <select class="form-select" @bind="htFuelEndLevel">
+                <option value="100% (Đầy)">100% (Đầy bình)</option>
+                <option value="80%">80%</option>
+                <option value="60%">60%</option>
+                <option value="40%">40%</option>
+                <option value="20%">20%</option>
+                <option value="Cạn (Đèn báo)">Cạn (Đèn báo)</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Nhiên liệu tiêu thụ (lít):</label>
+            <input type="number" class="form-control" @bind="htFuelUsed" min="0" step="0.5" />
+        </div>
+
+        <div class="col-12">
+            <label class="form-label fw-bold">Tình trạng phương tiện khi bàn giao hoàn trả <span class="text-danger">*</span>:</label>
+            <input type="text" class="form-control" @bind="htConditionAfter" placeholder="Bình thường, vệ sinh sạch sẽ, không có hư hỏng..." />
+        </div>
+
+        <div class="col-12">
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="dlgReturnSwitchIncident" @bind="htHasIncident" />
+                <label class="form-check-label fw-bold text-danger" for="dlgReturnSwitchIncident">
+                    Có sự cố, va quẹt hoặc phát sinh hư hỏng kỹ thuật trong quá trình công tác
+                </label>
+            </div>
+
+            @if (htHasIncident)
+            {
+                <div class="alert alert-danger p-2 mb-0">
+                    <label class="form-label fw-bold text-danger mb-1">Mô tả cụ thể sự cố / hư hỏng phát sinh <span class="text-danger">*</span>:</label>
+                    <textarea class="form-control" rows="2" @bind="htIncidentNote" placeholder="Mô tả cụ thể: trầy xước ba-đờ-sốc, nứt kính, tiếng kêu lạ động cơ, cần đưa vào xưởng kiểm tra..."></textarea>
+                </div>
+            }
+        </div>
+
+        <div class="col-12">
+            <label class="form-label fw-bold">Ghi chú hoàn trả / thanh toán (nếu có):</label>
+            <input type="text" class="form-control" @bind="htGeneralNote" placeholder="Ví dụ: Đã rửa xe, đã bàn giao đủ chìa khóa và giấy tờ lưu hành..." />
+        </div>
+    </div>
+
+    <!-- Dialog Actions -->
+    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+        <RadzenButton Text="Bỏ qua" 
+                      Icon="close" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="() => dialog.Close(false)" />
+        <RadzenButton Text="Xác nhận Nghiệm thu & Giải phóng xe" 
+                      Icon="verified" 
+                      ButtonStyle="ButtonStyle.Success" 
+                      Click="XacNhan" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Trip Trip { get; set; } = new();
+
+    private double htEndKm;
+    private string htFuelEndLevel = "80%";
+    private double htFuelUsed = 8.5;
+    private string htConditionAfter = "Xe nguyên vẹn, nội thất sạch sẽ, không có va chạm phát sinh";
+    private bool htHasIncident = false;
+    private string htIncidentNote = "";
+    private string htGeneralNote = "Đã hoàn trả đầy đủ chìa khóa và giấy tờ lưu hành";
+    private string errorMsg = "";
+
+    protected override void OnInitialized()
+    {
+        htEndKm = Trip.StartKm + 45; // Mặc định gợi ý số km chạy thực tế hợp lý
+    }
+
+    private void XacNhan()
+    {
+        if (htEndKm < Trip.StartKm)
+        {
+            errorMsg = $"Số Km kết thúc ({htEndKm:N0} km) không được nhỏ hơn Km ban đầu ({Trip.StartKm:N0} km).";
+            return;
+        }
+
+        if (htHasIncident && string.IsNullOrWhiteSpace(htIncidentNote))
+        {
+            errorMsg = "Đồng chí đã đánh dấu có sự cố phát sinh, bắt buộc phải nhập mô tả cụ thể sự cố.";
+            return;
+        }
+
+        string loi;
+        bool ok = tripService.ReturnVehicle(
+            Trip.Id,
+            htEndKm,
+            htFuelEndLevel,
+            htFuelUsed,
+            htConditionAfter,
+            htHasIncident,
+            htIncidentNote,
+            htGeneralNote,
+            out loi);
+
+        if (!ok)
+        {
+            errorMsg = loi;
+            return;
+        }
+
+        dialog.Close(true);
+    }
+}

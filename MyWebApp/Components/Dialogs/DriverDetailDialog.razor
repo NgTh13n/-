@@ -1,0 +1,45 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+
+@inject DialogService dialog
+
+<div class="driver-detail-dialog">
+    <div class="row g-3">
+        <div class="col-md-6"><strong>Mã lái xe:</strong> <span class="badge bg-secondary">LX-@Driver.Id.ToString("D3")</span></div>
+        <div class="col-md-6"><strong>Họ và tên:</strong> @Driver.FullName</div>
+        <div class="col-md-6"><strong>Số điện thoại:</strong> @(string.IsNullOrEmpty(Driver.Phone) ? "Chưa có" : Driver.Phone)</div>
+        <div class="col-md-6"><strong>Hạng GPLX:</strong> <span class="badge bg-primary">@Driver.LicenseType</span></div>
+        <div class="col-md-6"><strong>Số GPLX:</strong> @(string.IsNullOrEmpty(Driver.LicenseNumberDemo) ? "Chưa cập nhật" : Driver.LicenseNumberDemo)</div>
+        <div class="col-md-6">
+            <strong>Hạn GPLX:</strong>
+            @if (Driver.LicenseExpiryDate < DateTime.Today)
+            {
+                <span class="badge bg-danger ms-1">@Driver.LicenseExpiryDate.ToString("dd/MM/yyyy") (Hết hạn)</span>
+            }
+            else
+            {
+                <span class="text-success fw-medium ms-1">@Driver.LicenseExpiryDate.ToString("dd/MM/yyyy")</span>
+            }
+        </div>
+        <div class="col-md-6">
+            <strong>Tình trạng:</strong> 
+            <span class="badge @(Driver.Status == DriverStatus.Active ? "bg-success" : "bg-warning text-dark")">
+                @EnumHelper.TenDriverStatus(Driver.Status)
+            </span>
+        </div>
+        <div class="col-12">
+            <strong>Ghi chú nghiệp vụ:</strong>
+            <div class="p-2 bg-light rounded mt-1 border">@(string.IsNullOrEmpty(Driver.Notes) ? "Không có ghi chú thêm." : Driver.Notes)</div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4 pt-2 border-top">
+        <RadzenButton Text="Đóng" Icon="close" ButtonStyle="ButtonStyle.Secondary" Click="() => dialog.Close()" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Driver Driver { get; set; } = new();
+}

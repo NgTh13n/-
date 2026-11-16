@@ -1,0 +1,105 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Data
+@using MyWebApp.Services
+
+@inject DriverService driverService
+@inject DialogService dialog
+
+<div class="driver-edit-dialog">
+    @if (!string.IsNullOrEmpty(errorMsg))
+    {
+        <div class="alert alert-danger py-2 mb-3 shadow-sm">
+            <RadzenIcon Icon="error" Class="me-1 align-middle" /> @errorMsg
+        </div>
+    }
+
+    <EditForm Model="Driver" OnValidSubmit="Luu">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger mb-3" />
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Họ và tên lái xe <span class="text-danger">*</span></label>
+                <InputText class="form-control" @bind-Value="Driver.FullName" placeholder="Nhập họ và tên..." />
+                <ValidationMessage For="() => Driver.FullName" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Số điện thoại</label>
+                <InputText class="form-control" @bind-Value="Driver.Phone" placeholder="Nhập số điện thoại liên hệ..." />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Số giấy phép lái xe</label>
+                <InputText class="form-control" @bind-Value="Driver.LicenseNumberDemo" placeholder="Ví dụ: GPLX-29B2-08129" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Hạng GPLX <span class="text-danger">*</span></label>
+                <InputSelect class="form-select" @bind-Value="Driver.LicenseType">
+                    <option value="B1">B1</option>
+                    <option value="B2">B2</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                </InputSelect>
+                <ValidationMessage For="() => Driver.LicenseType" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Ngày hết hạn GPLX <span class="text-danger">*</span></label>
+                <InputDate class="form-control" @bind-Value="Driver.LicenseExpiryDate" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Tình trạng công tác</label>
+                <InputSelect class="form-select" @bind-Value="Driver.Status">
+                    <option value="@DriverStatus.Active">Đang làm việc</option>
+                    <option value="@DriverStatus.OnLeave">Đang nghỉ phép</option>
+                    <option value="@DriverStatus.Inactive">Không còn làm việc</option>
+                </InputSelect>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Ghi chú nghiệp vụ</label>
+                <InputText class="form-control" @bind-Value="Driver.Notes" placeholder="Ghi chú thêm..." />
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top mt-3">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                              Icon="close" 
+                              Text="Đóng" 
+                              Click="() => dialog.Close(false)" />
+                <RadzenButton ButtonType="ButtonType.Submit" 
+                              Text="@(IsEditing ? "Lưu thay đổi" : "Thêm lái xe")" 
+                              Icon="save" 
+                              ButtonStyle="ButtonStyle.Primary" />
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public Driver Driver { get; set; } = new();
+
+    [Parameter]
+    public bool IsEditing { get; set; } = false;
+
+    private string errorMsg = "";
+
+    private void Luu()
+    {
+        string loi;
+        bool ok = IsEditing ? driverService.Update(Driver, out loi) : driverService.Add(Driver, out loi);
+        if (!ok)
+        {
+            errorMsg = loi;
+            return;
+        }
+
+        dialog.Close(true);
+    }
+}

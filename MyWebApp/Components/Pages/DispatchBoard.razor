@@ -6,6 +6,7 @@
 @using MyWebApp.Models.Enums
 @using MyWebApp.Helpers
 @using MyWebApp.Data
+@using MyWebApp.Components.Dialogs
 
 @inject DispatchService dispatchService
 @inject DialogService dialog
@@ -42,198 +43,6 @@ else
             <button type="button" class="btn-close" @onclick="() => thongBao = string.Empty"></button>
         </div>
     }
-
-    <div id="khu-vuc-dieu-xe">
-    @* FORM LẬP LỆNH ĐIỀU ĐỘNG *@
-    @if (yeuCauDangDieuDong != null)
-    {
-        var canBoDeNghi = dispatchService.GetOfficer(yeuCauDangDieuDong.RequesterId);
-
-        <div class="gov-card mb-4">
-            <div class="gov-card-header">
-                <strong class="gov-card-header-title">
-                    <RadzenIcon Icon="assignment_turned_in" Style="color: var(--brand-navy);" /> LẬP LỆNH ĐIỀU ĐỘNG: @yeuCauDangDieuDong.BookingCode
-                </strong>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="DongFormDieuDong">Đóng</button>
-            </div>
-            <div class="gov-card-body">
-                <div class="alert alert-light border py-2 mb-3">
-                    <div class="row g-2">
-                        <div class="col-md-4">
-                            <strong>Cán bộ đề nghị:</strong> @(canBoDeNghi != null ? $"{canBoDeNghi.RankOrTitle} {canBoDeNghi.FullName}" : "Cán bộ")
-                            @if (canBoDeNghi != null)
-                            {
-                                <span class="badge @(canBoDeNghi.CanSelfDrive ? "bg-success" : "bg-secondary") ms-1">
-                                    @(canBoDeNghi.CanSelfDrive ? "Đủ ĐK tự lái" : "Chưa đủ ĐK tự lái")
-                                </span>
-                            }
-                        </div>
-                        <div class="col-md-4"><strong>Điểm đến:</strong> @yeuCauDangDieuDong.Destination</div>
-                        <div class="col-md-4"><strong>Mục đích:</strong> @yeuCauDangDieuDong.Purpose</div>
-                        <div class="col-md-4"><strong>Khởi hành:</strong> @yeuCauDangDieuDong.DepartureTime.ToString("dd/MM/yyyy HH:mm")</div>
-                        <div class="col-md-4"><strong>Dự kiến về:</strong> @yeuCauDangDieuDong.ReturnTime.ToString("dd/MM/yyyy HH:mm")</div>
-                        <div class="col-md-4">
-                            <strong>Đề xuất:</strong> 
-                            <span class="badge bg-secondary">@yeuCauDangDieuDong.RequestedVehicleType (@yeuCauDangDieuDong.PassengerCount người)</span>
-                            <span class="badge bg-info text-dark ms-1">@EnumHelper.TenDriverMode(yeuCauDangDieuDong.PreferredDriverMode)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-3 mb-3">
-                    @* 1. Chọn phương tiện *@
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">1. Chọn phương tiện điều động <span class="text-danger">*</span>:</label>
-                        <select class="form-select" @bind="xeDuocChonId" @bind:after="KiemTraPhuongTienDaChon">
-                            <option value="0">-- Chọn phương tiện công tác phù hợp --</option>
-                            @foreach (Vehicle xe in danhSachXeKhaDung)
-                            {
-                                bool biTrung = XeBiTrungLich(xe.Id);
-                                <option value="@xe.Id" class="@(biTrung ? "text-danger" : "text-success fw-bold")">
-                                    @(biTrung ? "⛔ [BẬN LỊCH]" : "✅ [SẴN SÀNG]") @xe.VehicleCode - @xe.LicensePlate (@xe.Brand @xe.Model | @EnumHelper.TenVehicleType(xe.VehicleType) - @xe.Seats chỗ)
-                                </option>
-                            }
-                        </select>
-
-                        @if (!string.IsNullOrEmpty(canhBaoXe))
-                        {
-                            <div class="alert alert-warning py-1 px-2 mt-2 small">
-                                <RadzenIcon Icon="warning" Class="me-1" />
-                                <strong>Cảnh báo xung đột:</strong> @canhBaoXe
-                            </div>
-                        }
-                    </div>
-
-                    @* 2. Phương án lái xe & Người lái *@
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">2. Phương án điều khiển xe <span class="text-danger">*</span>:</label>
-                        <div class="d-flex gap-3 mb-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="driverModeRadio" id="modeAssigned" 
-                                       checked="@(phuongAnLai == DriverMode.AssignedDriver)" 
-                                       @onchange="@(() => ChonPhuongAnLai(DriverMode.AssignedDriver))" />
-                                <label class="form-check-label fw-semibold" for="modeAssigned">
-                                    Lái xe đơn vị
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="driverModeRadio" id="modeSelf" 
-                                       checked="@(phuongAnLai == DriverMode.SelfDrive)" 
-                                       @onchange="@(() => ChonPhuongAnLai(DriverMode.SelfDrive))" />
-                                <label class="form-check-label fw-semibold" for="modeSelf">
-                                    Cán bộ trực tiếp tự lái
-                                </label>
-                            </div>
-                        </div>
-
-                        @if (phuongAnLai == DriverMode.AssignedDriver)
-                        {
-                            <select class="form-select" @bind="laiXeDuocChonId" @bind:after="KiemTraLaiXeDaChon">
-                                <option value="0">-- Chọn lái xe chuyên trách --</option>
-                                @foreach (Driver lx in danhSachLaiXeKhaDung)
-                                {
-                                    bool biTrung = LaiXeBiTrungLich(lx.Id);
-                                    bool hetHan = lx.LicenseExpiryDate < yeuCauDangDieuDong.DepartureTime;
-                                    <option value="@lx.Id" class="@(hetHan ? "text-danger fw-bold" : biTrung ? "text-danger" : "text-success fw-bold")">
-                                        @(hetHan ? "⛔ [GPLX HẾT HẠN]" : biTrung ? "⛔ [BẬN LỊCH]" : "✅ [SẴN SÀNG]") @lx.FullName (Hạng @lx.LicenseCategory - Hạn: @lx.LicenseExpiryDate.ToString("dd/MM/yyyy"))
-                                    </option>
-                                }
-                            </select>
-
-                            @if (!string.IsNullOrEmpty(canhBaoLaiXe))
-                            {
-                                <div class="alert alert-danger py-1 px-2 mt-2 small">
-                                    <RadzenIcon Icon="gpp_bad" Class="me-1" />
-                                    <strong>Cảnh báo an toàn:</strong> @canhBaoLaiXe
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <div class="p-2 bg-light rounded border">
-                                @if (canBoDeNghi != null && canBoDeNghi.CanSelfDrive)
-                                {
-                                    <div class="text-success fw-bold">
-                                        <RadzenIcon Icon="check_circle" Class="me-1" />
-                                        Cán bộ: @canBoDeNghi.RankOrTitle @canBoDeNghi.FullName (Đủ điều kiện tự lái xe công vụ)
-                                    </div>
-                                    <small class="text-muted">Đồng chí @canBoDeNghi.FullName sẽ trực tiếp chịu trách nhiệm nhận bàn giao và điều khiển xe.</small>
-                                }
-                                else
-                                {
-                                    <div class="text-danger fw-bold">
-                                        <RadzenIcon Icon="error" Class="me-1" />
-                                        CẢNH BÁO: Cán bộ @(canBoDeNghi?.FullName ?? "đề nghị") CHƯA ĐỦ ĐIỀU KIỆN tự lái xe công vụ!
-                                    </div>
-                                    <small class="text-danger">Không thể lập lệnh tự lái. Vui lòng chuyển sang phương án "Lái xe đơn vị".</small>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2 border-top pt-2">
-                    <RadzenButton Text="Xác nhận Lập lệnh điều động" 
-                                  Icon="send" 
-                                  ButtonStyle="ButtonStyle.Success" 
-                                  Click="XacNhanDieuDong" />
-                    <RadzenButton Text="Hủy bỏ" 
-                                  Icon="close" 
-                                  ButtonStyle="ButtonStyle.Light" 
-                                  Click="DongFormDieuDong" />
-                </div>
-            </div>
-        </div>
-    }
-
-    @* CHI TIẾT LỆNH ĐIỀU ĐỘNG *@
-    @if (lenhDangXem != null)
-    {
-        var xe = dispatchService.GetVehicle(lenhDangXem.VehicleId);
-        var don = dispatchService.GetBooking(lenhDangXem.BookingId);
-
-        <div class="card mb-4 border-info shadow-sm">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
-                <strong class="text-primary"><RadzenIcon Icon="receipt_long" Class="me-1" /> Chi tiết Lệnh điều động: @lenhDangXem.DispatchCode</strong>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="DongChiTietLenh">Đóng</button>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3"><strong>Mã lệnh điều động:</strong> <span class="badge bg-primary">@lenhDangXem.DispatchCode</span></div>
-                    <div class="col-md-3"><strong>Mã yêu cầu gốc:</strong> @don?.BookingCode</div>
-                    <div class="col-md-3"><strong>Thời điểm lập lệnh:</strong> @lenhDangXem.DispatchedAt.ToString("dd/MM/yyyy HH:mm")</div>
-                    <div class="col-md-3">
-                        <strong>Trạng thái chuyến:</strong> 
-                        <span class="badge-status @lenhDangXem.Status.BadgeClass()">
-                            @lenhDangXem.Status.Ten()
-                        </span>
-                    </div>
-
-                    <div class="col-md-4">
-                        <strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model - @EnumHelper.TenVehicleType(xe?.VehicleType ?? VehicleType.OTo))
-                    </div>
-                    <div class="col-md-4">
-                        <strong>Phương án lái xe:</strong> 
-                        <span class="badge @(lenhDangXem.DriverMode == DriverMode.SelfDrive ? "bg-info text-dark" : "bg-primary")">
-                            @EnumHelper.TenDriverMode(lenhDangXem.DriverMode)
-                        </span>
-                    </div>
-                    <div class="col-md-4">
-                        <strong>Người điều khiển:</strong> @lenhDangXem.DriverNameSnapshot
-                    </div>
-
-                    <div class="col-md-4"><strong>Cán bộ đề nghị:</strong> @lenhDangXem.RequesterNameSnapshot</div>
-                    <div class="col-md-4"><strong>Lịch khởi hành:</strong> @lenhDangXem.ScheduledStartAt.ToString("dd/MM/yyyy HH:mm")</div>
-                    <div class="col-md-4"><strong>Lịch trở về:</strong> @lenhDangXem.ScheduledEndAt.ToString("dd/MM/yyyy HH:mm")</div>
-
-                    <div class="col-12">
-                        <strong>Ghi chú điều động:</strong> @lenhDangXem.Note
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-    </div>
 
     @* TABS ĐIỀU PHỐI: HÀNG CHỜ ĐIỀU ĐỘNG VS DANH SÁCH LỆNH *@
     <RadzenTabs @bind-SelectedIndex="tabHienTai" Class="shadow-sm">
@@ -297,13 +106,21 @@ else
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Title="Thao tác" Sortable="false" Filterable="false" Width="140px">
+                        <RadzenDataGridColumn Title="Thao tác" Sortable="false" Filterable="false" Width="180px">
                             <Template Context="item">
-                                <RadzenButton Text="Xếp xe" 
-                                              Icon="directions_car" 
-                                              ButtonStyle="ButtonStyle.Primary" 
-                                              Size="ButtonSize.Small" 
-                                              Click="@(() => MoFormDieuDong(item))" />
+                                <div class="d-flex gap-1">
+                                    <RadzenButton Icon="visibility" 
+                                                  ButtonStyle="ButtonStyle.Light" 
+                                                  Size="ButtonSize.Small" 
+                                                  Title="Xem chi tiết yêu cầu" 
+                                                  Click="@(() => XemChiTietYeuCau(item))" />
+
+                                    <RadzenButton Text="Xếp xe" 
+                                                  Icon="directions_car" 
+                                                  ButtonStyle="ButtonStyle.Primary" 
+                                                  Size="ButtonSize.Small" 
+                                                  Click="@(() => MoFormDieuDong(item))" />
+                                </div>
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
@@ -372,7 +189,7 @@ else
                                     <RadzenButton Icon="visibility" 
                                                   ButtonStyle="ButtonStyle.Light" 
                                                   Size="ButtonSize.Small" 
-                                                  Title="Xem chi tiết" 
+                                                  Title="Xem chi tiết lệnh" 
                                                   Click="@(() => XemChiTietLenh(item))" />
 
                                     @if (item.Status == TripStatus.WaitingDeparture || item.Status == TripStatus.Dispatched)
@@ -397,18 +214,6 @@ else
     List<Booking> danhSachChoDieuDong = new();
     List<Trip> danhSachLenhDieuDong = new();
 
-    List<Vehicle> danhSachXeKhaDung = new();
-    List<Driver> danhSachLaiXeKhaDung = new();
-
-    Booking? yeuCauDangDieuDong;
-    Trip? lenhDangXem;
-
-    int xeDuocChonId = 0;
-    int laiXeDuocChonId = 0;
-    DriverMode phuongAnLai = DriverMode.AssignedDriver;
-
-    string canhBaoXe = "";
-    string canhBaoLaiXe = "";
     string thongBao = "";
     bool coLoi = false;
 
@@ -434,130 +239,37 @@ else
 
     private async Task MoFormDieuDong(Booking don)
     {
-        yeuCauDangDieuDong = don;
-        xeDuocChonId = 0;
-        laiXeDuocChonId = 0;
-        phuongAnLai = don.PreferredDriverMode;
-        canhBaoXe = "";
-        canhBaoLaiXe = "";
-        thongBao = "";
+        var result = await dialog.OpenAsync<DispatchCreateDialog>(
+            $"Lập lệnh điều động: {don.BookingCode}",
+            new Dictionary<string, object?> { { "Booking", don } },
+            new DialogOptions { Width = "820px", Resizable = true, Draggable = true }
+        );
 
-        danhSachXeKhaDung = dispatchService.GetEligibleVehicles(don);
-        danhSachLaiXeKhaDung = dispatchService.GetEligibleDrivers();
-        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-dieu-xe");
-    }
-
-    private void ChonPhuongAnLai(DriverMode mode)
-    {
-        phuongAnLai = mode;
-        canhBaoLaiXe = "";
-        if (mode == DriverMode.SelfDrive)
+        if (result == true)
         {
-            laiXeDuocChonId = 0;
+            NapDuLieu();
+            thongBao = $"Đã lập lệnh điều động thành công cho yêu cầu {don.BookingCode}!";
+            coLoi = false;
+            tabHienTai = 1; // Chuyển qua tab Lệnh điều động đã lập
         }
     }
 
-    private void DongFormDieuDong()
+    private async Task XemChiTietYeuCau(Booking don)
     {
-        yeuCauDangDieuDong = null;
-        xeDuocChonId = 0;
-        laiXeDuocChonId = 0;
-        canhBaoXe = "";
-        canhBaoLaiXe = "";
-    }
-
-    private void KiemTraPhuongTienDaChon()
-    {
-        canhBaoXe = "";
-        if (xeDuocChonId <= 0 || yeuCauDangDieuDong == null) return;
-
-        if (!dispatchService.KiemTraTrungLichXe(xeDuocChonId, yeuCauDangDieuDong.DepartureTime, yeuCauDangDieuDong.ReturnTime, null, out string loi))
-        {
-            canhBaoXe = loi;
-        }
-    }
-
-    private bool XeBiTrungLich(int xeId)
-    {
-        if (yeuCauDangDieuDong == null) return false;
-        return !dispatchService.KiemTraTrungLichXe(xeId, yeuCauDangDieuDong.DepartureTime, yeuCauDangDieuDong.ReturnTime, null, out _);
-    }
-
-    private bool LaiXeBiTrungLich(int laiXeId)
-    {
-        if (yeuCauDangDieuDong == null) return false;
-        return !dispatchService.KiemTraTrungLichLaiXe(laiXeId, yeuCauDangDieuDong.DepartureTime, yeuCauDangDieuDong.ReturnTime, null, out _);
-    }
-
-    private void KiemTraLaiXeDaChon()
-    {
-        canhBaoLaiXe = "";
-        if (laiXeDuocChonId <= 0 || yeuCauDangDieuDong == null) return;
-
-        if (!dispatchService.KiemTraTrungLichLaiXe(laiXeDuocChonId, yeuCauDangDieuDong.DepartureTime, yeuCauDangDieuDong.ReturnTime, null, out string loi))
-        {
-            canhBaoLaiXe = loi;
-        }
-    }
-
-    private async Task XacNhanDieuDong()
-    {
-        if (yeuCauDangDieuDong == null) return;
-
-        if (xeDuocChonId <= 0)
-        {
-            thongBao = "Vui lòng chọn một phương tiện phù hợp.";
-            coLoi = true;
-            return;
-        }
-
-        if (phuongAnLai == DriverMode.AssignedDriver && laiXeDuocChonId <= 0)
-        {
-            thongBao = "Vui lòng chọn một lái xe đơn vị để phân công.";
-            coLoi = true;
-            return;
-        }
-
-        var xacNhan = await dialog.Confirm(
-            $"Xác nhận lập lệnh điều động cho yêu cầu {yeuCauDangDieuDong.BookingCode}?",
-            "Xác nhận điều động",
-            new ConfirmOptions { OkButtonText = "Xác nhận điều động", CancelButtonText = "Bỏ qua" });
-
-        if (xacNhan != true) return;
-
-        string loi;
-        bool thanhCong = dispatchService.CreateDispatchOrder(
-            yeuCauDangDieuDong.Id, 
-            xeDuocChonId, 
-            phuongAnLai, 
-            laiXeDuocChonId, 
-            out loi);
-
-        if (!thanhCong)
-        {
-            thongBao = loi;
-            coLoi = true;
-            return;
-        }
-
-        string maDon = yeuCauDangDieuDong.BookingCode;
-        DongFormDieuDong();
-        NapDuLieu();
-
-        thongBao = $"Đã lập lệnh điều động thành công cho yêu cầu {maDon}.";
-        coLoi = false;
-        tabHienTai = 1;
+        await dialog.OpenAsync<BookingDetailDialog>(
+            $"Chi tiết yêu cầu sử dụng phương tiện: {don.BookingCode}",
+            new Dictionary<string, object?> { { "Booking", don } },
+            new DialogOptions { Width = "760px", Resizable = true, Draggable = true }
+        );
     }
 
     private async Task XemChiTietLenh(Trip item)
     {
-        lenhDangXem = item;
-        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-dieu-xe");
-    }
-
-    private void DongChiTietLenh()
-    {
-        lenhDangXem = null;
+        await dialog.OpenAsync<TripDetailDialog>(
+            $"Chi tiết Lệnh điều động: {item.DispatchCode}",
+            new Dictionary<string, object?> { { "Trip", item } },
+            new DialogOptions { Width = "780px", Resizable = true, Draggable = true }
+        );
     }
 
     private async Task HuyLenhDieuDong(Trip item)
@@ -582,11 +294,6 @@ else
         NapDuLieu();
         thongBao = $"Đã hủy lệnh điều động {item.DispatchCode} thành công.";
         coLoi = false;
-
-        if (lenhDangXem?.Id == item.Id)
-        {
-            DongChiTietLenh();
-        }
     }
 
     public void Dispose()

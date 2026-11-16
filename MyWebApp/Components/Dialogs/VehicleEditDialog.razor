@@ -1,0 +1,140 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Data
+@using MyWebApp.Services
+
+@inject VehicleService vehicleService
+@inject DialogService dialog
+
+<div class="vehicle-edit-dialog">
+    @if (!string.IsNullOrEmpty(errorMsg))
+    {
+        <div class="alert alert-danger py-2 mb-3 shadow-sm">
+            <RadzenIcon Icon="error" Class="me-1 align-middle" /> @errorMsg
+        </div>
+    }
+
+    <EditForm Model="Vehicle" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger mb-3" />
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Mã phương tiện <span class="text-danger">*</span></label>
+                <InputText class="form-control" @bind-Value="Vehicle.VehicleCode" />
+                <ValidationMessage For="() => Vehicle.VehicleCode" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Biển số công vụ <span class="text-danger">*</span></label>
+                <InputText class="form-control" @bind-Value="Vehicle.LicensePlate" placeholder="Ví dụ: 80A-012.34" />
+                <ValidationMessage For="() => Vehicle.LicensePlate" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Loại phương tiện <span class="text-danger">*</span></label>
+                <InputSelect class="form-select" @bind-Value="Vehicle.VehicleType">
+                    <option value="@VehicleType.OTo">Ô tô</option>
+                    <option value="@VehicleType.XeMay">Xe máy</option>
+                    <option value="@VehicleType.XeTai">Xe bán tải / Chuyên dụng</option>
+                    <option value="@VehicleType.XeChuyenDung">Xe chuyên dùng đặc chủng</option>
+                </InputSelect>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Trạng thái vận hành <span class="text-danger">*</span></label>
+                <InputSelect class="form-select" @bind-Value="Vehicle.Status">
+                    <option value="@VehicleStatus.SanSang">Sẵn sàng</option>
+                    <option value="@VehicleStatus.DangDuocDieuDong">Đang được điều động</option>
+                    <option value="@VehicleStatus.DangBaoDuong">Đang bảo dưỡng</option>
+                    <option value="@VehicleStatus.NgungHoatDong">Ngừng hoạt động</option>
+                </InputSelect>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Nhãn hiệu <span class="text-danger">*</span></label>
+                <InputText class="form-control" @bind-Value="Vehicle.Brand" placeholder="Toyota, Ford, VinFast..." />
+                <ValidationMessage For="() => Vehicle.Brand" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Model xe <span class="text-danger">*</span></label>
+                <InputText class="form-control" @bind-Value="Vehicle.Model" placeholder="Fortuner, Camry, Ranger..." />
+                <ValidationMessage For="() => Vehicle.Model" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Năm sản xuất <span class="text-danger">*</span></label>
+                <InputNumber class="form-control" @bind-Value="Vehicle.ManufactureYear" />
+                <ValidationMessage For="() => Vehicle.ManufactureYear" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Số chỗ ngồi <span class="text-danger">*</span></label>
+                <InputNumber class="form-control" @bind-Value="Vehicle.Seats" />
+                <ValidationMessage For="() => Vehicle.Seats" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Số km hiện tại <span class="text-danger">*</span></label>
+                <InputNumber class="form-control" @bind-Value="Vehicle.CurrentKm" />
+                <ValidationMessage For="() => Vehicle.CurrentKm" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Màu sắc</label>
+                <InputText class="form-control" @bind-Value="Vehicle.Color" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Ngày tiếp nhận</label>
+                <InputDate class="form-control" @bind-Value="Vehicle.ReceiveDate" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Số khung</label>
+                <InputText class="form-control" @bind-Value="Vehicle.ChassisNumber" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Số máy</label>
+                <InputText class="form-control" @bind-Value="Vehicle.EngineNumber" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Hạn đăng kiểm</label>
+                <InputDate class="form-control" @bind-Value="Vehicle.RegistrationExpiryDate" />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label fw-bold">Ghi chú quản lý</label>
+                <InputText class="form-control" @bind-Value="Vehicle.Note" placeholder="Ghi chú thêm về trang bị nghiệp vụ..." />
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top mt-3">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                              Icon="close" 
+                              Text="Đóng" 
+                              Click="() => dialog.Close(false)" />
+                <RadzenButton ButtonType="ButtonType.Submit" 
+                              Text="@(IsEditing ? "Lưu thay đổi" : "Thêm phương tiện")" 
+                              Icon="save" 
+                              ButtonStyle="ButtonStyle.Primary" />
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public Vehicle Vehicle { get; set; } = new();
+
+    [Parameter]
+    public bool IsEditing { get; set; } = false;
+
+    private string errorMsg = "";
+
+    private void Save()
+    {
+        string loi;
+        bool ok = IsEditing ? vehicleService.Update(Vehicle, out loi) : vehicleService.Add(Vehicle, out loi);
+        if (!ok)
+        {
+            errorMsg = loi;
+            return;
+        }
+
+        dialog.Close(true);
+    }
+}

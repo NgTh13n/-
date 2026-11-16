@@ -1,0 +1,148 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Data
+@using MyWebApp.Services
+
+@inject BookingService bookingService
+@inject DialogService dialog
+
+<div class="approval-action-dialog">
+    @if (!string.IsNullOrEmpty(errorMsg))
+    {
+        <div class="alert alert-danger py-2 mb-3 shadow-sm">
+            <RadzenIcon Icon="error" Class="me-1 align-middle" /> @errorMsg
+        </div>
+    }
+
+    <!-- Metadata Card -->
+    <div class="p-3 bg-light rounded mb-3 border">
+        <div class="row g-2 small">
+            <div class="col-md-4">Mã yêu cầu: <span class="badge bg-primary">@Booking.BookingCode</span></div>
+            <div class="col-md-4">Cán bộ đề nghị: <strong>@bookingService.GetRequesterName(Booking.RequesterId)</strong></div>
+            <div class="col-md-4">Đơn vị / Đội: <strong>@Booking.DepartmentSnapshot</strong></div>
+            <div class="col-md-6">Mục đích: <strong>@Booking.Purpose</strong></div>
+            <div class="col-md-6">Tuyến đến: <strong>@Booking.Destination</strong></div>
+            <div class="col-md-6">Thời gian: <strong>@Booking.DepartureTime.ToString("dd/MM HH:mm") → @Booking.ReturnTime.ToString("dd/MM HH:mm")</strong></div>
+            <div class="col-md-6">
+                Phương án lái: 
+                <span class="badge @(Booking.PreferredDriverMode == DriverMode.SelfDrive ? "bg-info text-dark" : "bg-primary")">
+                    @EnumHelper.TenDriverMode(Booking.PreferredDriverMode)
+                </span>
+            </div>
+        </div>
+    </div>
+
+    @if (ActionType == "Approve")
+    {
+        <div class="mb-3">
+            <label class="form-label fw-bold text-success">
+                <RadzenIcon Icon="check_circle" Class="me-1 align-middle" />
+                Ý kiến chỉ đạo / Giao nhiệm vụ cho Đội xe:
+            </label>
+            <textarea class="form-control" rows="3" @bind="comment" placeholder="Ví dụ: Đồng ý phê duyệt, giao Đội xe bố trí phương tiện và lái xe đảm bảo an toàn tác chiến..."></textarea>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <RadzenButton Text="Bỏ qua" Icon="close" ButtonStyle="ButtonStyle.Light" Click="() => dialog.Close(false)" />
+            <RadzenButton Text="Xác nhận Phê duyệt" Icon="check_circle" ButtonStyle="ButtonStyle.Success" Click="XacNhanDuyet" />
+        </div>
+    }
+    else if (ActionType == "Adjustment")
+    {
+        <div class="mb-3">
+            <label class="form-label text-warning fw-bold text-dark">
+                <RadzenIcon Icon="edit_note" Class="me-1 align-middle text-warning" />
+                Nội dung chỉ đạo cần bổ sung / chỉnh sửa <span class="text-danger">*</span>:
+            </label>
+            <textarea class="form-control" rows="3" @bind="comment" placeholder="Nhập rõ nội dung cán bộ cần chỉnh sửa, bổ sung..."></textarea>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <RadzenButton Text="Bỏ qua" Icon="close" ButtonStyle="ButtonStyle.Light" Click="() => dialog.Close(false)" />
+            <RadzenButton Text="Gửi yêu cầu bổ sung" Icon="send" ButtonStyle="ButtonStyle.Warning" Click="XacNhanBoSung" />
+        </div>
+    }
+    else if (ActionType == "Reject")
+    {
+        <div class="mb-3">
+            <label class="form-label text-danger fw-bold">
+                <RadzenIcon Icon="block" Class="me-1 align-middle" />
+                Lý do từ chối yêu cầu (bắt buộc nhập) <span class="text-danger">*</span>:
+            </label>
+            <textarea class="form-control" rows="3" @bind="comment" placeholder="Nhập rõ lý do từ chối để thông báo đến cán bộ đề nghị..."></textarea>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <RadzenButton Text="Bỏ qua" Icon="close" ButtonStyle="ButtonStyle.Light" Click="() => dialog.Close(false)" />
+            <RadzenButton Text="Xác nhận từ chối" Icon="block" ButtonStyle="ButtonStyle.Danger" Click="XacNhanTuChoi" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Booking Booking { get; set; } = new();
+
+    [Parameter]
+    public string ActionType { get; set; } = "Approve";
+
+    private string comment = "";
+    private string errorMsg = "";
+
+    protected override void OnInitialized()
+    {
+        if (ActionType == "Approve")
+        {
+            comment = "Đồng ý phê duyệt, giao Đội xe bố trí phương tiện và lái xe đảm bảo an toàn.";
+        }
+    }
+
+    private void XacNhanDuyet()
+    {
+        string loi;
+        bool ok = bookingService.Approve(Booking.Id, comment, out loi);
+        if (!ok)
+        {
+            errorMsg = loi;
+            return;
+        }
+        dialog.Close(true);
+    }
+
+    private void XacNhanBoSung()
+    {
+        if (string.IsNullOrWhiteSpace(comment))
+        {
+            errorMsg = "Bắt buộc phải nhập nội dung chỉ đạo cần bổ sung / chỉnh sửa.";
+            return;
+        }
+
+        string loi;
+        bool ok = bookingService.RequestAdjustment(Booking.Id, comment, out loi);
+        if (!ok)
+        {
+            errorMsg = loi;
+            return;
+        }
+        dialog.Close(true);
+    }
+
+    private void XacNhanTuChoi()
+    {
+        if (string.IsNullOrWhiteSpace(comment))
+        {
+            errorMsg = "Bắt buộc phải nhập lý do từ chối yêu cầu.";
+            return;
+        }
+
+        string loi;
+        bool ok = bookingService.Reject(Booking.Id, comment, out loi);
+        if (!ok)
+        {
+            errorMsg = loi;
+            return;
+        }
+        dialog.Close(true);
+    }
+}

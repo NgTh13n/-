@@ -6,6 +6,7 @@
 @using MyWebApp.Models.Enums
 @using MyWebApp.Helpers
 @using MyWebApp.Data
+@using MyWebApp.Components.Dialogs
 
 @inject BookingService bookingService
 @inject DialogService dialog
@@ -56,178 +57,6 @@ else
             <button type="button" class="btn-close" @onclick="() => thongBao = string.Empty"></button>
         </div>
     }
-
-    <div id="khu-vuc-phe-duyet">
-    @* HỘP THOẠI XỬ LÝ: PHÊ DUYỆT (KÈM Ý KIẾN CHỈ ĐẠO) *@
-    @if (yeuCauPheDuyet != null)
-    {
-        <div class="gov-card gov-card-accent-success mb-4">
-            <div class="gov-card-header">
-                <strong class="gov-card-header-title text-success"><RadzenIcon Icon="check_circle" Class="me-1" /> Phê duyệt yêu cầu: @yeuCauPheDuyet.BookingCode</strong>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="() => yeuCauPheDuyet = null">Đóng</button>
-            </div>
-            <div class="gov-card-body">
-                <p class="mb-2">
-                    Cán bộ đề nghị: <strong>@bookingService.GetRequesterName(yeuCauPheDuyet.RequesterId)</strong> 
-                    — Tuyến đến: <strong>@yeuCauPheDuyet.Destination</strong>
-                    — Phương án lái: <strong>@EnumHelper.TenDriverMode(yeuCauPheDuyet.PreferredDriverMode)</strong>
-                </p>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Ý kiến chỉ đạo / Giao nhiệm vụ cho Đội xe:</label>
-                    <textarea class="form-control" rows="2" @bind="yKienPheDuyet" placeholder="Ví dụ: Đồng ý phê duyệt, giao Đội xe bố trí phương tiện và lái xe đảm bảo an toàn tác chiến..."></textarea>
-                </div>
-                <div class="d-flex gap-2">
-                    <RadzenButton Text="Xác nhận Phê duyệt" Icon="check" ButtonStyle="ButtonStyle.Success" Click="XacNhanPheDuyet" />
-                    <RadzenButton Text="Bỏ qua" Icon="close" ButtonStyle="ButtonStyle.Light" Click="() => yeuCauPheDuyet = null" />
-                </div>
-            </div>
-        </div>
-    }
-
-    @* HỘP THOẠI XỬ LÝ: YÊU CẦU BỔ SUNG *@
-    @if (yeuCauBoSung != null)
-    {
-        <div class="gov-card gov-card-accent-warning mb-4">
-            <div class="gov-card-header">
-                <strong class="gov-card-header-title text-warning"><RadzenIcon Icon="edit_note" Class="me-1" /> Yêu cầu bổ sung thông tin: @yeuCauBoSung.BookingCode</strong>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="() => yeuCauBoSung = null">Đóng</button>
-            </div>
-            <div class="gov-card-body">
-                <p class="mb-2">
-                    Cán bộ đề nghị: <strong>@bookingService.GetRequesterName(yeuCauBoSung.RequesterId)</strong> 
-                    — Mục đích: <strong>@yeuCauBoSung.Purpose</strong>
-                </p>
-                <div class="mb-3">
-                    <label class="form-label text-danger fw-bold">Nội dung chỉ đạo cần bổ sung / chỉnh sửa <span class="text-danger">*</span>:</label>
-                    <textarea class="form-control" rows="3" @bind="noiDungBoSung" placeholder="Nhập rõ nội dung cán bộ cần chỉnh sửa, bổ sung (ví dụ: cung cấp danh sách cán bộ tham gia, văn bản chỉ đạo của lãnh đạo phụ trách...)..."></textarea>
-                </div>
-                <div class="d-flex gap-2">
-                    <RadzenButton Text="Gửi yêu cầu bổ sung" Icon="send" ButtonStyle="ButtonStyle.Warning" Click="XacNhanYeuCauBoSung" />
-                    <RadzenButton Text="Bỏ qua" Icon="close" ButtonStyle="ButtonStyle.Light" Click="() => yeuCauBoSung = null" />
-                </div>
-            </div>
-        </div>
-    }
-
-    @* HỘP THOẠI XỬ LÝ: TỪ CHỐI *@
-    @if (yeuCauTuChoi != null)
-    {
-        <div class="gov-card gov-card-accent-danger mb-4">
-            <div class="gov-card-header">
-                <strong class="gov-card-header-title text-danger"><RadzenIcon Icon="block" Class="me-1" /> Từ chối yêu cầu: @yeuCauTuChoi.BookingCode</strong>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="() => yeuCauTuChoi = null">Đóng</button>
-            </div>
-            <div class="gov-card-body">
-                <p class="mb-2">
-                    Cán bộ đề nghị: <strong>@bookingService.GetRequesterName(yeuCauTuChoi.RequesterId)</strong> 
-                    — Tuyến đến: <strong>@yeuCauTuChoi.Destination</strong>
-                </p>
-                <div class="mb-3">
-                    <label class="form-label text-danger fw-bold">Lý do từ chối (bắt buộc nhập) <span class="text-danger">*</span>:</label>
-                    <textarea class="form-control" rows="3" @bind="lyDoTuChoi" placeholder="Nhập rõ lý do từ chối để thông báo đến cán bộ đề nghị..."></textarea>
-                </div>
-                <div class="d-flex gap-2">
-                    <RadzenButton Text="Xác nhận từ chối" Icon="block" ButtonStyle="ButtonStyle.Danger" Click="XacNhanTuChoi" />
-                    <RadzenButton Text="Bỏ qua" Icon="close" ButtonStyle="ButtonStyle.Light" Click="() => yeuCauTuChoi = null" />
-                </div>
-            </div>
-        </div>
-    }
-
-    @* CHI TIẾT YÊU CẦU ĐANG XEM *@
-    @if (yeuCauDangXem != null)
-    {
-        <div class="card mb-4 border-info shadow-sm">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
-                <strong class="text-primary"><RadzenIcon Icon="info" Class="me-1" /> Chi tiết yêu cầu: @yeuCauDangXem.BookingCode</strong>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="DongChiTiet">Đóng</button>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3"><strong>Mã yêu cầu:</strong> @yeuCauDangXem.BookingCode</div>
-                    <div class="col-md-3"><strong>Người đề nghị:</strong> @bookingService.GetRequesterName(yeuCauDangXem.RequesterId)</div>
-                    <div class="col-md-3"><strong>Đơn vị / Đội:</strong> @yeuCauDangXem.DepartmentSnapshot</div>
-                    <div class="col-md-3">
-                        <strong>Trạng thái:</strong> 
-                        <span class="badge-status @yeuCauDangXem.Status.BadgeClass()">
-                            @yeuCauDangXem.Status.Ten()
-                        </span>
-                    </div>
-
-                    <div class="col-md-6"><strong>Mục đích:</strong> @yeuCauDangXem.Purpose</div>
-                    <div class="col-md-3"><strong>Phân loại:</strong> @yeuCauDangXem.WorkType</div>
-                    <div class="col-md-3">
-                        <strong>Phương án lái xe:</strong> 
-                        <span class="badge @(yeuCauDangXem.PreferredDriverMode == DriverMode.SelfDrive ? "bg-info text-dark" : "bg-primary")">
-                            @EnumHelper.TenDriverMode(yeuCauDangXem.PreferredDriverMode)
-                        </span>
-                    </div>
-
-                    @if (!string.IsNullOrEmpty(yeuCauDangXem.TaskDescription))
-                    {
-                        <div class="col-12">
-                            <strong>Nội dung nhiệm vụ cụ thể:</strong>
-                            <div class="p-2 bg-light rounded mt-1 border">@yeuCauDangXem.TaskDescription</div>
-                        </div>
-                    }
-
-                    <div class="col-md-6"><strong>Xuất phát:</strong> @yeuCauDangXem.Departure</div>
-                    <div class="col-md-6"><strong>Điểm đến:</strong> @yeuCauDangXem.Destination</div>
-                    <div class="col-md-4"><strong>Khởi hành:</strong> @yeuCauDangXem.DepartureTime.ToString("dd/MM/yyyy HH:mm")</div>
-                    <div class="col-md-4"><strong>Về dự kiến:</strong> @yeuCauDangXem.ReturnTime.ToString("dd/MM/yyyy HH:mm")</div>
-                    <div class="col-md-4"><strong>Số lượng người:</strong> @yeuCauDangXem.PassengerCount người (Loại xe: @yeuCauDangXem.RequestedVehicleType)</div>
-                </div>
-
-                @if (!string.IsNullOrEmpty(yeuCauDangXem.NeedAdjustmentReason))
-                {
-                    <div class="alert alert-warning mt-3 mb-0">
-                        <strong>Ý kiến yêu cầu bổ sung:</strong> @yeuCauDangXem.NeedAdjustmentReason
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(yeuCauDangXem.RejectionReason))
-                {
-                    <div class="alert alert-danger mt-3 mb-0">
-                        <strong>Lý do từ chối:</strong> @yeuCauDangXem.RejectionReason
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(yeuCauDangXem.ApprovalComment))
-                {
-                    <div class="alert alert-info mt-3 mb-0">
-                        <strong>Ý kiến chỉ đạo phê duyệt:</strong> @yeuCauDangXem.ApprovalComment
-                    </div>
-                }
-
-                @* Audit Trail *@
-                <div class="mt-3 pt-2 border-top">
-                    <h6 class="text-secondary mb-2"><RadzenIcon Icon="history" Class="me-1" /> Tiến trình xử lý (Audit Trail):</h6>
-                    @{
-                        var histories = mockDataService.StatusHistories
-                            .Where(h => h.EntityType == "VehicleRequest" && h.EntityId == yeuCauDangXem.Id)
-                            .OrderBy(h => h.ChangedAt)
-                            .ToList();
-                    }
-                    @if (histories.Count > 0)
-                    {
-                        <ul class="list-group list-group-flush small">
-                            @foreach (var h in histories)
-                            {
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-1">
-                                    <div>
-                                        <span class="text-muted me-2">@h.ChangedAt.ToString("dd/MM/yyyy HH:mm")</span>
-                                        <strong>@h.ChangedByFullName:</strong> @h.Comment
-                                    </div>
-                                    <span class="badge bg-light text-dark border">@h.ToStatus</span>
-                                </li>
-                            }
-                        </ul>
-                    }
-                </div>
-            </div>
-        </div>
-    }
-    </div>
 
     @* DANH SÁCH YÊU CẦU: HÀNG CHỜ DUYỆT HOẶC LỊCH SỬ *@
     <div class="gov-card">
@@ -401,16 +230,6 @@ else
     List<Booking> danhSachChoDuyet = new();
     List<Booking> danhSachLichSu = new();
 
-    Booking? yeuCauDangXem;
-    Booking? yeuCauPheDuyet;
-    string yKienPheDuyet = "Đồng ý phê duyệt, giao Đội xe bố trí phương tiện và lái xe đảm bảo an toàn.";
-
-    Booking? yeuCauBoSung;
-    string noiDungBoSung = "";
-
-    Booking? yeuCauTuChoi;
-    string lyDoTuChoi = "";
-
     bool hienThiLichSu = false;
     string thongBao = "";
     bool coLoi = false;
@@ -435,141 +254,63 @@ else
 
     private async Task XemChiTiet(Booking item)
     {
-        yeuCauDangXem = item;
-        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-phe-duyet");
+        await dialog.OpenAsync<BookingDetailDialog>(
+            $"Hồ sơ yêu cầu: {item.BookingCode}",
+            new Dictionary<string, object?> { { "Booking", item } },
+            new DialogOptions { Width = "840px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
     }
 
-    private void DongChiTiet()
-    {
-        yeuCauDangXem = null;
-    }
-
+    // --- POPUP PHÊ DUYỆT ---
     private async Task MoHopThoaiPheDuyet(Booking item)
     {
         if (!authService.CanApproveBookings) return;
-        yeuCauPheDuyet = item;
-        yeuCauBoSung = null;
-        yeuCauTuChoi = null;
-        yKienPheDuyet = "Đồng ý phê duyệt, giao Đội xe bố trí phương tiện và lái xe đảm bảo an toàn.";
-        thongBao = "";
-        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-phe-duyet");
-    }
 
-    private void XacNhanPheDuyet()
-    {
-        if (yeuCauPheDuyet == null) return;
+        var res = await dialog.OpenAsync<ApprovalActionDialog>(
+            $"Phê duyệt yêu cầu sử dụng phương tiện: {item.BookingCode}",
+            new Dictionary<string, object?> { { "Booking", item }, { "ActionType", "Approve" } },
+            new DialogOptions { Width = "760px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
 
-        string loi;
-        bool thanhCong = bookingService.Approve(yeuCauPheDuyet.Id, yKienPheDuyet, out loi);
-
-        if (!thanhCong)
+        if (res == true)
         {
-            thongBao = loi;
-            coLoi = true;
-            return;
-        }
-
-        string maDon = yeuCauPheDuyet.BookingCode;
-        yeuCauPheDuyet = null;
-        NapDuLieu();
-        thongBao = $"Đã phê duyệt yêu cầu {maDon}. Hồ sơ đã được chuyển tiếp sang Đội xe để điều động.";
-        coLoi = false;
-
-        if (yeuCauDangXem?.Id == yeuCauPheDuyet?.Id)
-        {
-            DongChiTiet();
+            NapDuLieu();
+            thongBao = $"Đã phê duyệt yêu cầu {item.BookingCode}. Hồ sơ đã được chuyển tiếp sang Đội xe để điều động.";
+            coLoi = false;
         }
     }
 
+    // --- POPUP YÊU CẦU BỔ SUNG ---
     private async Task MoHopThoaiBoSung(Booking item)
     {
         if (!authService.CanApproveBookings) return;
-        yeuCauBoSung = item;
-        yeuCauPheDuyet = null;
-        yeuCauTuChoi = null;
-        noiDungBoSung = "";
-        thongBao = "";
-        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-phe-duyet");
-    }
 
-    private void XacNhanYeuCauBoSung()
-    {
-        if (yeuCauBoSung == null) return;
+        var res = await dialog.OpenAsync<ApprovalActionDialog>(
+            $"Yêu cầu bổ sung thông tin: {item.BookingCode}",
+            new Dictionary<string, object?> { { "Booking", item }, { "ActionType", "Adjustment" } },
+            new DialogOptions { Width = "760px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
 
-        if (string.IsNullOrWhiteSpace(noiDungBoSung))
+        if (res == true)
         {
-            thongBao = "Bắt buộc phải nhập nội dung chỉ đạo cần bổ sung / chỉnh sửa.";
-            coLoi = true;
-            return;
-        }
-
-        string loi;
-        bool thanhCong = bookingService.RequestAdjustment(yeuCauBoSung.Id, noiDungBoSung, out loi);
-
-        if (!thanhCong)
-        {
-            thongBao = loi;
-            coLoi = true;
-            return;
-        }
-
-        string maDon = yeuCauBoSung.BookingCode;
-        yeuCauBoSung = null;
-        noiDungBoSung = "";
-
-        NapDuLieu();
-        thongBao = $"Đã gửi yêu cầu bổ sung thông tin cho hồ sơ {maDon}.";
-        coLoi = false;
-
-        if (yeuCauDangXem?.Id == yeuCauBoSung?.Id)
-        {
-            DongChiTiet();
+            NapDuLieu();
+            thongBao = $"Đã gửi yêu cầu bổ sung thông tin cho hồ sơ {item.BookingCode}.";
+            coLoi = false;
         }
     }
 
+    // --- POPUP TỪ CHỐI ---
     private async Task MoHopThoaiTuChoi(Booking item)
     {
         if (!authService.CanApproveBookings) return;
-        yeuCauTuChoi = item;
-        yeuCauPheDuyet = null;
-        yeuCauBoSung = null;
-        lyDoTuChoi = "";
-        thongBao = "";
-        await js.InvokeVoidAsync("cuonLenForm", "khu-vuc-phe-duyet");
-    }
 
-    private void XacNhanTuChoi()
-    {
-        if (yeuCauTuChoi == null) return;
+        var res = await dialog.OpenAsync<ApprovalActionDialog>(
+            $"Từ chối yêu cầu sử dụng phương tiện: {item.BookingCode}",
+            new Dictionary<string, object?> { { "Booking", item }, { "ActionType", "Reject" } },
+            new DialogOptions { Width = "760px", CloseDialogOnOverlayClick = true, CloseDialogOnEsc = true });
 
-        if (string.IsNullOrWhiteSpace(lyDoTuChoi))
+        if (res == true)
         {
-            thongBao = "Bắt buộc phải nhập lý do từ chối yêu cầu.";
-            coLoi = true;
-            return;
-        }
-
-        string loi;
-        bool thanhCong = bookingService.Reject(yeuCauTuChoi.Id, lyDoTuChoi, out loi);
-
-        if (!thanhCong)
-        {
-            thongBao = loi;
-            coLoi = true;
-            return;
-        }
-
-        string maDon = yeuCauTuChoi.BookingCode;
-        yeuCauTuChoi = null;
-        lyDoTuChoi = "";
-
-        NapDuLieu();
-        thongBao = $"Đã từ chối yêu cầu {maDon} và lưu lý do từ chối vào lịch sử.";
-        coLoi = false;
-
-        if (yeuCauDangXem?.Id == yeuCauTuChoi?.Id)
-        {
-            DongChiTiet();
+            NapDuLieu();
+            thongBao = $"Đã từ chối yêu cầu {item.BookingCode} và lưu lý do từ chối vào lịch sử.";
+            coLoi = false;
         }
     }
 

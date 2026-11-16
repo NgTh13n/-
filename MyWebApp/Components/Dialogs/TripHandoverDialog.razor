@@ -1,0 +1,109 @@
+@using MyWebApp.Models
+@using MyWebApp.Models.Enums
+@using MyWebApp.Helpers
+@using MyWebApp.Data
+@using MyWebApp.Services
+
+@inject TripService tripService
+@inject DialogService dialog
+
+@{
+    var xe = tripService.GetVehicle(Trip.VehicleId);
+    var don = tripService.GetBooking(Trip.BookingId);
+}
+
+<div class="trip-handover-dialog">
+    @if (!string.IsNullOrEmpty(errorMsg))
+    {
+        <div class="alert alert-danger py-2 mb-3 shadow-sm">
+            <RadzenIcon Icon="error" Class="me-1 align-middle" /> @errorMsg
+        </div>
+    }
+
+    <div class="p-3 bg-light rounded mb-3 border">
+        <div class="row g-2 small">
+            <div class="col-md-4"><strong>Lệnh điều động:</strong> <span class="badge bg-primary">@Trip.DispatchCode</span></div>
+            <div class="col-md-4"><strong>Phương tiện:</strong> @xe?.LicensePlate (@xe?.Brand @xe?.Model)</div>
+            <div class="col-md-4">
+                <strong>Phương án lái:</strong> 
+                <span class="badge @(Trip.DriverMode == DriverMode.SelfDrive ? "bg-info text-dark" : "bg-secondary")">
+                    @EnumHelper.TenDriverMode(Trip.DriverMode)
+                </span>
+            </div>
+            <div class="col-md-4"><strong>Người điều khiển:</strong> @Trip.DriverNameSnapshot</div>
+            <div class="col-md-4"><strong>Cán bộ đề nghị:</strong> @Trip.RequesterNameSnapshot</div>
+            <div class="col-md-4"><strong>Tuyến đến:</strong> @don?.Destination</div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Chỉ số Km ban đầu (Odometer) <span class="text-danger">*</span>:</label>
+            <input type="number" class="form-control" @bind="bgStartKm" min="0" step="1" />
+            <small class="text-muted">Chỉ số Odometer hiện tại của xe</small>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Mức nhiên liệu ban đầu <span class="text-danger">*</span>:</label>
+            <select class="form-select" @bind="bgFuelStartLevel">
+                <option value="100% (Đầy bình)">100% (Đầy bình)</option>
+                <option value="75% (3/4 bình)">75% (3/4 bình)</option>
+                <option value="50% (1/2 bình)">50% (1/2 bình)</option>
+                <option value="25% (1/4 bình)">25% (1/4 bình)</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Trang bị / Phụ kiện kèm theo:</label>
+            <input type="text" class="form-control" @bind="bgAccessories" placeholder="Đầy đủ giấy tờ, kích xe, lốp dự phòng, còi ưu tiên..." />
+        </div>
+
+        <div class="col-12">
+            <label class="form-label fw-bold">Tình trạng ngoại quan, kỹ thuật trước khi giao <span class="text-danger">*</span>:</label>
+            <textarea class="form-control" rows="2" @bind="bgConditionBefore" placeholder="Xe sạch sẽ, hoạt động tốt, hệ thống phanh, đèn còi ưu tiên bình thường..."></textarea>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+        <RadzenButton Text="Bỏ qua" 
+                      Icon="close" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Click="() => dialog.Close(false)" />
+        <RadzenButton Text="Xác nhận Bàn giao & Bắt đầu chuyến đi" 
+                      Icon="check_circle" 
+                      ButtonStyle="ButtonStyle.Success" 
+                      Click="XacNhan" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Trip Trip { get; set; } = new();
+
+    private double bgStartKm = 0;
+    private string bgFuelStartLevel = "100% (Đầy bình)";
+    private string bgConditionBefore = "Xe sạch sẽ, đầy đủ giấy tờ, không trầy xước, đèn còi ưu tiên hoạt động tốt";
+    private string bgAccessories = "Sổ đăng kiểm, bảo hiểm, kích xe, lốp dự phòng";
+    private string errorMsg = "";
+
+    protected override void OnInitialized()
+    {
+        var xe = tripService.GetVehicle(Trip.VehicleId);
+        bgStartKm = xe?.CurrentKm ?? Trip.StartKm;
+    }
+
+    private void XacNhan()
+    {
+        string loi;
+        string conditionFull = $"{bgConditionBefore} (Trang bị: {bgAccessories})";
+        bool ok = tripService.HandoverVehicle(Trip.Id, bgStartKm, bgFuelStartLevel, conditionFull, out loi);
+
+        if (!ok)
+        {
+            errorMsg = loi;
+            return;
+        }
+
+        dialog.Close(true);
+    }
+}

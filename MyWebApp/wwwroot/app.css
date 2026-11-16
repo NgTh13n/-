@@ -218,15 +218,13 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
     transform: scale(1.1) !important;
 }
 
-/* Hiệu ứng chuyển trang mượt mà (Fade-in & Slide-up nhẹ) */
+/* Hiệu ứng chuyển trang mượt mà (Fade-in nhẹ) */
 @keyframes pageFadeIn {
     from {
-        opacity: 0.7;
-        transform: translateY(4px);
+        opacity: 0.85;
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
@@ -487,39 +485,8 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
 }
 
 /* ==========================================================================
-   BUTTONS & ACTIONS
+   BUTTONS & ACTIONS (Chi tiết hệ thống xem tại CAND BUTTON SYSTEM)
    ========================================================================== */
-
-.btn-primary-action {
-    background-color: var(--brand-red) !important;
-    border-color: var(--brand-red) !important;
-    color: #ffffff !important;
-    font-weight: 500 !important;
-    border-radius: 6px !important;
-    padding: 6px 14px !important;
-    font-size: 0.85rem !important;
-    box-shadow: 0 1px 2px rgba(197, 34, 31, 0.2);
-}
-
-.btn-primary-action:hover {
-    background-color: var(--brand-red-hover) !important;
-    border-color: var(--brand-red-hover) !important;
-}
-
-.btn-secondary-action {
-    background-color: #ffffff !important;
-    border: 1px solid var(--border-strong) !important;
-    color: var(--text-secondary) !important;
-    font-weight: 500 !important;
-    border-radius: 6px !important;
-    padding: 6px 14px !important;
-    font-size: 0.85rem !important;
-}
-
-.btn-secondary-action:hover {
-    background-color: #f8fafc !important;
-    color: var(--text-primary) !important;
-}
 
 /* ==========================================================================
    PAGE HEADERS (TIÊU ĐỀ TRANG RÕ RÀNG)
@@ -932,32 +899,302 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
 }
 
 /* ==========================================================================
-   BUTTON NOWRAP & APPROVAL ACTION BUTTONS (CHỐNG GÃY CHỮ & CẮT CỤT TỪ CHỐI)
+   BUTTON NOWRAP & CAND BUTTON SYSTEM (BƯỚC 3: MÀU SẮC & MICRO-ANIMATIONS)
+   Chính quy - Trang nghiêm - Phản hồi xúc giác hiện đại (Tactile Physics)
    ========================================================================== */
 .rz-button, 
 .btn, 
-.rz-button-text,
-.approval-action-group,
-.approval-action-group * {
+.btn-primary-action,
+.btn-secondary-action {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
     white-space: nowrap !important;
     word-break: normal !important;
     overflow-wrap: normal !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    text-decoration: none !important;
+    border: 1px solid transparent !important;
+    box-sizing: border-box !important;
+    transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+                background 0.16s ease,
+                border-color 0.16s ease,
+                color 0.16s ease,
+                filter 0.16s ease !important;
 }
 
-/* Thao tác quyết định trong bảng phê duyệt */
+.rz-button:focus,
+.btn:focus {
+    outline: none !important;
+}
+
+.rz-button:focus-visible,
+.btn:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.45) !important; /* Vàng ánh kim CAND */
+}
+
+/* Micro-Interaction: Hover Elevation (Nâng nút nhẹ + Nổi bóng) */
+.rz-button:hover:not(:disabled):not(.rz-state-disabled),
+.btn:hover:not(:disabled) {
+    transform: translateY(-1.5px) !important;
+}
+
+/* Micro-Interaction: Active Mechanical Press (Đầm tay, phản hồi chân thực) */
+.rz-button:active:not(:disabled):not(.rz-state-disabled),
+.btn:active:not(:disabled) {
+    transform: translateY(0.5px) scale(0.99) !important;
+    filter: brightness(0.95) !important;
+}
+
+/* Micro-Interaction: Smooth Icon Dynamics */
+.rz-button .rzi,
+.rz-button .rz-button-icon-left,
+.rz-button .rz-button-icon-right,
+.btn i {
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+.rz-button:hover:not(:disabled):not(.rz-state-disabled) .rzi,
+.rz-button:hover:not(:disabled):not(.rz-state-disabled) .rz-button-icon-left,
+.rz-button:hover:not(:disabled):not(.rz-state-disabled) .rz-button-icon-right,
+.btn:hover:not(:disabled) i {
+    transform: scale(1.14) !important;
+}
+
+/* Text alignment inside buttons */
+.rz-button-text {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* --------------------------------------------------------------------------
+   1. PRIMARY: Xanh Navy CAND / Khởi tạo nghiệp vụ uy quyền (Lập yêu cầu, Xếp xe, Bàn giao)
+   -------------------------------------------------------------------------- */
+.rz-button.rz-button-primary,
+.btn.btn-primary,
+.btn-primary-action {
+    background: linear-gradient(180deg, #1e3a5f 0%, #0f2942 100%) !important;
+    border-color: #0b1e30 !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 2px 5px rgba(15, 41, 66, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.rz-button.rz-button-primary:hover:not(:disabled),
+.btn.btn-primary:hover:not(:disabled),
+.btn-primary-action:hover:not(:disabled) {
+    background: linear-gradient(180deg, #2b5080 0%, #16385a 100%) !important;
+    border-color: #0e2439 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(15, 41, 66, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.rz-button.rz-button-primary:active:not(:disabled),
+.btn.btn-primary:active:not(:disabled),
+.btn-primary-action:active:not(:disabled) {
+    background: linear-gradient(180deg, #0a1b2c 0%, #143250 100%) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. SUCCESS: Xanh Lục Quân Hiệu CAND (Duyệt, Nghiệm thu, Hoàn trả, Quyết toán)
+   -------------------------------------------------------------------------- */
+.rz-button.rz-button-success,
+.btn.btn-success {
+    background: linear-gradient(180deg, #15803d 0%, #14532d 100%) !important;
+    border-color: #0f3d20 !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35) !important;
+    box-shadow: 0 2px 5px rgba(20, 83, 45, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.rz-button.rz-button-success:hover:not(:disabled),
+.btn.btn-success:hover:not(:disabled) {
+    background: linear-gradient(180deg, #16a34a 0%, #15803d 100%) !important;
+    border-color: #14532d !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(22, 101, 52, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
+}
+
+.rz-button.rz-button-success:active:not(:disabled),
+.btn.btn-success:active:not(:disabled) {
+    background: linear-gradient(180deg, #0f3d20 0%, #14532d 100%) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. WARNING: Vàng Hổ Phách Ánh Kim CAND (Bổ sung, Chỉnh sửa, Nhắc nhở)
+   -------------------------------------------------------------------------- */
+.rz-button.rz-button-warning,
+.btn.btn-warning {
+    background: linear-gradient(180deg, #d97706 0%, #b45309 100%) !important;
+    border-color: #78350f !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 2px 5px rgba(180, 83, 9, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.rz-button.rz-button-warning:hover:not(:disabled),
+.btn.btn-warning:hover:not(:disabled) {
+    background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%) !important;
+    border-color: #92400e !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(180, 83, 9, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+
+.rz-button.rz-button-warning:active:not(:disabled),
+.btn.btn-warning:active:not(:disabled) {
+    background: linear-gradient(180deg, #78350f 0%, #92400e 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. DANGER: Đỏ Cờ CAND Trang Nghiêm (Từ chối, Báo sự cố khẩn cấp, Xóa)
+   -------------------------------------------------------------------------- */
+.rz-button.rz-button-danger,
+.btn.btn-danger {
+    background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%) !important;
+    border-color: #7f1d1d !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 2px 5px rgba(185, 28, 28, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.rz-button.rz-button-danger:hover:not(:disabled),
+.btn.btn-danger:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%) !important;
+    border-color: #991b1b !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
+}
+
+.rz-button.rz-button-danger:active:not(:disabled),
+.btn.btn-danger:active:not(:disabled) {
+    background: linear-gradient(180deg, #6b1111 0%, #991b1b 100%) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Hiệu ứng xung nhịp cảnh báo khẩn cấp (Emergency Danger Pulse) */
+@keyframes candDangerPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6), 0 2px 5px rgba(185, 28, 28, 0.32);
+    }
+    70% {
+        box-shadow: 0 0 0 7px rgba(220, 38, 38, 0), 0 2px 5px rgba(185, 28, 28, 0.32);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0), 0 2px 5px rgba(185, 28, 28, 0.32);
+    }
+}
+
+.rz-button-danger:has(.rzi-warning),
+.rz-button-danger:has(.rzi-emergency),
+.btn-emergency-pulse {
+    animation: candDangerPulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
+}
+
+.rz-button-danger:has(.rzi-warning):hover,
+.rz-button-danger:has(.rzi-emergency):hover,
+.btn-emergency-pulse:hover {
+    animation: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. LIGHT & SECONDARY: Slate Công Vụ Trang Nhã (Xem chi tiết, Đóng, Hủy bỏ)
+   -------------------------------------------------------------------------- */
+.rz-button.rz-button-light,
+.rz-button.rz-button-secondary,
+.btn.btn-light,
+.btn.btn-secondary,
+.btn-secondary-action {
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+    border-color: #cbd5e1 !important;
+    color: #0f2942 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 #ffffff !important;
+}
+
+.rz-button.rz-button-light:hover:not(:disabled),
+.rz-button.rz-button-secondary:hover:not(:disabled),
+.btn.btn-light:hover:not(:disabled),
+.btn.btn-secondary:hover:not(:disabled),
+.btn-secondary-action:hover:not(:disabled) {
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    border-color: #94a3b8 !important;
+    color: #091a2b !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+}
+
+.rz-button.rz-button-light:active:not(:disabled),
+.rz-button.rz-button-secondary:active:not(:disabled),
+.btn.btn-light:active:not(:disabled),
+.btn.btn-secondary:active:not(:disabled),
+.btn-secondary-action:active:not(:disabled) {
+    background: #e2e8f0 !important;
+    border-color: #94a3b8 !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. INFO: Lam Nghiệp Vụ CAND (Khắc phục sự cố, Chuyển hướng, Tra cứu)
+   -------------------------------------------------------------------------- */
+.rz-button.rz-button-info,
+.btn.btn-info {
+    background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%) !important;
+    border-color: #075985 !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 2px 5px rgba(3, 105, 161, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.rz-button.rz-button-info:hover:not(:disabled),
+.btn.btn-info:hover:not(:disabled) {
+    background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%) !important;
+    border-color: #0369a1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.rz-button.rz-button-info:active:not(:disabled),
+.btn.btn-info:active:not(:disabled) {
+    background: linear-gradient(180deg, #075985 0%, #0369a1 100%) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. TABLE ROW ACTION BUTTONS & APPROVAL GROUP (CĂN CHỈNH KHOẢNG CÁCH, CHỐNG CO LỆCH)
+   -------------------------------------------------------------------------- */
 .approval-action-group {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 0.35rem !important;
+    gap: 0.4rem !important;
     flex-wrap: nowrap !important;
     width: 100% !important;
     margin: 0 auto !important;
 }
 
-.approval-action-group .rz-button {
+.approval-action-group .rz-button,
+.rz-data-grid-data td .rz-button.rz-button-sm {
     font-size: 0.8125rem !important;
-    padding: 0 0.65rem !important;
+    padding: 0 0.7rem !important;
     height: 32px !important;
     min-height: 32px !important;
     border-radius: 6px !important;
@@ -968,36 +1205,33 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
     text-align: center !important;
     flex-shrink: 0 !important;
     white-space: nowrap !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
     line-height: normal !important;
-    transition: all 0.15s ease !important;
 }
 
-.approval-action-group .rz-button .rz-button-icon-left {
-    font-size: 1rem !important;
-    margin-right: 0.3rem !important;
+.approval-action-group .rz-button .rz-button-icon-left,
+.rz-data-grid-data td .rz-button.rz-button-sm .rz-button-icon-left {
+    font-size: 1.05rem !important;
+    margin-right: 0.35rem !important;
     margin-left: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    line-height: 1 !important;
 }
 
-.approval-action-group .rz-button-text {
-    white-space: nowrap !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    line-height: 1 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
+/* Nút chỉ chứa icon (như nút Xem chi tiết trong bảng) */
 .approval-action-group .rz-button.rz-button-icon-only,
-.approval-action-group .rz-button:not(:has(.rz-button-text:not(:empty))) {
+.approval-action-group .rz-button:not(:has(.rz-button-text:not(:empty))),
+.rz-data-grid-data td .rz-button.rz-button-icon-only,
+.rz-data-grid-data td .rz-button:not(:has(.rz-button-text:not(:empty))) {
     width: 32px !important;
     min-width: 32px !important;
     padding: 0 !important;
+}
+
+/* Modal Dialog action buttons (chuẩn kích thước thao tác) */
+.cand-modal-footer .rz-button,
+.rz-dialog-content .d-flex .rz-button {
+    min-height: 36px !important;
+    padding: 0 1.15rem !important;
+    font-size: 0.875rem !important;
+    border-radius: 6px !important;
 }
 
 .rz-data-grid-data td:has(.approval-action-group),
@@ -1018,4 +1252,217 @@ h1:focus, h2:focus, h3:focus, [tabindex="-1"]:focus {
     text-align: center !important;
     width: 100% !important;
     display: inline-block !important;
+}
+
+/* ========================================================
+   RADZEN DIALOG CAND BRANDING (MODAL POPUP TOÀN MÀN HÌNH)
+   ======================================================== */
+.rz-dialog-wrapper {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+    z-index: 10005 !important;
+}
+
+.rz-dialog {
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: auto !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    pointer-events: auto !important;
+    z-index: 10006 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
+}
+
+.rz-dialog-mask {
+    background-color: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 10000 !important;
+    pointer-events: auto !important;
+}
+
+.rz-dialog-titlebar {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    color: #ffffff !important;
+    border-bottom: 2px solid #c5a059 !important;
+    padding: 0.85rem 1.25rem !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.rz-dialog-title {
+    font-size: 1.12rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: 0.01em !important;
+}
+
+.rz-dialog-titlebar-close {
+    color: #ffffff !important;
+    opacity: 0.85 !important;
+    transition: all 0.2s !important;
+    cursor: pointer !important;
+}
+
+.rz-dialog-titlebar-close:hover {
+    opacity: 1 !important;
+    transform: rotate(90deg) !important;
+}
+
+.rz-dialog-content {
+    padding: 1.5rem !important;
+    background: #ffffff !important;
+    max-height: calc(90vh - 65px) !important;
+    overflow-y: auto !important;
+}
+
+/* ========================================================
+   CAND MODAL DIALOG POPUP SYSTEM
+   ======================================================== */
+.cand-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    animation: candFadeIn 0.2s ease-out;
+}
+
+.cand-modal-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 820px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: candSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cand-modal-container.cand-modal-lg {
+    max-width: 950px;
+}
+
+.cand-modal-container.cand-modal-md {
+    max-width: 650px;
+}
+
+.cand-modal-container.cand-modal-sm {
+    max-width: 480px;
+}
+
+.cand-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    border-bottom: 2px solid var(--accent-gold, #c5a059);
+}
+
+.cand-modal-header.header-success {
+    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+    border-bottom-color: #81c784;
+}
+
+.cand-modal-header.header-warning {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    border-bottom-color: #fcd34d;
+}
+
+.cand-modal-header.header-danger {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    border-bottom-color: #fca5a5;
+}
+
+.cand-modal-title {
+    font-size: 1.12rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: #ffffff;
+}
+
+.cand-modal-close-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.cand-modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: rotate(90deg);
+}
+
+.cand-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.cand-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+@keyframes candFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes candSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
